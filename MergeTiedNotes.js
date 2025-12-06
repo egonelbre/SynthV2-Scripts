@@ -88,16 +88,18 @@ function main() {
     return
   } else if (result.answers.scope == 2) {
     // Project
-      var project = SV.getProject();
-      for(var i = 0; i < project.getNumNoteGroupsInLibrary(); i ++) {
-        var group = project.getNoteGroup(i);
-        mergeTiedNotes(group, group);
-      }
-      for(var i = 0; i < project.getNumTracks(); i ++) {
-        var track = project.getTrack(i);
-        var mainGroup = track.getGroupReference(0).getTarget();
-        mergeTiedNotes(mainGroup, mainGroup);
-      }
+    var project = SV.getProject();
+    for(var i = 0; i < project.getNumNoteGroupsInLibrary(); i ++) {
+      var group = project.getNoteGroup(i);
+      mergeTiedNotes(group, group);
+    }
+    for(var i = 0; i < project.getNumTracks(); i ++) {
+      var track = project.getTrack(i);
+      var mainGroup = track.getGroupReference(0).getTarget();
+      mergeTiedNotes(mainGroup, mainGroup);
+    }
+    SV.finish();
+    return
   }
 }
 
