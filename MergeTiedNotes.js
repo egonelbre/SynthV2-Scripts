@@ -1,3 +1,21 @@
+/*
+
+This script merges any notes that are on the same pitch
+and tied togehter.
+
+For example:
+
+             [- ]
+[Lorem] [+ ]     [- ] [- ] [+ ]
+
+Will be merged into:
+
+             [- ]
+[Lorem] [+ ]     [-      ] [+ ]
+
+*/
+
+
 var SCRIPT_TITLE = "Merge Tied Notes";
 
 function getClientInfo() {
