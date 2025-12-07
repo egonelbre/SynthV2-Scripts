@@ -4,9 +4,10 @@ This script ensures note onsets and phrase offsets are precise.
 
 */
 
-const SCRIPT_TITLE = "Precise Onset";
+const SCRIPT_TITLE = "Precise Onset and Offset";
 const FLAG = "precise-pitch-control";
-const TRANSITION_DURATION = SV.QUARTER / 4;
+
+const ONSET_EPSILON = SV.QUARTER / 16;
 
 function getClientInfo() {
 	return {
@@ -29,7 +30,7 @@ function main() {
 			{
 				name: "phrase",
 				type: "CheckBox",
-				text: SV.T("Only phrase starts."),
+				text: SV.T("Only first and last note of the phrase."),
 				default: false
 			},
 			{
@@ -71,129 +72,61 @@ function processNotes(notes, group, options) {
 
 	clearPitchControlsInRange(group, notes[0].getOnset(), notes[notes.length-1].getEnd(), FLAG);
 
-	var eps = SV.QUARTER/16;
+	function touching (a, b) {
+		return a.getEnd() + ONSET_EPSILON > b.getOnset();
+	}
 
-	if(options.phrase) {
-		var lastEnd = 0;
-		for(var i = 0; i < notes.length; i++) {
-			var note = notes[i];
-			var onset = note.getOnset();
+	for (var i = 0; i < notes.length; i++) {
+		var note = notes[i];
+		var prevNote = i - 1 >= 0 ? notes[i - 1] : null;
+		var nextNote = i + 1 < notes.length ? notes[i + 1] : null;
 
-			// check whether note is part of a phrase
-			if(lastEnd == onset) {
-				lastEnd = note.getEnd();
-				continue;
-			}
+		// create onset control
+		var prepare = ONSET_EPSILON;
+		var onset = ONSET_EPSILON;
 
-			var prep = eps;
-			if(onset - lastEnd < prep) {
-				prep = onset - lastEnd;
-			}
-			var dur = eps;
-			if(dur > note.getDuration()) {
-				dur = note.getDuration();
-			}
-
-			// add onset control
-			var control = SV.create("PitchControlCurve");
-			control.setPosition(onset);
-			control.setPitch(note.getPitch());
-			control.setPoints([
-				[-prep, 0],
-				[dur, 0],
-			]);
-			control.setScriptData(FLAG, true);
-
-			group.addPitchControl(control);
-
-			// add offset control
-			var endprep = eps;
-			if(endprep > note.getDuration() - dur) {
-				endprep = note.getDuration() - dur;
-			}
-
-			var enddur = eps;
-			var skip = false;
-			if(i + 1 < notes.length) {
-				var next = notes[i+1];
-				var nextOnset = next.getOnset();
-
-				if (note.getEnd() + enddur > nextOnset) {
-					skip = true;
-				}
-			}
-
-			if(!skip && endprep + enddur > 0){
-				var control = SV.create("PitchControlCurve");
-				control.setScriptData(FLAG, true);
-				control.setPosition(note.getEnd());
-				control.setPitch(note.getPitch());
-				control.setPoints([
-					[-endprep, 0],
-					[enddur, 0],
-				]);
-
-				group.addPitchControl(control);
-			}
-
-			lastEnd = note.getEnd();
+		var phraseContinuation = prevNote && touching(prevNote, note);
+		if(prevNote && phraseContinuation) {
+			prepare = note.getOnset() - prevNote.getEnd();
 		}
-	} else {
-		var lastEnd = 0;
-		for(var i = 0; i < notes.length; i++) {
-			var note = notes[i];
-			var onset = note.getOnset();
+		if(onset > note.getDuration()) {
+			onset = note.getDuration();
+		}
 
-			var prep = eps;
-			if(onset - lastEnd < prep) {
-				prep = onset - lastEnd;
-			}
-			var dur = eps;
-			if(dur > note.getDuration()) {
-				dur = note.getDuration();
-			}
+		// only control onset if not part of a phrase (with option)
+		var controlOnset = true;
+		if (options.phrase) controlOnset = !phraseContinuation;
 
-			// otherwise add a control point
+		if(controlOnset) {
 			var control = SV.create("PitchControlCurve");
-			control.setPosition(onset);
+			control.setScriptData(FLAG, true);
+			control.setPosition(note.getOnset());
 			control.setPitch(note.getPitch());
 			control.setPoints([
-				[-prep, 0],
-				[dur, 0],
+				[-prepare, 0],
+				[onset, 0],
 			]);
 
 			group.addPitchControl(control);
+		}
 
-			// add offset control
-			var endprep = eps;
-			if(endprep > note.getDuration() - dur) {
-				endprep = note.getDuration() - dur;
+		// When it's the last note in a phrase add control to avoid glissando down.
+		if(nextNote && !touching(note, nextNote)) {
+			var end = ONSET_EPSILON;
+			if(end > note.getDuration() - onset) {
+				end = note.getDuration() - onset;
 			}
 
-			var enddur = eps;
-			var skip = false;
-			if(i + 1 < notes.length) {
-				var next = notes[i+1];
-				var nextOnset = next.getOnset();
+			var control = SV.create("PitchControlCurve");
+			control.setScriptData(FLAG, true);
+			control.setPosition(note.getEnd());
+			control.setPitch(note.getPitch());
+			control.setPoints([
+				[-end, 0],
+				[ONSET_EPSILON, 0],
+			]);
 
-				if (note.getEnd() + enddur > nextOnset) {
-					skip = true;
-				}
-			}
-
-			if(!skip && endprep + enddur > 0){
-				var control = SV.create("PitchControlCurve");
-				control.setPosition(note.getEnd());
-				control.setPitch(note.getPitch());
-				control.setPoints([
-					[-endprep, 0],
-					[enddur, 0],
-				]);
-
-				group.addPitchControl(control);
-			}
-
-			lastEnd = note.getEnd();
+			group.addPitchControl(control);
 		}
 	}
 }
