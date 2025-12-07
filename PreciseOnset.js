@@ -4,8 +4,9 @@ This script ensures note onsets and phrase offsets are precise.
 
 */
 
-
-var SCRIPT_TITLE = "Precise Onset";
+const SCRIPT_TITLE = "Precise Onset";
+const FLAG = "precise-pitch-control";
+const TRANSITION_DURATION = SV.QUARTER / 4;
 
 function getClientInfo() {
 	return {
@@ -30,12 +31,6 @@ function main() {
 				type: "CheckBox",
 				text: SV.T("Only phrase starts."),
 				default: false
-			},
-			{
-				name: "clear",
-				type: "CheckBox",
-				text: SV.T("Clear all pitch controls."),
-				default: true
 			},
 			{
 				"name" : "scope", "type" : "ComboBox",
@@ -74,45 +69,7 @@ function processNotes(notes, group, options) {
 		return;
 	}
 
-	if(!options.clear) {
-		var first = notes[0];
-		var last = notes[notes.length-1];
-
-		var start = first.getOnset();
-		var end = last.getEnd();
-
-		// clear the overlapping pitch controls.
-		// TODO: this clears more than necessary, but good enough for me
-		var N = group.getNumPitchControls();
-		for(var i = N - 1; i >= 0; i--) {
-			var control = group.getPitchControl(i);
-
-			var at = control.getPosition();
-			var min = at;
-			var max = at;
-
-			var points = control.getPoints();
-			for(var k = 0; k < points.length; k ++) {
-				min = Math.min(min, at + points[k][0]);
-				max = Math.max(max, at + points[k][0]);
-			}
-
-			if(end < min) {
-				continue;
-			}
-			if(max < start) {
-				continue;
-			}
-
-			group.removePitchControl(i);
-		}
-	} else {
-		var N = group.getNumPitchControls();
-		for(var i = N - 1; i >= 0; i--) {
-			group.removePitchControl(i);
-		}
-	}
-
+	clearPitchControlsInRange(group, notes[0].getOnset(), notes[notes.length-1].getEnd(), FLAG);
 
 	var eps = SV.QUARTER/16;
 
@@ -145,6 +102,7 @@ function processNotes(notes, group, options) {
 				[-prep, 0],
 				[dur, 0],
 			]);
+			control.setScriptData(FLAG, true);
 
 			group.addPitchControl(control);
 
@@ -167,6 +125,7 @@ function processNotes(notes, group, options) {
 
 			if(!skip && endprep + enddur > 0){
 				var control = SV.create("PitchControlCurve");
+				control.setScriptData(FLAG, true);
 				control.setPosition(note.getEnd());
 				control.setPitch(note.getPitch());
 				control.setPoints([
@@ -309,4 +268,43 @@ function groupAsNotesArray(noteGroup) {
 			return target[prop];
 		}
 	});
+}
+
+// * Pitch Control Helpers * //
+
+function clearPitchControlsInRange(group, startPos, endPos, flag) {
+	var pitchControlsToRemove = [];
+
+	for(var i = 0; i < group.getNumPitchControls(); i ++) {
+		var pitchControl = group.getPitchControl(i);
+		var controlStart, controlEnd;
+
+		if(pitchControl.getScriptData(flag) != true) {
+			continue;
+		}
+
+		if(pitchControl.type === "PitchControlCurve") {
+			// For curves, check the range of points
+			var points = pitchControl.getPoints();
+			if(points && points.length > 0) {
+				var curvePos = pitchControl.getPosition();
+				controlStart = curvePos + points[0][0];
+				controlEnd = curvePos + points[points.length - 1][0];
+			} else {
+				// No points, treat as single position
+				controlStart = controlEnd = pitchControl.getPosition();
+			}
+		} else {
+			// For points, use single position
+			controlStart = controlEnd = pitchControl.getPosition();
+		}
+
+		if(!(controlEnd < startPos || controlStart > endPos)) {
+			pitchControlsToRemove.push(i);
+		}
+	}
+
+	for(var i = pitchControlsToRemove.length - 1; i >= 0; i --) {
+		group.removePitchControl(pitchControlsToRemove[i]);
+	}
 }

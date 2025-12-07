@@ -5,7 +5,11 @@ pitch control curves that lock the pitch to the note's base pitch.
 
 */
 
-var SCRIPT_TITLE = "Pitch Perfect";
+const SCRIPT_TITLE = "Pitch Perfect";
+const FLAG = "precise-pitch-control";
+
+const ONSET_NATURAL = SV.QUARTER / 16;
+const TRANSITION_DURATION = SV.QUARTER / 4;
 
 function getClientInfo() {
 	return {
@@ -25,12 +29,6 @@ function main() {
 		"title": SV.T(SCRIPT_TITLE),
 		"buttons": "OkCancel",
 		"widgets": [
-			{
-				name: "clear",
-				type: "CheckBox",
-				text: SV.T("Clear existing pitch controls"),
-				default: false
-			},
 			{
 				"name" : "scope", "type" : "ComboBox",
 				"label" : SV.T("Scope"),
@@ -68,63 +66,33 @@ function processNotes(notes, group, options) {
 		return;
 	}
 
-	if(options.clear) {
-		var first = notes[0];
-		var last = notes[notes.length-1];
-
-		var start = first.getOnset();
-		var end = last.getEnd();
-
-		// clear the overlapping pitch controls
-		var N = group.getNumPitchControls();
-		for(var i = N - 1; i >= 0; i--) {
-			var control = group.getPitchControl(i);
-
-			var at = control.getPosition();
-			var min = at;
-			var max = at;
-
-			var points = control.getPoints();
-			for(var k = 0; k < points.length; k ++) {
-				min = Math.min(min, at + points[k][0]);
-				max = Math.max(max, at + points[k][0]);
-			}
-
-			if(end < min) {
-				continue;
-			}
-			if(max < start) {
-				continue;
-			}
-
-			group.removePitchControl(i);
-		}
-	}
+	clearPitchControlsInRange(group, notes[0].getOnset(), notes[notes.length-1].getEnd(), FLAG);
 
 	// Add perfect pitch controls for each note
 	for(var i = 0; i < notes.length; i++) {
 		var note = notes[i];
-		var onset = note.getOnset();
-		var duration = note.getDuration();
-		var pitch = note.getPitch();
+		var nextNote = i + 1 < notes.length ? notes[i + 1] : null;
 
-		// allow for some transitions between notes
-		if(i + 1 < notes.length) {
-			var nextNote = notes[i+1];
-			if(note.getEnd() == nextNote.getOnset()) {
-				duration -= SV.QUARTER / 4;
-				duration = Math.max(0, duration);
+		var duration = note.getDuration() - ONSET_NATURAL;
+
+		// allow time for a smooth transition between joined notes.
+		if(nextNote) {
+			var transition = nextNote.getOnset() - note.getEnd();
+			if (transition < TRANSITION_DURATION) {
+				duration = duration - (TRANSITION_DURATION - transition);
+				if (duration <= 0) continue;
 			}
 		}
+		if (duration <= 0) continue;
 
-		// Create a pitch control curve that spans the entire note
-		// with zero deviation (perfect pitch)
+		// Create a pitch control curve that spans the entire note with zero deviation.
 		var control = SV.create("PitchControlCurve");
-		control.setPosition(onset);
-		control.setPitch(pitch);
+		control.setScriptData(FLAG, true);
+		control.setPosition(note.getOnset());
+		control.setPitch(note.getPitch());
 		control.setPoints([
-			[0, 0],
-			[duration, 0]
+			[ONSET_NATURAL, 0],
+			[duration-ONSET_NATURAL, 0]
 		]);
 
 		group.addPitchControl(control);
@@ -201,4 +169,43 @@ function groupAsNotesArray(noteGroup) {
 			return target[prop];
 		}
 	});
+}
+
+// * Pitch Control Helpers * //
+
+function clearPitchControlsInRange(group, startPos, endPos, flag) {
+	var pitchControlsToRemove = [];
+
+	for(var i = 0; i < group.getNumPitchControls(); i ++) {
+		var pitchControl = group.getPitchControl(i);
+		var controlStart, controlEnd;
+
+		if(pitchControl.getScriptData(flag) != true) {
+			continue;
+		}
+
+		if(pitchControl.type === "PitchControlCurve") {
+			// For curves, check the range of points
+			var points = pitchControl.getPoints();
+			if(points && points.length > 0) {
+				var curvePos = pitchControl.getPosition();
+				controlStart = curvePos + points[0][0];
+				controlEnd = curvePos + points[points.length - 1][0];
+			} else {
+				// No points, treat as single position
+				controlStart = controlEnd = pitchControl.getPosition();
+			}
+		} else {
+			// For points, use single position
+			controlStart = controlEnd = pitchControl.getPosition();
+		}
+
+		if(!(controlEnd < startPos || controlStart > endPos)) {
+			pitchControlsToRemove.push(i);
+		}
+	}
+
+	for(var i = pitchControlsToRemove.length - 1; i >= 0; i --) {
+		group.removePitchControl(pitchControlsToRemove[i]);
+	}
 }
