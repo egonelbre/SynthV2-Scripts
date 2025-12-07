@@ -44,7 +44,7 @@ function main() {
         "label" : SV.T("Scope"),
         "choices" : [
           SV.T("Selected Notes"),
-          SV.T("Current Track"), 
+          SV.T("Current Track"),
           SV.T("Entire Project")
         ],
         "default" : selectedNotes.length > 0 ? 0 : 2
@@ -80,7 +80,7 @@ function main() {
     for(var i = 0; i < trackGroupN; i ++) {
       var group = track.getGroupReference(i).getTarget();
       if(visited.indexOf(group.getUUID()) < 0) {
-        mergeTiedNotes(group, group);
+        mergeTiedNotes(groupAsNotesArray(group), group);
         visited.push(group.getUUID());
       }
     }
@@ -96,7 +96,7 @@ function main() {
     for(var i = 0; i < project.getNumTracks(); i ++) {
       var track = project.getTrack(i);
       var mainGroup = track.getGroupReference(0).getTarget();
-      mergeTiedNotes(mainGroup, mainGroup);
+      mergeTiedNotes(groupAsNotesArray(mainGroup), mainGroup);
     }
     SV.finish();
     return
@@ -104,7 +104,7 @@ function main() {
 }
 
 function mergeTiedNotes(notes, group) {
-  if(getLength(notes) <= 1) {
+  if(notes.length <= 1) {
     return;
   }
 
@@ -114,8 +114,8 @@ function mergeTiedNotes(notes, group) {
   var fragPitch = 0;
   var fragEnd = 0;
 
-  for(var i = 0; i < getLength(notes); i++) {
-    var note = getNote(notes, i);
+  for(var i = 0; i < notes.length; i++) {
+    var note = notes[i];
     var lyrics = note.getLyrics();
     var pitch = note.getPitch()
     var currOnset = note.getOnset();
@@ -132,11 +132,11 @@ function mergeTiedNotes(notes, group) {
 
     if(fragIdx + 1 != i) {
       // extend the first note
-      var first = getNote(notes, fragIdx);
+      var first = notes[fragIdx];
       first.setDuration(fragEnd - first.getOnset());
       // remove the other notes
       for(var k = fragIdx+1; k < i; k++) {
-        toRemove.push(getNote(notes, k));
+        toRemove.push(notes[k]);
       }
     }
 
@@ -146,9 +146,9 @@ function mergeTiedNotes(notes, group) {
     fragEnd = note.getEnd();
   }
 
-  if(fragIdx + 1 != getLength(notes)) {
+  if(fragIdx + 1 != notes.length) {
       // extend the first note
-      var first = getNote(notes, fragIdx);
+      var first = notes[fragIdx];
       first.setDuration(fragEnd - first.getOnset());
       // remove the other notes
       for(var k = fragIdx+1; k < i; k++) {
@@ -169,20 +169,16 @@ function sortNotes(notes) {
   });
 }
 
-function getNote(arr, index) {
-  if(Array.isArray(arr)) {
-    return arr[index];
-  } else {
-    // the input is a NoteGroup
-    return arr.getNote(index);
-  }
-}
-
-function getLength(arr) {
-  if(Array.isArray(arr)) {
-    return arr.length;
-  } else {
-    // the input is a NoteGroup
-    return arr.getNumNotes();
-  }
+function groupAsNotesArray(noteGroup) {
+  return new Proxy(noteGroup, {
+    get: function(target, prop) {
+      if (prop === 'length') {
+        return target.getNumNotes();
+      }
+      if (typeof prop == "number") {
+        return target.getNote(prop);
+      }
+      return target[prop];
+    }
+  });
 }

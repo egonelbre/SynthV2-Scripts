@@ -45,7 +45,7 @@ function main() {
         "label" : SV.T("Scope"),
         "choices" : [
           SV.T("Selected Notes"),
-          SV.T("Current Track"), 
+          SV.T("Current Track"),
           SV.T("Entire Project")
         ],
         "default" : selectedNotes.length > 0 ? 0 : 2
@@ -82,7 +82,7 @@ function main() {
     for(var i = 0; i < trackGroupN; i ++) {
       var scope = track.getGroupReference(i);
       var group = scope.getTarget();
-      processNotes(group, group, scope, options);
+      processNotes(groupAsNotesArray(group), group, scope, options);
     }
     SV.finish();
     return
@@ -97,7 +97,7 @@ function main() {
       for(var k = 0; k < trackGroupN; k ++) {
         var scope = track.getGroupReference(k);
         var group = scope.getTarget();
-        processNotes(group, group, scope, options);
+        processNotes(groupAsNotesArray(group), group, scope, options);
       }
     }
     SV.finish();
@@ -106,14 +106,13 @@ function main() {
 }
 
 function processNotes(notes, group, scope, options) {
-  var notesN = getLength(notes);
-  if(notesN == 0) {
+  if(notes.length == 0) {
     return;
   }
 
   if(!options.clear) {
-    var first = getNote(notes, 0);
-    var last = getNote(notes, notesN-1);
+    var first = notes[0];
+    var last = notes[notes.length-1];
 
     var start = first.getOnset();
     var end = last.getEnd();
@@ -155,8 +154,8 @@ function processNotes(notes, group, scope, options) {
 
   if(options.phrase) {
     var lastEnd = 0;
-    for(var i = 0; i < notesN; i++) {
-      var note = getNote(notes, i);
+    for(var i = 0; i < notes.length; i++) {
+      var note = notes[i];
       var onset = note.getOnset();
 
       // check whether note is part of a phrase
@@ -193,8 +192,8 @@ function processNotes(notes, group, scope, options) {
 
       var enddur = eps;
       var skip = false;
-      if(i + 1 < notesN) {
-        var next = getNote(notes, i + 1);
+      if(i + 1 < notes.length) {
+        var next = notes[i+1];
         var nextOnset = next.getOnset();
 
         if (note.getEnd() + enddur > nextOnset) {
@@ -218,8 +217,8 @@ function processNotes(notes, group, scope, options) {
     }
   } else {
     var lastEnd = 0;
-    for(var i = 0; i < notesN; i++) {
-      var note = getNote(notes, i);
+    for(var i = 0; i < notes.length; i++) {
+      var note = notes[i];
       var onset = note.getOnset();
 
       var prep = eps;
@@ -250,8 +249,8 @@ function processNotes(notes, group, scope, options) {
 
       var enddur = eps;
       var skip = false;
-      if(i + 1 < notesN) {
-        var next = getNote(notes, i + 1);
+      if(i + 1 < notes.length) {
+        var next = notes[i+1];
         var nextOnset = next.getOnset();
 
         if (note.getEnd() + enddur > nextOnset) {
@@ -284,20 +283,16 @@ function sortNotes(notes) {
   });
 }
 
-function getNote(arr, index) {
-  if(Array.isArray(arr)) {
-    return arr[index];
-  } else {
-    // the input is a NoteGroup
-    return arr.getNote(index);
-  }
-}
-
-function getLength(arr) {
-  if(Array.isArray(arr)) {
-    return arr.length;
-  } else {
-    // the input is a NoteGroup
-    return arr.getNumNotes();
-  }
+function groupAsNotesArray(noteGroup) {
+  return new Proxy(noteGroup, {
+    get: function(target, prop) {
+      if (prop === 'length') {
+        return target.getNumNotes();
+      }
+      if (typeof prop == "number") {
+        return target.getNote(prop);
+      }
+      return target[prop];
+    }
+  });
 }

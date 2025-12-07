@@ -78,7 +78,7 @@ function main() {
       var scope = track.getGroupReference(i);
       var group = scope.getTarget();
       if(visited.indexOf(group.getUUID()) < 0) {
-        processNotes(group, group, options);
+        processNotes(groupAsNotesArray(group), group, options);
         visited.push(group.getUUID());
       }
     }
@@ -89,12 +89,12 @@ function main() {
     var project = SV.getProject();
     for(var i = 0; i < project.getNumNoteGroupsInLibrary(); i ++) {
       var group = project.getNoteGroup(i);
-      processNotes(group, group, options);
+      processNotes(groupAsNotesArray(group), group, options);
     }
     for(var i = 0; i < project.getNumTracks(); i ++) {
       var track = project.getTrack(i);
       var mainGroup = track.getGroupReference(0).getTarget();
-      processNotes(mainGroup, mainGroup, options);
+      processNotes(groupAsNotesArray(mainGroup), mainGroup, options);
     }
     SV.finish();
     return
@@ -102,14 +102,13 @@ function main() {
 }
 
 function processNotes(notes, group, options) {
-  var notesN = getLength(notes);
-  if(notesN == 0) {
+  if(notes.length == 0) {
     return;
   }
 
   if(options.clear) {
-    var first = getNote(notes, 0);
-    var last = getNote(notes, notesN-1);
+    var first = notes[0];
+    var last = notes[notes.length-1];
 
     var start = first.getOnset();
     var end = last.getEnd();
@@ -141,15 +140,15 @@ function processNotes(notes, group, options) {
   }
 
   // Add perfect pitch controls for each note
-  for(var i = 0; i < notesN; i++) {
-    var note = getNote(notes, i);
+  for(var i = 0; i < notes.length; i++) {
+    var note = notes[i];
     var onset = note.getOnset();
     var duration = note.getDuration();
     var pitch = note.getPitch();
 
     // allow for some transitions between notes
-    if(i + 1 < notesN) {
-      var nextNote = getNote(notes, i + 1);
+    if(i + 1 < notes.length) {
+      var nextNote = notes[i+1];
       if(note.getEnd() == nextNote.getOnset()) {
         duration -= SV.QUARTER / 4;
         duration = Math.max(0, duration);
@@ -178,20 +177,16 @@ function sortNotes(notes) {
   });
 }
 
-function getNote(arr, index) {
-  if(Array.isArray(arr)) {
-    return arr[index];
-  } else {
-    // the input is a NoteGroup
-    return arr.getNote(index);
-  }
-}
-
-function getLength(arr) {
-  if(Array.isArray(arr)) {
-    return arr.length;
-  } else {
-    // the input is a NoteGroup
-    return arr.getNumNotes();
-  }
+function groupAsNotesArray(noteGroup) {
+  return new Proxy(noteGroup, {
+    get: function(target, prop) {
+      if (prop === 'length') {
+        return target.getNumNotes();
+      }
+      if (typeof prop == "number") {
+        return target.getNote(prop);
+      }
+      return target[prop];
+    }
+  });
 }
