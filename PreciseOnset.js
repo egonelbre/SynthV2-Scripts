@@ -163,9 +163,6 @@ function processTrack(process, options) {
 }
 
 function processProject(process, options) {
-	var track = SV.getMainEditor().getCurrentTrack();
-	var groupCount = track.getNumGroups();
-
 	// process all groups that may be shared between tracks
 	var project = SV.getProject();
 	for(var i = 0; i < project.getNumNoteGroupsInLibrary(); i ++) {

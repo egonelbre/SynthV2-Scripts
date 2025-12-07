@@ -30,6 +30,26 @@ function main() {
 		"buttons": "OkCancel",
 		"widgets": [
 			{
+				"name"     : "vibrato_cents",
+				"type"     : "Slider",
+				"label"    : SV.T("Vibrato (cents)"),
+				"format"   : "%1.0f",
+				"minValue" : 0,
+				"maxValue" : 50,
+				"interval" : 1,
+				"default"  : 5,
+			},
+			{
+				"name"     : "vibrato_hz",
+				"type"     : "Slider",
+				"label"    : SV.T("Vibrato (Hz)"),
+				"format"   : "%1.0f",
+				"minValue" : 3.0,
+				"maxValue" : 8.0,
+				"interval" : 0.1,
+				"default"  : 5.0,
+			},
+			{
 				"name" : "scope", "type" : "ComboBox",
 				"label" : SV.T("Scope"),
 				"choices" : [
@@ -54,14 +74,14 @@ function main() {
 	} else if (scope == 1) {
 		processTrack(processNotes, result.answers);
 	} else if (scope == 2) {
-		processProject(processNotes, result.answers);
+		processProjectWithRefs(processNotes, result.answers);
 	} else {
 		SV.showMessageBox(SV.T(SCRIPT_TITLE), SV.T("Invalid scope."));
 	}
 	SV.finish();
 }
 
-function processNotes(notes, group, options) {
+function processNotes(notes, group, options, groupRef) {
 	if(notes.length == 0) {
 		return;
 	}
@@ -85,18 +105,71 @@ function processNotes(notes, group, options) {
 		}
 		if (duration <= 0) continue;
 
-		// Create a pitch control curve that spans the entire note with zero deviation.
-		var control = SV.create("PitchControlCurve");
-		control.setScriptData(FLAG, true);
-		control.setPosition(note.getOnset());
-		control.setPitch(note.getPitch());
-		control.setPoints([
-			[ONSET_NATURAL, 0],
-			[duration-ONSET_NATURAL, 0]
-		]);
-
-		group.addPitchControl(control);
+		if(options.vibrato_cents > 0) {
+			addVibratePitchControl(groupRef, note, ONSET_NATURAL, duration, options.vibrato_cents, options.vibrato_hz)
+		} else {
+			addPrecisePitchControl(group, note, ONSET_NATURAL, duration)
+		}
 	}
+}
+
+function addPrecisePitchControl(group, note, start, duration) {
+	// Create a pitch control curve that spans the entire note with zero deviation.
+	var control = SV.create("PitchControlCurve");
+	control.setScriptData(FLAG, true);
+	control.setPosition(note.getOnset());
+	control.setPitch(note.getPitch());
+
+	control.setPoints([
+		[start, 0],
+		[duration-start, 0]
+	]);
+
+	group.addPitchControl(control);
+}
+
+function addVibratePitchControl(groupRef, note, start, duration, cents, hz) {
+	var group = groupRef.getTarget();
+	var basePitch = note.getPitch();
+
+	// Create a pitch control curve that spans the entire note with zero deviation.
+	var control = SV.create("PitchControlPoint");
+	control.setScriptData(FLAG, true);
+	control.setPosition(note.getOnset());
+	control.setPitch(note.getPitch());
+	group.addPitchControl(control);
+
+	var noteEnd = note.getOnset() + duration;
+
+	var project = SV.getProject();
+	var timeAxis = project.getTimeAxis();
+	var periodSeconds = 1.0 / hz;
+	var noteStartSeconds = timeAxis.getSecondsFromBlick(note.getOnset() + groupRef.getTimeOffset());
+	var periodBlicks = timeAxis.getBlickFromSeconds(noteStartSeconds + periodSeconds) -
+			timeAxis.getBlickFromSeconds(noteStartSeconds);
+
+	var currentPosition = note.getOnset() + start;
+	var halfCycleCount = 0;
+	var fadeIn = 0;
+	while(currentPosition < noteEnd) {
+		if(halfCycleCount > 0) {
+			var amplitude = (halfCycleCount % 2 === 0) ? -1.0 : 1.0;
+			fadeIn = Math.min(fadeIn + 0.1, 1);
+		 	var pitchOffset = cents * amplitude * fadeIn / 100.0;
+
+			var vibratoPoint = SV.create("PitchControlPoint");
+			vibratoPoint.setPosition(currentPosition);
+			vibratoPoint.setPitch(basePitch + pitchOffset);
+			vibratoPoint.setScriptData(FLAG, true);
+			group.addPitchControl(vibratoPoint);
+		}
+
+		var noise = Math.round(periodBlicks * (Math.random() * 0.15));
+		currentPosition += periodBlicks / 2 + noise;
+		halfCycleCount++;
+	}
+
+	return control;
 }
 
 // * Common * //
@@ -110,8 +183,9 @@ function processSelection(process, options) {
 	var selectedNotes = selection.getSelectedNotes();
 	selectedNotes = sortNotes(selectedNotes);
 
-	var group = SV.getMainEditor().getCurrentGroup().getTarget();
-	process(selectedNotes, group, options);
+	var groupRef = SV.getMainEditor().getCurrentGroup()
+	var group = groupRef.getTarget();
+	process(selectedNotes, group, options, groupRef);
 }
 
 function processTrack(process, options) {
@@ -119,21 +193,19 @@ function processTrack(process, options) {
 	var groupCount = track.getNumGroups();
 	var visited = [];
 	for(var i = 0; i < groupCount; i ++) {
-		var group = track.getGroupReference(i).getTarget();
+		var groupRef = track.getGroupReference(i);
+		var group = groupRef.getTarget();
 
 		// some note groups may be shared between or within tracks
 		if(visited.indexOf(group.getUUID()) >= 0)
 			continue;
 		visited.push(group.getUUID());
 
-		process(groupAsNotesArray(group), group, options);
+		process(groupAsNotesArray(group), group, options, groupRef);
 	}
 }
 
 function processProject(process, options) {
-	var track = SV.getMainEditor().getCurrentTrack();
-	var groupCount = track.getNumGroups();
-
 	// process all groups that may be shared between tracks
 	var project = SV.getProject();
 	for(var i = 0; i < project.getNumNoteGroupsInLibrary(); i ++) {
@@ -146,6 +218,29 @@ function processProject(process, options) {
 		var track = project.getTrack(i);
 		var mainGroup = track.getGroupReference(0).getTarget();
 		process(groupAsNotesArray(mainGroup), mainGroup, options);
+	}
+}
+
+function processProjectWithRefs(process, options) {
+	var visited = [];
+	var project = SV.getProject();
+
+	// process unique groups for each track
+	for(var i = 0; i < project.getNumTracks(); i ++) {
+		var track = project.getTrack(i);
+		var groupCount = track.getNumGroups();
+		var visited = [];
+		for(var k = 0; k < groupCount; k ++) {
+			var groupRef = track.getGroupReference(k);
+			var group = groupRef.getTarget();
+
+			// some note groups may be shared between or within tracks
+			if(visited.indexOf(group.getUUID()) >= 0)
+				continue;
+			visited.push(group.getUUID());
+
+			process(groupAsNotesArray(group), group, options, groupRef);
+		}
 	}
 }
 
