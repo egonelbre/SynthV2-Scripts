@@ -38,6 +38,26 @@ interface ComputedAttributes {
 }
 
 /**
+ * Note attributes object returned by Note.getAttributes
+ */
+interface NoteAttributes {
+  rTone: number;
+  rIntonation: number;
+  dF0VbrMod: number;
+  expValueX: number;
+  expValueY: number;
+  phonemes: {;
+    leftOffset: number;
+    position: number;
+    activity: number;
+    strength: number;
+  }[];
+  muted: boolean;
+  evenSyllableDuration: boolean;
+  languageOverride: string;
+  phonesetOverride: string;
+}
+/**
  * Host information object returned by SV.getHostInfo
  */
 interface HostInfo {
@@ -65,6 +85,60 @@ interface MeasureMark {
   numerator: number;
   denominator: number;
 }
+/**
+ * Form is argument for showDialog methods
+ */
+interface Form {
+  title: string;
+  message: string;
+  buttons: "YesNoCancel"|"OkCancel";
+  widgets: Widget[];
+}
+/**
+ * Widget is definition of a form element
+ */
+type Widget = Slider | CheckBox | ComboBox | TextBox | TextArea;
+interface Slider {
+    name: string;
+    type: "Slider";
+    label: string;
+    format: string;
+    minValue: number;
+    maxValue: number;
+    interval: number;
+    default: number;
+}
+
+interface CheckBox {
+    name: string;
+    type: "CheckBox";
+    text: string;
+    default: boolean;
+}
+
+interface ComboBox {
+    name: string;
+    type: "ComboBox";
+    label: string;
+    choices: string[];
+    default: number;
+}
+
+interface TextBox { 
+    name: string;
+    type: "TextBox";
+    label: string;
+    default: string;
+}
+
+interface TextArea {
+    name: string;
+    type: "TextArea";
+    label: string;
+    height: number;
+    default: string;
+}
+
 declare class ArrangementSelectionState extends SelectionStateBase {
 }
 
@@ -345,9 +419,9 @@ declare class Note extends ScriptableNestedObject {
 
   /**
    * Get an object holding note properties. The object has the following properties.
-   * @returns any
+   * @returns NoteAttributes
    */
-  getAttributes(): any;
+  getAttributes(): NoteAttributes;
 
   /**
    * Get the pitch adjustment in cents. 100 cents equals one semitone. This adjustment is applied on top of the base pitch of the note. (supported since 2.1.1)
@@ -849,7 +923,7 @@ declare class Project extends ScriptableNestedObject {
    * @param id
    * @returns NoteGroup | undefined
    */
-  getNoteGroup(id: any): NoteGroup | undefined;
+  getNoteGroup(id: number): NoteGroup | undefined;
 
   /**
    * Get the number of `NoteGroup` in the project library.
@@ -1046,9 +1120,9 @@ declare class SV {
 
   /**
    * Get the UI state object for controlling the playback.
-   * @returns PlayBackControl
+   * @returns PlaybackControl
    */
-  getPlayback(): PlayBackControl;
+  getPlayback(): PlaybackControl;
 
   /**
    * Get the currently open project.
@@ -1107,14 +1181,14 @@ declare class SV {
    * @param form
    * @returns any
    */
-  showCustomDialog(form: any): any;
+  showCustomDialog(form: Form): any;
 
   /**
    * Display a custom dialog defined in `form` , without blocking the script execution.
    * @param form
    * @param callback
    */
-  showCustomDialogAsync(form: any, callback: Function): void;
+  showCustomDialogAsync(form: Form, callback: Function): void;
 
   /**
    * The synchronous version of `SV#showInputBoxAsync` that blocks the script execution until the user closes the dialog. It returns the text input from the user.
@@ -1492,7 +1566,7 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
    * Select pitch control objects.
    * @param controls Array of PitchControlPoint or PitchControlCurve objects
    */
-  selectPitchControls(controls: any[]): void;
+  selectPitchControls(controls: (PitchControlPoint | PitchControlCurve)[]): void;
 
   /**
    * Select automation points for the specified parameter type.
@@ -1512,14 +1586,14 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
    * Unselect pitch control objects.
    * @param controls Array of PitchControlPoint or PitchControlCurve objects
    */
-  unselectPitchControls(controls: any[]): void;
+  unselectPitchControls(controls: (PitchControlPoint | PitchControlCurve)[]): void;
 
   /**
    * Unselect automation points for the specified parameter type.
    * @param parameterType The parameter type
    * @param positions Array of Blick positions to unselect
    */
-  unselectPoints(parameterType: string, positions: any[]): void;
+  unselectPoints(parameterType: string, positions: number[]): void;
 
 }
 

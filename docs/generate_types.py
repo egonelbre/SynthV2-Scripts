@@ -416,15 +416,36 @@ def parse_return_description(return_desc: str) -> Optional[str]:
     return result_type
 
 
-def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc: str = "", method_name: str = "") -> str:
+def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc: str = "", method_name: str = "", param_name: str = "") -> str:
     """Convert documentation type to TypeScript type."""
-    # Method-specific type overrides for complex object types
+    # Parameter-specific type overrides
+    param_type_overrides = {
+        ("SV", "showCustomDialog", "form"): "Form",
+        ("SV", "showCustomDialogAsync", "form"): "Form",
+
+        ("TrackInnerSelectionState", "selectPitchControls", "controls"): "(PitchControlPoint | PitchControlCurve)[]",
+        ("TrackInnerSelectionState", "unselectPitchControls", "controls"): "(PitchControlPoint | PitchControlCurve)[]",
+        ("TrackInnerSelectionState", "unselectPoints", "positions"): "number[]",
+
+        ("Project", "getNoteGroup", "id"): "number",
+    }
+
+    # Check for parameter-specific override first
+    if class_name and method_name and param_name:
+        override_key = (class_name, method_name, param_name)
+        if override_key in param_type_overrides:
+            return param_type_overrides[override_key]
+        # If we're processing a parameter and no override found, continue with normal processing
+        # Do NOT check method overrides for parameters
+
+    # Method-specific type overrides for complex object types (return types only, not parameters)
     method_type_overrides = {
         ("NoteGroupReference", "getVoice"): "VoiceParameters",
 
         ("SV", "getComputedAttributesForGroup"): "ComputedAttributes[]",
         ("SV", "getComputedPitchForGroup"): "(number|null)[]",
         ("SV", "getHostInfo"): "HostInfo",
+        ("SV", "getPlayback"): "PlaybackControl",
 
         ("TimeAxis", "getAllMeasureMarks"): "MeasureMark[]",
         ("TimeAxis", "getMeasureMarkAt"): "MeasureMark",
@@ -433,11 +454,13 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
         ("TimeAxis", "getAllTempoMarks"): "TempoMark[]",
         ("TimeAxis", "getTempoMarkAt"): "TempoMark",
 
+        ("Note", "getAttributes"): "NoteAttributes",
+
         ("TrackInnerSelectionState", "getSelectedPoints"): "number[]",
     }
 
-    # Check for method-specific override
-    if class_name and method_name:
+    # Check for method-specific override (only for return types, not parameters)
+    if class_name and method_name and not param_name:
         override_key = (class_name, method_name)
         if override_key in method_type_overrides:
             return method_type_overrides[override_key]
@@ -565,6 +588,27 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
     lines.append("")
 
     lines.append("/**")
+    lines.append(" * Note attributes object returned by Note.getAttributes")
+    lines.append(" */")
+    lines.append("interface NoteAttributes {")
+    lines.append("  rTone: number;")
+    lines.append("  rIntonation: number;")
+    lines.append("  dF0VbrMod: number;")
+    lines.append("  expValueX: number;")
+    lines.append("  expValueY: number;")
+    lines.append("  phonemes: {;")
+    lines.append("    leftOffset: number;")
+    lines.append("    position: number;")
+    lines.append("    activity: number;")
+    lines.append("    strength: number;")
+    lines.append("  }[];")
+    lines.append("  muted: boolean;")
+    lines.append("  evenSyllableDuration: boolean;")
+    lines.append("  languageOverride: string;")
+    lines.append("  phonesetOverride: string;")
+    lines.append("}")
+
+    lines.append("/**")
     lines.append(" * Host information object returned by SV.getHostInfo")
     lines.append(" */")
     lines.append("interface HostInfo {")
@@ -594,6 +638,64 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
     lines.append("  numerator: number;")
     lines.append("  denominator: number;")
     lines.append("}")
+
+    lines.append("/**")
+    lines.append(" * Form is argument for showDialog methods")
+    lines.append(" */")
+    lines.append("interface Form {")
+    lines.append("  title: string;")
+    lines.append("  message: string;")
+    lines.append('  buttons: "YesNoCancel"|"OkCancel";')
+    lines.append("  widgets: Widget[];")
+    lines.append("}")
+
+    lines.append("/**")
+    lines.append(" * Widget is definition of a form element")
+    lines.append(" */")
+    lines.append("type Widget = Slider | CheckBox | ComboBox | TextBox | TextArea;")
+
+    lines.append('interface Slider {')
+    lines.append('    name: string;')
+    lines.append('    type: "Slider";')
+    lines.append('    label: string;')
+    lines.append('    format: string;')
+    lines.append('    minValue: number;')
+    lines.append('    maxValue: number;')
+    lines.append('    interval: number;')
+    lines.append('    default: number;')
+    lines.append('}')
+    lines.append('')
+    lines.append('interface CheckBox {')
+    lines.append('    name: string;')
+    lines.append('    type: "CheckBox";')
+    lines.append('    text: string;')
+    lines.append('    default: boolean;')
+    lines.append('}')
+    lines.append('')
+    lines.append('interface ComboBox {')
+    lines.append('    name: string;')
+    lines.append('    type: "ComboBox";')
+    lines.append('    label: string;')
+    lines.append('    choices: string[];')
+    lines.append('    default: number;')
+    lines.append('}')
+    lines.append('')
+    lines.append('interface TextBox { ')
+    lines.append('    name: string;')
+    lines.append('    type: "TextBox";')
+    lines.append('    label: string;')
+    lines.append('    default: string;')
+    lines.append('}')
+    lines.append('')
+    lines.append('interface TextArea {')
+    lines.append('    name: string;')
+    lines.append('    type: "TextArea";')
+    lines.append('    label: string;')
+    lines.append('    height: number;')
+    lines.append('    default: string;')
+    lines.append('}')
+    lines.append('')
+
     # Sort classes by name
     classes_sorted = sorted(classes, key=lambda c: c.name)
 
@@ -626,7 +728,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
 
                 # Parameter documentation
                 for param_name, param_type, param_desc in method.params:
-                    ts_type = convert_type_to_typescript(param_type, class_info.name)
+                    ts_type = convert_type_to_typescript(param_type, class_info.name, "", method.name, param_name)
                     if param_desc:
                         lines.append(f"   * @param {param_name} {param_desc}")
                     else:
@@ -650,7 +752,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
             else:
                 # Method syntax: methodName(params): returnType;
                 params_str = ", ".join([
-                    f"{name}: {convert_type_to_typescript(ptype, class_info.name)}"
+                    f"{name}: {convert_type_to_typescript(ptype, class_info.name, '', method.name, name)}"
                     for name, ptype, _ in method.params
                 ])
                 return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc, method.name)
