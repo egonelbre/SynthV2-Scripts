@@ -124,7 +124,7 @@ interface ComboBox {
     default: number;
 }
 
-interface TextBox { 
+interface TextBox {
     name: string;
     type: "TextBox";
     label: string;
@@ -999,7 +999,7 @@ declare class RetakeList extends ScriptableNestedObject {
 
 }
 
-declare class SV {
+declare const SV : {
   /**
    * Number of blicks in a quarter. The value is 705600000.
    * @returns number

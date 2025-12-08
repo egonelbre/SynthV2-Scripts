@@ -1,3 +1,5 @@
+/// <reference path="./docs/synthesizer-v-api.d.ts"
+
 /*
 
 This script ensures note onsets and phrase offsets are precise.

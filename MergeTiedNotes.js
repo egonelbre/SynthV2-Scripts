@@ -1,3 +1,5 @@
+/// <reference path="./docs/synthesizer-v-api.d.ts"
+
 /*
 
 This script merges any notes that are on the same pitch
@@ -14,7 +16,6 @@ Will be merged into:
 [Lorem] [+ ]     [-      ] [+ ]
 
 */
-
 
 var SCRIPT_TITLE = "Merge Tied Notes";
 

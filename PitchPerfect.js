@@ -1,3 +1,5 @@
+/// <reference path="./docs/synthesizer-v-api.d.ts"
+
 /*
 
 This script sets all selected notes to perfect pitch by adding
