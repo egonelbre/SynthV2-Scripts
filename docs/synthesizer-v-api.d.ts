@@ -885,8 +885,9 @@ declare class RetakeList extends ScriptableNestedObject {
 declare class SV {
   /**
    * Number of blicks in a quarter. The value is 705600000.
+   * @returns number
    */
-  QUARTER(): void;
+  QUARTER: number;
 
   /**
    * Get a localized version of `text` based on the current UI language settings.

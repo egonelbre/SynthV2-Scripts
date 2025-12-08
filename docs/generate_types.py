@@ -18,7 +18,7 @@ from typing import Dict, List, Optional, Tuple
 
 
 class MethodInfo:
-    """Information about a method."""
+    """Information about a method or property."""
     def __init__(self):
         self.name = ""
         self.params: List[Tuple[str, str, str]] = []  # (name, type, description)
@@ -27,6 +27,7 @@ class MethodInfo:
         self.description = ""
         self.inherited_from: Optional[str] = None
         self.is_static = False
+        self.is_property = False  # True for constants/properties, False for methods
 
 
 class ClassInfo:
@@ -97,6 +98,7 @@ class APIDocParser(HTMLParser):
         # Inside method header, detect return type: <span class="type-signature">
         elif self.in_method_header and tag == "span" and attrs_dict.get("class") == "type-signature":
             self.in_type_signature = True
+            self.in_method_name = False  # Stop capturing method name
             self.text_buffer = []
 
         # Detect description: <div class="description usertext">
@@ -259,11 +261,19 @@ class APIDocParser(HTMLParser):
         # Capture return type from type signature
         elif self.in_type_signature and self.current_method:
             self.text_buffer.append(data)
-            # Look for return type after arrow: "→ {Type}"
             full_text = " ".join(self.text_buffer)
-            match = re.search(r'→\s*\{([^}]+)\}', full_text)
-            if match:
-                self.current_method.return_type = match.group(1)
+            
+            # Check if it's a property type ":Type" or method return "→ {Type}"
+            # Property pattern: ":type"
+            property_match = re.search(r':\s*(\w+)', full_text)
+            if property_match:
+                self.current_method.is_property = True
+                self.current_method.return_type = property_match.group(1)
+            else:
+                # Method return type pattern: "→ {Type}"
+                method_match = re.search(r'→\s*\{([^}]+)\}', full_text)
+                if method_match:
+                    self.current_method.return_type = method_match.group(1)
 
         # Capture h5 text (to detect "Returns:")
         elif self.text_buffer is not None and not self.in_description and not self.in_return_desc and not self.in_param_cell:
@@ -570,15 +580,23 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
 
                 lines.append("   */")
 
-            # Method signature
+            # Generate signature based on whether it's a property or method
             static_keyword = "static " if method.is_static else ""
-            params_str = ", ".join([
-                f"{name}: {convert_type_to_typescript(ptype, class_info.name)}"
-                for name, ptype, _ in method.params
-            ])
-            return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc, method.name)
-
-            lines.append(f"  {static_keyword}{method.name}({params_str}): {return_type};")
+            
+            if method.is_property:
+                # Property syntax: static readonly PROPERTY: type;
+                readonly_keyword = "readonly " if static_keyword else ""
+                return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc, method.name)
+                lines.append(f"  {static_keyword}{readonly_keyword}{method.name}: {return_type};")
+            else:
+                # Method syntax: methodName(params): returnType;
+                params_str = ", ".join([
+                    f"{name}: {convert_type_to_typescript(ptype, class_info.name)}"
+                    for name, ptype, _ in method.params
+                ])
+                return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc, method.name)
+                lines.append(f"  {static_keyword}{method.name}({params_str}): {return_type};")
+            
             lines.append("")
 
         lines.append("}")
