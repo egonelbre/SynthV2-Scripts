@@ -46,9 +46,9 @@ declare class Automation extends ScriptableNestedObject {
 
   /**
    * A version of `Automation#getPoints` with unlimited range.
-   * @returns any[]
+   * @returns number[][]
    */
-  getAllPoints(): any[];
+  getAllPoints(): number[][];
 
   /**
    * Get a definition object with the following properties,
@@ -73,9 +73,9 @@ declare class Automation extends ScriptableNestedObject {
    * Get an array of control points whose positions are between `begin` and `end` (blicks). Each element in the array is an array of two elements: a `number` for the position (blicks) and a `number` for the parameter value. For example, `[[0, 0.1], [5000, 0], [10000, -0.1]]` .
    * @param begin
    * @param end
-   * @returns any[]
+   * @returns number[][]
    */
-  getPoints(begin: number, end: number): any[];
+  getPoints(begin: number, end: number): number[][];
 
   /**
    * Get the parameter type for this `Automation` . See the `typeName` column of the table in `Automation#getDefinition` .
@@ -116,9 +116,9 @@ declare class CoordinateSystem extends NestedObject {
 
   /**
    * Get the current visible time range. It returns an array with two `number` elements corresponding to the starting time and ending time. The time unit is blicks.
-   * @returns any[]
+   * @returns number[]
    */
-  getTimeViewRange(): any[];
+  getTimeViewRange(): number[];
 
   /**
    * Get the scaling factor in the vertical direction.
@@ -128,9 +128,9 @@ declare class CoordinateSystem extends NestedObject {
 
   /**
    * Get the current visible value range. It returns an array with two `number` elements corresponding to the lower value and upper value. For the piano roll, the unit is MIDI number (semitones); for arrangement view, its value bears no meaning.
-   * @returns any[]
+   * @returns number[]
    */
-  getValueViewRange(): any[];
+  getValueViewRange(): number[];
 
   /**
    * Move the visible area so the left end is at `time` .
@@ -202,9 +202,9 @@ declare class GroupSelection {
 
   /**
    * Get an array of selected `NoteGroupReference` following the order of selection.
-   * @returns any[]
+   * @returns NoteGroupReference[]
    */
-  getSelectedGroups(): any[];
+  getSelectedGroups(): NoteGroupReference[];
 
   /**
    * Check if there is at least one `NoteGroupReference` selected.
@@ -642,9 +642,9 @@ declare class PitchControlCurve extends ScriptableNestedObject {
 
   /**
    * Get all control points of this pitch control curve.
-   * @returns Array.<Array.<number>>
+   * @returns number[][]
    */
-  getPoints(): Array.<Array.<number>>;
+  getPoints(): number[][];
 
   /**
    * Get the anchor position of this pitch control curve relative to the time offset of the note group (in blicks).
@@ -669,7 +669,7 @@ declare class PitchControlCurve extends ScriptableNestedObject {
    * Set all control points of this pitch control curve.
    * @param points array of [time, value] pairs
    */
-  setPoints(points: Array.<Array.<number>>): void;
+  setPoints(points: number[][]): void;
 
   /**
    * Set the anchor position of this pitch control curve.
@@ -978,9 +978,9 @@ declare class SV {
   /**
    * Get the phonemes for all notes in a group (passed in as a group reference). The group must be part of the currently open project.
    * @param group
-   * @returns any[]
+   * @returns string[]
    */
-  getPhonemesForGroup(group: NoteGroupReference): any[];
+  getPhonemesForGroup(group: NoteGroupReference): string[];
 
   /**
    * Get the UI state object for controlling the playback.
@@ -1130,9 +1130,9 @@ declare class ScriptableNestedObject extends NestedObject {
   /**
    * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
    * @param key The key to retrieve the value for
-   * @returns any
+   * @returns undefined
    */
-  getScriptData(key: string): any;
+  getScriptData(key: string): undefined;
 
   /**
    * Get all keys currently stored in the object's script data storage.
@@ -1143,9 +1143,9 @@ declare class ScriptableNestedObject extends NestedObject {
   /**
    * Check whether a key exists in the object's script data storage.
    * @param key The key to check for
-   * @returns boolean
+   * @returns true
    */
-  hasScriptData(key: string): boolean;
+  hasScriptData(key: string): true;
 
   /**
    * Remove a key-value pair from the object's script data storage.
@@ -1391,15 +1391,15 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
 
   /**
    * Get an array of selected `Note` following the order of selection.
-   * @returns any[]
+   * @returns Note
    */
-  getSelectedNotes(): any[];
+  getSelectedNotes(): Note;
 
   /**
    * Get an array of selected pitch control objects.
-   * @returns any[]
+   * @returns PitchControlPoint
    */
-  getSelectedPitchControls(): any[];
+  getSelectedPitchControls(): PitchControlPoint;
 
   /**
    * Get an array of selected automation points for the specified parameter type.

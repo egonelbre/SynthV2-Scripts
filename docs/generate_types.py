@@ -23,6 +23,7 @@ class MethodInfo:
         self.name = ""
         self.params: List[Tuple[str, str, str]] = []  # (name, type, description)
         self.return_type = "void"
+        self.return_desc = ""  # Detailed return type description from HTML
         self.description = ""
         self.inherited_from: Optional[str] = None
         self.is_static = False
@@ -58,11 +59,14 @@ class APIDocParser(HTMLParser):
         self.param_cell_type = None  # 'name', 'type', or 'description'
         self.in_code = False
         self.in_inherited_from = False
+        self.in_returns_section = False
+        self.in_return_desc = False
 
         # Current parameter being parsed
         self.current_param_name = ""
         self.current_param_type = ""
         self.current_param_desc = ""
+        self.current_return_desc = ""
 
         # Buffer for collecting text
         self.text_buffer = []
@@ -145,6 +149,23 @@ class APIDocParser(HTMLParser):
             if match and self.current_method:
                 self.current_method.inherited_from = match.group(1)
 
+        # Detect Returns section: <h5>Returns:</h5>
+        elif tag == "h5":
+            self.text_buffer = []
+
+        # Detect return description: <div class="param-desc"> after Returns section
+        elif self.in_returns_section and tag == "div" and attrs_dict.get("class") == "param-desc":
+            self.in_return_desc = True
+            self.text_buffer = []
+
+        # Inside return desc, detect paragraph
+        elif self.in_return_desc and tag == "p":
+            self.text_buffer = []
+
+        # Inside return desc, detect code: <code>
+        elif self.in_return_desc and tag == "code":
+            self.in_code = True
+
     def handle_endtag(self, tag):
         # End of method header
         if tag == "h4" and self.in_method_header:
@@ -153,9 +174,33 @@ class APIDocParser(HTMLParser):
             self.in_signature = False
             self.in_type_signature = False
 
+        # End of h5 tag - check if it's "Returns:"
+        elif tag == "h5":
+            text = " ".join(self.text_buffer).strip()
+            if text == "Returns:":
+                self.in_returns_section = True
+                self.current_return_desc = ""
+            self.text_buffer = []
+
         # End of description
         elif tag == "div" and self.in_description:
             self.in_description = False
+
+        # End of return description div
+        elif tag == "div" and self.in_return_desc:
+            self.in_return_desc = False
+            self.in_returns_section = False
+            # Save the return description to the current method
+            if self.current_method and self.current_return_desc:
+                self.current_method.return_desc = self.current_return_desc
+
+        # End of return description paragraph - save description
+        elif self.in_return_desc and tag == "p":
+            if self.current_method and self.text_buffer:
+                desc = " ".join(self.text_buffer).strip()
+                desc = re.sub(r'\s+', ' ', desc)
+                self.current_return_desc = desc
+            self.text_buffer = []
 
         # End of description paragraph - save description
         elif self.in_description and tag == "p":
@@ -220,6 +265,18 @@ class APIDocParser(HTMLParser):
             if match:
                 self.current_method.return_type = match.group(1)
 
+        # Capture h5 text (to detect "Returns:")
+        elif self.text_buffer is not None and not self.in_description and not self.in_return_desc and not self.in_param_cell:
+            self.text_buffer.append(data)
+
+        # Capture return description text
+        elif self.in_return_desc:
+            # Add backticks around code
+            if self.in_code:
+                self.text_buffer.append(f"`{data}`")
+            else:
+                self.text_buffer.append(data)
+
         # Capture description text
         elif self.in_description:
             # Add backticks around code
@@ -273,13 +330,80 @@ def parse_html_file(filepath: Path) -> Optional[ClassInfo]:
         return None
 
 
-def convert_type_to_typescript(doc_type: str, class_name: str = "") -> str:
+def parse_return_description(return_desc: str) -> Optional[str]:
+    """
+    Parse a return type description and convert it to TypeScript type.
+    
+    Examples:
+    - "an `array` of `array` of `number`" -> "number[][]"
+    - "an `array` of `object`" -> "object[]"
+    - "a `string`" -> "string"
+    """
+    if not return_desc:
+        return None
+    
+    # Extract all types in backticks
+    types = re.findall(r'`([^`]+)`', return_desc)
+    if not types:
+        return None
+    
+    # Common type mappings
+    type_map = {
+        "string": "string",
+        "number": "number",
+        "boolean": "boolean",
+        "object": "any",
+        "array": None,  # Special handling
+        "function": "Function",
+        "Function": "Function",
+    }
+    
+    # Parse nested array structure
+    # Look for patterns like "array of array of number"
+    # Build from the innermost type outward
+    result_type = None
+    
+    # Reverse the list to process from innermost to outermost
+    for i in range(len(types) - 1, -1, -1):
+        type_name = types[i].strip()
+        
+        if type_name == "array":
+            # Wrap the current result in an array
+            if result_type is None:
+                result_type = "any[]"
+            else:
+                result_type = f"{result_type}[]"
+        else:
+            # This is the base type
+            mapped_type = type_map.get(type_name, type_name)
+            if mapped_type is None:
+                continue
+            # If it looks like a class name (starts with uppercase), keep it
+            if type_name and type_name[0].isupper():
+                result_type = type_name
+            else:
+                result_type = mapped_type
+    
+    return result_type
+
+
+def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc: str = "") -> str:
     """Convert documentation type to TypeScript type."""
+    # First, try to parse the return description if available
+    if return_desc:
+        parsed = parse_return_description(return_desc)
+        if parsed:
+            return parsed
+    
     if not doc_type or doc_type == "void":
         return "void"
 
     # Clean up the type string
     doc_type = doc_type.strip()
+
+    # If it's already a TypeScript array type (e.g., "number[]"), return as-is
+    if doc_type.endswith("[]"):
+        return doc_type
 
     # Common type mappings
     type_map = {
@@ -299,11 +423,26 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "") -> str:
     if doc_type in type_map:
         return type_map[doc_type]
 
-    # Handle array types like "Array.<Type>"
-    array_match = re.match(r'Array\.<(\w+)>', doc_type)
-    if array_match:
-        inner_type = convert_type_to_typescript(array_match.group(1))
-        return f"{inner_type}[]"
+    # Handle nested Array.<Type> notation (including HTML entities)
+    # Convert Array.<Array.<number>> to number[][]
+    if "Array.<" in doc_type or "Array.&lt;" in doc_type:
+        # Handle HTML entities
+        doc_type = doc_type.replace("&lt;", "<").replace("&gt;", ">")
+        
+        # Recursively convert nested Array.<Type> to Type[]
+        while "Array.<" in doc_type:
+            # Find innermost Array.<Type>
+            match = re.search(r'Array\.<([^<>]+)>', doc_type)
+            if match:
+                inner_type = match.group(1).strip()
+                # Recursively convert the inner type
+                converted_inner = convert_type_to_typescript(inner_type, class_name)
+                # Replace this Array.<Type> with Type[]
+                doc_type = doc_type[:match.start()] + converted_inner + "[]" + doc_type[match.end():]
+            else:
+                break
+        
+        return doc_type
 
     # If it looks like a class name (starts with uppercase), keep it
     if doc_type and doc_type[0].isupper():
@@ -365,7 +504,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
 
                 # Return documentation
                 if method.return_type != "void":
-                    ts_return = convert_type_to_typescript(method.return_type, class_info.name)
+                    ts_return = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc)
                     lines.append(f"   * @returns {ts_return}")
 
                 lines.append("   */")
@@ -376,7 +515,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
                 f"{name}: {convert_type_to_typescript(ptype, class_info.name)}"
                 for name, ptype, _ in method.params
             ])
-            return_type = convert_type_to_typescript(method.return_type, class_info.name)
+            return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc)
 
             lines.append(f"  {static_keyword}{method.name}({params_str}): {return_type};")
             lines.append("")
