@@ -4,6 +4,24 @@
  * https://resource.dreamtonics.com/scripting/index.html
  */
 
+/**
+ * Voice parameters object returned by NoteGroupReference.getVoice
+ */
+interface VoiceParameters {
+  paramLoudness: number;
+  paramTension: number;
+  paramBreathiness: number;
+  paramGender: number;
+  paramToneShift: number;
+  vocalModeParams: {
+    [vocalModeName: string]: {
+      pitch: number;
+      timbre: number;
+      pronunciation: number;
+    };
+  };
+}
+
 declare class ArrangementSelectionState extends SelectionStateBase {
 }
 
@@ -566,9 +584,9 @@ declare class NoteGroupReference extends ScriptableNestedObject {
 
   /**
    * Get an object holding the default voice properties for this group, similar to `Note#getAttributes` .
-   * @returns any
+   * @returns VoiceParameters
    */
-  getVoice(): any;
+  getVoice(): VoiceParameters;
 
   /**
    * Whether this `NoteGroupReference` refers to an external audio file. If so, it must not refer to a `NoteGroup` .

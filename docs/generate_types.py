@@ -406,8 +406,19 @@ def parse_return_description(return_desc: str) -> Optional[str]:
     return result_type
 
 
-def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc: str = "") -> str:
+def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc: str = "", method_name: str = "") -> str:
     """Convert documentation type to TypeScript type."""
+    # Method-specific type overrides for complex object types
+    method_type_overrides = {
+        ("NoteGroupReference", "getVoice"): "VoiceParameters",
+    }
+    
+    # Check for method-specific override
+    if class_name and method_name:
+        override_key = (class_name, method_name)
+        if override_key in method_type_overrides:
+            return method_type_overrides[override_key]
+    
     # First, try to parse the return description if available
     if return_desc:
         parsed = parse_return_description(return_desc)
@@ -494,6 +505,26 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
     lines.append(" */")
     lines.append("")
 
+    # Add interface definitions for complex return types
+    lines.append("/**")
+    lines.append(" * Voice parameters object returned by NoteGroupReference.getVoice")
+    lines.append(" */")
+    lines.append("interface VoiceParameters {")
+    lines.append("  paramLoudness: number;")
+    lines.append("  paramTension: number;")
+    lines.append("  paramBreathiness: number;")
+    lines.append("  paramGender: number;")
+    lines.append("  paramToneShift: number;")
+    lines.append("  vocalModeParams: {")
+    lines.append("    [vocalModeName: string]: {")
+    lines.append("      pitch: number;")
+    lines.append("      timbre: number;")
+    lines.append("      pronunciation: number;")
+    lines.append("    };")
+    lines.append("  };")
+    lines.append("}")
+    lines.append("")
+
     # Sort classes by name
     classes_sorted = sorted(classes, key=lambda c: c.name)
 
@@ -534,7 +565,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
 
                 # Return documentation
                 if method.return_type != "void":
-                    ts_return = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc)
+                    ts_return = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc, method.name)
                     lines.append(f"   * @returns {ts_return}")
 
                 lines.append("   */")
@@ -545,7 +576,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
                 f"{name}: {convert_type_to_typescript(ptype, class_info.name)}"
                 for name, ptype, _ in method.params
             ])
-            return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc)
+            return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc, method.name)
 
             lines.append(f"  {static_keyword}{method.name}({params_str}): {return_type};")
             lines.append("")
