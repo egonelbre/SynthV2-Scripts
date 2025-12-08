@@ -338,6 +338,7 @@ def parse_return_description(return_desc: str) -> Optional[str]:
     - "an `array` of `array` of `number`" -> "number[][]"
     - "an `array` of `object`" -> "object[]"
     - "a `string`" -> "string"
+    - "The stored value, or `undefined` if..." -> None (skip, let type signature handle it)
     """
     if not return_desc:
         return None
@@ -345,6 +346,13 @@ def parse_return_description(return_desc: str) -> Optional[str]:
     # Extract all types in backticks
     types = re.findall(r'`([^`]+)`', return_desc)
     if not types:
+        return None
+    
+    # Check for union type patterns like "value or `undefined`"
+    # In these cases, prefer the type signature instead
+    if "or" in return_desc.lower() or "," in return_desc:
+        # This might be a union type description, skip parsing
+        # Let the type signature from the HTML handle it
         return None
     
     # Common type mappings
@@ -400,6 +408,9 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
 
     # Clean up the type string
     doc_type = doc_type.strip()
+    
+    # Normalize union types: "Type|undefined" -> "Type | undefined"
+    doc_type = re.sub(r'\s*\|\s*', ' | ', doc_type)
 
     # If it's already a TypeScript array type (e.g., "number[]"), return as-is
     if doc_type.endswith("[]"):
@@ -421,11 +432,10 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
 
     # Check if it's in the map
     if doc_type in type_map:
-        return type_map[doc_type]
-
+        result = type_map[doc_type]
     # Handle nested Array.<Type> notation (including HTML entities)
     # Convert Array.<Array.<number>> to number[][]
-    if "Array.<" in doc_type or "Array.&lt;" in doc_type:
+    elif "Array.<" in doc_type or "Array.&lt;" in doc_type:
         # Handle HTML entities
         doc_type = doc_type.replace("&lt;", "<").replace("&gt;", ">")
         
@@ -442,14 +452,23 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
             else:
                 break
         
-        return doc_type
-
+        result = doc_type
     # If it looks like a class name (starts with uppercase), keep it
-    if doc_type and doc_type[0].isupper():
-        return doc_type
-
-    # Default to any for unknown types
-    return "any"
+    elif doc_type and doc_type[0].isupper():
+        result = doc_type
+    else:
+        # Default to any for unknown types
+        result = "any"
+    
+    # Check if the return description mentions that undefined can be returned
+    # Pattern: "... or `undefined` ..." or "returns `undefined` if..."
+    if return_desc and "`undefined`" in return_desc and result != "undefined":
+        # Add undefined to the union type if not already void or undefined
+        if result != "void":
+            # Remove trailing space if present and add proper spacing
+            result = result.rstrip() + " | undefined"
+    
+    return result
 
 
 def generate_typescript_definitions(classes: List[ClassInfo]) -> str:

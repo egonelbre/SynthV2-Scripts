@@ -263,9 +263,9 @@ declare class NestedObject {
 
   /**
    * Get the parent `NestedObject` . Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject |undefined
+   * @returns NestedObject | undefined
    */
-  getParent(): NestedObject |undefined;
+  getParent(): NestedObject | undefined;
 
   /**
    * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
@@ -786,9 +786,9 @@ declare class Project extends ScriptableNestedObject {
   /**
    * If `id` is a number, get the `id` -th `NoteGroup` in the project library.
    * @param id
-   * @returns NoteGroup |undefined
+   * @returns NoteGroup | undefined
    */
-  getNoteGroup(id: any): NoteGroup |undefined;
+  getNoteGroup(id: any): NoteGroup | undefined;
 
   /**
    * Get the number of `NoteGroup` in the project library.
@@ -1130,9 +1130,9 @@ declare class ScriptableNestedObject extends NestedObject {
   /**
    * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
    * @param key The key to retrieve the value for
-   * @returns undefined
+   * @returns any | undefined
    */
-  getScriptData(key: string): undefined;
+  getScriptData(key: string): any | undefined;
 
   /**
    * Get all keys currently stored in the object's script data storage.
@@ -1143,9 +1143,9 @@ declare class ScriptableNestedObject extends NestedObject {
   /**
    * Check whether a key exists in the object's script data storage.
    * @param key The key to check for
-   * @returns true
+   * @returns boolean
    */
-  hasScriptData(key: string): true;
+  hasScriptData(key: string): boolean;
 
   /**
    * Remove a key-value pair from the object's script data storage.
@@ -1397,9 +1397,9 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
 
   /**
    * Get an array of selected pitch control objects.
-   * @returns PitchControlPoint
+   * @returns any[]
    */
-  getSelectedPitchControls(): PitchControlPoint;
+  getSelectedPitchControls(): any[];
 
   /**
    * Get an array of selected automation points for the specified parameter type.
