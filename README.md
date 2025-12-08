@@ -1,1 +1,1 @@
-Random assortment of Synthesizer V2 scripts.
+Assortment of SynthV2 scripts
