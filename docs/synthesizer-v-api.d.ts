@@ -1529,7 +1529,7 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
    * Get an array of selected `Note` following the order of selection.
    * @returns Note
    */
-  getSelectedNotes(): Note;
+  getSelectedNotes(): Note[];
 
   /**
    * Get an array of selected pitch control objects.

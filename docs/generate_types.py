@@ -457,6 +457,7 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
         ("Note", "getAttributes"): "NoteAttributes",
 
         ("TrackInnerSelectionState", "getSelectedPoints"): "number[]",
+        ("TrackInnerSelectionState", "getSelectedNotes"): "Note[]",
     }
 
     # Check for method-specific override (only for return types, not parameters)

@@ -136,7 +136,7 @@ function processNotes(notes, group, options) {
 // * Common * //
 
 function hasSelectedNotes() {
-	return SV.getMainEditor().getSelection().getSelectedNotes().length > 0;
+	return SV.getMainEditor().getSelection().hasSelectedNotes();
 }
 
 function processSelection(process, options) {
