@@ -22,6 +22,49 @@ interface VoiceParameters {
   };
 }
 
+/**
+ * Computed attributes object returned by SV.getComputedAttributesForGroup
+ */
+interface ComputedAttributes {
+  accent: string;
+  rapTone: number | null;
+  rapIntonation: number | null;
+  phonemes: {
+    symbol: string;
+    language: string;
+    activity: number | null;
+    position: number | null;
+  }[];
+}
+
+/**
+ * Host information object returned by SV.getHostInfo
+ */
+interface HostInfo {
+  osType: string;
+  osName: string;
+  hostName: string;
+  hostVersion: string;
+  hostVersionNumber: number;
+  languageCode: string;
+}
+/**
+ * TempoMark returned by TimeAxis
+ */
+interface TempoMark {
+  position: number;
+  positionSeconds: number;
+  bpm: number;
+}
+/**
+ * MeasureMark returned by TimeAxis
+ */
+interface MeasureMark {
+  position: number;
+  positionBlick: number;
+  numerator: number;
+  denominator: number;
+}
 declare class ArrangementSelectionState extends SelectionStateBase {
 }
 
@@ -962,9 +1005,9 @@ declare class SV {
   /**
    * Get computed attributes for all notes in a group (passed in as a group reference). (supported since 2.1.1)
    * @param group
-   * @returns any[]
+   * @returns ComputedAttributes[]
    */
-  getComputedAttributesForGroup(group: NoteGroupReference): any[];
+  getComputedAttributesForGroup(group: NoteGroupReference): ComputedAttributes[];
 
   /**
    * Get computed pitch values for a group (passed in as a group reference) over a specified time range. (supported since 2.1.1)
@@ -972,9 +1015,9 @@ declare class SV {
    * @param blickStart The starting position in blicks
    * @param blickInterval The interval between samples in blicks
    * @param numFrames The number of samples to retrieve
-   * @returns any[]
+   * @returns (number|null)[]
    */
-  getComputedPitchForGroup(groupReference: NoteGroupReference, blickStart: number, blickInterval: number, numFrames: number): any[];
+  getComputedPitchForGroup(groupReference: NoteGroupReference, blickStart: number, blickInterval: number, numFrames: number): (number|null)[];
 
   /**
    * Get the text on the system clipboard.
@@ -984,9 +1027,9 @@ declare class SV {
 
   /**
    * Get an object with the following properties.
-   * @returns any
+   * @returns HostInfo
    */
-  getHostInfo(): any;
+  getHostInfo(): HostInfo;
 
   /**
    * Get the UI state object for the piano roll.
@@ -1238,15 +1281,15 @@ declare class TimeAxis extends ScriptableNestedObject {
 
   /**
    * Get all measure marks in this `TimeAxis` . See `TimeAxis#getMeasureMarkAt` .
-   * @returns any[]
+   * @returns MeasureMark[]
    */
-  getAllMeasureMarks(): any[];
+  getAllMeasureMarks(): MeasureMark[];
 
   /**
    * Get all tempo marks in this `TimeAxis` . See `TimeAxis#getTempoMarkAt` .
-   * @returns any[]
+   * @returns TempoMark[]
    */
-  getAllTempoMarks(): any[];
+  getAllTempoMarks(): TempoMark[];
 
   /**
    * Convert physical time `t` (second) to musical time (blicks).
@@ -1265,16 +1308,16 @@ declare class TimeAxis extends ScriptableNestedObject {
   /**
    * Get the measure mark at measure `measureNumber` .
    * @param measureNumber
-   * @returns any
+   * @returns MeasureMark
    */
-  getMeasureMarkAt(measureNumber: number): any;
+  getMeasureMarkAt(measureNumber: number): MeasureMark;
 
   /**
    * Get the measure mark that is effective at position `b` (blicks). For the returned object, see `TimeAxis#getMeasureMarkAt` .
    * @param b
-   * @returns any
+   * @returns MeasureMark
    */
-  getMeasureMarkAtBlick(b: number): any;
+  getMeasureMarkAtBlick(b: number): MeasureMark;
 
   /**
    * Convert musical time `b` (blicks) to physical time (seconds).
@@ -1423,9 +1466,9 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
   /**
    * Get an array of selected automation points for the specified parameter type.
    * @param parameterType The parameter type (e.g., "pitchDelta", "loudness", etc.)
-   * @returns any[]
+   * @returns number[]
    */
-  getSelectedPoints(parameterType: string): any[];
+  getSelectedPoints(parameterType: string): number[];
 
   /**
    * Check if there is at least one `Note` selected.

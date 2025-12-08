@@ -262,7 +262,7 @@ class APIDocParser(HTMLParser):
         elif self.in_type_signature and self.current_method:
             self.text_buffer.append(data)
             full_text = " ".join(self.text_buffer)
-            
+
             # Check if it's a property type ":Type" or method return "→ {Type}"
             # Property pattern: ":type"
             property_match = re.search(r':\s*(\w+)', full_text)
@@ -343,7 +343,7 @@ def parse_html_file(filepath: Path) -> Optional[ClassInfo]:
 def parse_return_description(return_desc: str) -> Optional[str]:
     """
     Parse a return type description and convert it to TypeScript type.
-    
+
     Examples:
     - "an `array` of `array` of `number`" -> "number[][]"
     - "an `array` of `object`" -> "object[]"
@@ -353,12 +353,12 @@ def parse_return_description(return_desc: str) -> Optional[str]:
     """
     if not return_desc:
         return None
-    
+
     # Extract all types in backticks
     types = re.findall(r'`([^`]+)`', return_desc)
     if not types:
         return None
-    
+
     # Check for pattern: "array of X or Y" (union types inside array)
     # Pattern: "array of `Type1` or `Type2`"
     if re.search(r'array\s+of.*\s+or\s+', return_desc, re.IGNORECASE):
@@ -368,14 +368,14 @@ def parse_return_description(return_desc: str) -> Optional[str]:
             # Build union type and wrap in array
             union = " | ".join(element_types)
             return f"({union})[]"
-    
+
     # Check for union type patterns like "value or `undefined`" (not inside array)
     # In these cases, prefer the type signature instead
     if "or" in return_desc.lower() and "array" not in return_desc.lower():
         # This might be a union type description, skip parsing
         # Let the type signature from the HTML handle it
         return None
-    
+
     # Common type mappings
     type_map = {
         "string": "string",
@@ -386,16 +386,16 @@ def parse_return_description(return_desc: str) -> Optional[str]:
         "function": "Function",
         "Function": "Function",
     }
-    
+
     # Parse nested array structure
     # Look for patterns like "array of array of number"
     # Build from the innermost type outward
     result_type = None
-    
+
     # Reverse the list to process from innermost to outermost
     for i in range(len(types) - 1, -1, -1):
         type_name = types[i].strip()
-        
+
         if type_name == "array":
             # Wrap the current result in an array
             if result_type is None:
@@ -412,7 +412,7 @@ def parse_return_description(return_desc: str) -> Optional[str]:
                 result_type = type_name
             else:
                 result_type = mapped_type
-    
+
     return result_type
 
 
@@ -421,26 +421,39 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
     # Method-specific type overrides for complex object types
     method_type_overrides = {
         ("NoteGroupReference", "getVoice"): "VoiceParameters",
+
+        ("SV", "getComputedAttributesForGroup"): "ComputedAttributes[]",
+        ("SV", "getComputedPitchForGroup"): "(number|null)[]",
+        ("SV", "getHostInfo"): "HostInfo",
+
+        ("TimeAxis", "getAllMeasureMarks"): "MeasureMark[]",
+        ("TimeAxis", "getMeasureMarkAt"): "MeasureMark",
+        ("TimeAxis", "getMeasureMarkAtBlick"): "MeasureMark",
+
+        ("TimeAxis", "getAllTempoMarks"): "TempoMark[]",
+        ("TimeAxis", "getTempoMarkAt"): "TempoMark",
+
+        ("TrackInnerSelectionState", "getSelectedPoints"): "number[]",
     }
-    
+
     # Check for method-specific override
     if class_name and method_name:
         override_key = (class_name, method_name)
         if override_key in method_type_overrides:
             return method_type_overrides[override_key]
-    
+
     # First, try to parse the return description if available
     if return_desc:
         parsed = parse_return_description(return_desc)
         if parsed:
             return parsed
-    
+
     if not doc_type or doc_type == "void":
         return "void"
 
     # Clean up the type string
     doc_type = doc_type.strip()
-    
+
     # Normalize union types: "Type|undefined" -> "Type | undefined"
     doc_type = re.sub(r'\s*\|\s*', ' | ', doc_type)
 
@@ -470,7 +483,7 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
     elif "Array.<" in doc_type or "Array.&lt;" in doc_type:
         # Handle HTML entities
         doc_type = doc_type.replace("&lt;", "<").replace("&gt;", ">")
-        
+
         # Recursively convert nested Array.<Type> to Type[]
         while "Array.<" in doc_type:
             # Find innermost Array.<Type>
@@ -483,7 +496,7 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
                 doc_type = doc_type[:match.start()] + converted_inner + "[]" + doc_type[match.end():]
             else:
                 break
-        
+
         result = doc_type
     # If it looks like a class name (starts with uppercase), keep it
     elif doc_type and doc_type[0].isupper():
@@ -491,7 +504,7 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
     else:
         # Default to any for unknown types
         result = "any"
-    
+
     # Check if the return description mentions that undefined can be returned
     # Pattern: "... or `undefined` ..." or "returns `undefined` if..."
     if return_desc and "`undefined`" in return_desc and result != "undefined":
@@ -499,7 +512,7 @@ def convert_type_to_typescript(doc_type: str, class_name: str = "", return_desc:
         if result != "void":
             # Remove trailing space if present and add proper spacing
             result = result.rstrip() + " | undefined"
-    
+
     return result
 
 
@@ -535,6 +548,52 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
     lines.append("}")
     lines.append("")
 
+    lines.append("/**")
+    lines.append(" * Computed attributes object returned by SV.getComputedAttributesForGroup")
+    lines.append(" */")
+    lines.append("interface ComputedAttributes {")
+    lines.append("  accent: string;")
+    lines.append("  rapTone: number | null;")
+    lines.append("  rapIntonation: number | null;")
+    lines.append("  phonemes: {")
+    lines.append("    symbol: string;")
+    lines.append("    language: string;")
+    lines.append("    activity: number | null;")
+    lines.append("    position: number | null;")
+    lines.append("  }[];")
+    lines.append("}")
+    lines.append("")
+
+    lines.append("/**")
+    lines.append(" * Host information object returned by SV.getHostInfo")
+    lines.append(" */")
+    lines.append("interface HostInfo {")
+    lines.append("  osType: string;")
+    lines.append("  osName: string;")
+    lines.append("  hostName: string;")
+    lines.append("  hostVersion: string;")
+    lines.append("  hostVersionNumber: number;")
+    lines.append("  languageCode: string;")
+    lines.append("}")
+
+    lines.append("/**")
+    lines.append(" * TempoMark returned by TimeAxis")
+    lines.append(" */")
+    lines.append("interface TempoMark {")
+    lines.append("  position: number;")
+    lines.append("  positionSeconds: number;")
+    lines.append("  bpm: number;")
+    lines.append("}")
+
+    lines.append("/**")
+    lines.append(" * MeasureMark returned by TimeAxis")
+    lines.append(" */")
+    lines.append("interface MeasureMark {")
+    lines.append("  position: number;")
+    lines.append("  positionBlick: number;")
+    lines.append("  numerator: number;")
+    lines.append("  denominator: number;")
+    lines.append("}")
     # Sort classes by name
     classes_sorted = sorted(classes, key=lambda c: c.name)
 
@@ -582,7 +641,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
 
             # Generate signature based on whether it's a property or method
             static_keyword = "static " if method.is_static else ""
-            
+
             if method.is_property:
                 # Property syntax: static readonly PROPERTY: type;
                 readonly_keyword = "readonly " if static_keyword else ""
@@ -596,7 +655,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
                 ])
                 return_type = convert_type_to_typescript(method.return_type, class_info.name, method.return_desc, method.name)
                 lines.append(f"  {static_keyword}{method.name}({params_str}): {return_type};")
-            
+
             lines.append("")
 
         lines.append("}")
