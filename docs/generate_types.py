@@ -337,6 +337,7 @@ def parse_return_description(return_desc: str) -> Optional[str]:
     Examples:
     - "an `array` of `array` of `number`" -> "number[][]"
     - "an `array` of `object`" -> "object[]"
+    - "An array of `PitchControlPoint` or `PitchControlCurve`" -> "(PitchControlPoint | PitchControlCurve)[]"
     - "a `string`" -> "string"
     - "The stored value, or `undefined` if..." -> None (skip, let type signature handle it)
     """
@@ -348,9 +349,19 @@ def parse_return_description(return_desc: str) -> Optional[str]:
     if not types:
         return None
     
-    # Check for union type patterns like "value or `undefined`"
+    # Check for pattern: "array of X or Y" (union types inside array)
+    # Pattern: "array of `Type1` or `Type2`"
+    if re.search(r'array\s+of.*\s+or\s+', return_desc, re.IGNORECASE):
+        # Extract non-array types (all types except "array")
+        element_types = [t for t in types if t != "array"]
+        if len(element_types) > 1:
+            # Build union type and wrap in array
+            union = " | ".join(element_types)
+            return f"({union})[]"
+    
+    # Check for union type patterns like "value or `undefined`" (not inside array)
     # In these cases, prefer the type signature instead
-    if "or" in return_desc.lower() or "," in return_desc:
+    if "or" in return_desc.lower() and "array" not in return_desc.lower():
         # This might be a union type description, skip parsing
         # Let the type signature from the HTML handle it
         return None

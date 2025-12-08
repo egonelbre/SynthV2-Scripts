@@ -1143,9 +1143,9 @@ declare class ScriptableNestedObject extends NestedObject {
   /**
    * Check whether a key exists in the object's script data storage.
    * @param key The key to check for
-   * @returns boolean
+   * @returns true
    */
-  hasScriptData(key: string): boolean;
+  hasScriptData(key: string): true;
 
   /**
    * Remove a key-value pair from the object's script data storage.
@@ -1397,9 +1397,9 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
 
   /**
    * Get an array of selected pitch control objects.
-   * @returns any[]
+   * @returns (PitchControlPoint | PitchControlCurve)[]
    */
-  getSelectedPitchControls(): any[];
+  getSelectedPitchControls(): (PitchControlPoint | PitchControlCurve)[];
 
   /**
    * Get an array of selected automation points for the specified parameter type.
