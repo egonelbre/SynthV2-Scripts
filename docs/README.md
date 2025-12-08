@@ -40,10 +40,12 @@ python3 generate_types.py
 - ~2,200 lines of TypeScript definitions
 
 **Features:**
+- Uses Python's built-in `HTMLParser` for robust HTML parsing
 - Extracts method signatures with parameter types
-- Preserves documentation comments
-- Handles return types and inheritance
+- Preserves documentation comments with proper formatting
+- Handles return types and inheritance relationships
 - Converts documentation types to TypeScript types
+- Properly handles multi-line HTML and complex markup
 
 ## Generated Files
 
@@ -55,6 +57,7 @@ TypeScript type definitions for the Synthesizer V Studio Scripting API. This fil
 - IntelliSense/autocomplete support in VS Code and other editors
 - Method signatures with parameter and return types
 - JSDoc comments with descriptions
+- Proper inheritance hierarchy (e.g., `Note extends ScriptableNestedObject`)
 
 **Example usage in a TypeScript project:**
 ```typescript
@@ -107,6 +110,27 @@ https://resource.dreamtonics.com/scripting/index.html
 
 - Python 3.6+
 - No external dependencies (uses only standard library)
+
+## Implementation Details
+
+### HTML Parsing
+
+The `generate_types.py` script uses Python's built-in `html.parser.HTMLParser` class for robust HTML parsing. This approach:
+
+- Handles malformed or multi-line HTML gracefully
+- Provides state-based parsing for complex nested structures
+- Avoids brittle regular expression matching
+- Properly extracts text content while ignoring HTML markup
+
+### Type Conversion
+
+Documentation types are converted to TypeScript equivalents:
+- `string` → `string`
+- `number` → `number`
+- `boolean` → `boolean`
+- `object` → `any`
+- `Array.<Type>` → `Type[]`
+- Class names (e.g., `Note`, `Project`) → preserved as-is
 
 ## License
 

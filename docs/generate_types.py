@@ -13,6 +13,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from html.parser import HTMLParser
 from typing import Dict, List, Optional, Tuple
 
 
@@ -36,13 +37,207 @@ class ClassInfo:
         self.extends: Optional[str] = None
 
 
-def clean_html(text: str) -> str:
-    """Remove HTML tags and clean up text."""
-    # Remove HTML tags but keep the content
-    text = re.sub(r'<[^>]+>', '', text)
-    # Clean up whitespace
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
+class APIDocParser(HTMLParser):
+    """HTML parser for extracting method information from API documentation."""
+
+    def __init__(self):
+        super().__init__()
+        self.methods: Dict[str, MethodInfo] = {}
+        self.current_method: Optional[MethodInfo] = None
+        self.current_method_id: Optional[str] = None
+
+        # State tracking
+        self.in_method_header = False
+        self.in_method_name = False
+        self.in_signature = False
+        self.in_type_signature = False
+        self.in_description = False
+        self.in_param_table = False
+        self.in_param_row = False
+        self.in_param_cell = False
+        self.param_cell_type = None  # 'name', 'type', or 'description'
+        self.in_code = False
+        self.in_inherited_from = False
+
+        # Current parameter being parsed
+        self.current_param_name = ""
+        self.current_param_type = ""
+        self.current_param_desc = ""
+
+        # Buffer for collecting text
+        self.text_buffer = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs_dict = dict(attrs)
+
+        # Detect method header: <h4 class="name" id="methodName">
+        if tag == "h4" and attrs_dict.get("class") == "name":
+            method_id = attrs_dict.get("id")
+            if method_id:
+                # Save previous method if exists
+                if self.current_method:
+                    self.methods[self.current_method.name] = self.current_method
+
+                # Start new method
+                self.current_method = MethodInfo()
+                self.current_method_id = method_id
+                self.in_method_header = True
+                self.in_method_name = True
+                self.text_buffer = []
+
+        # Inside method header, detect signature: <span class="signature">
+        elif self.in_method_header and tag == "span" and attrs_dict.get("class") == "signature":
+            self.in_signature = True
+            self.in_method_name = False
+
+        # Inside method header, detect return type: <span class="type-signature">
+        elif self.in_method_header and tag == "span" and attrs_dict.get("class") == "type-signature":
+            self.in_type_signature = True
+            self.text_buffer = []
+
+        # Detect description: <div class="description usertext">
+        elif tag == "div" and "description" in attrs_dict.get("class", "") and "usertext" in attrs_dict.get("class", ""):
+            self.in_description = True
+            self.text_buffer = []
+
+        # Inside description, detect paragraph
+        elif self.in_description and tag == "p":
+            self.text_buffer = []
+
+        # Inside description, detect code: <code>
+        elif self.in_description and tag == "code":
+            self.in_code = True
+
+        # Detect parameter table: <table class="params">
+        elif tag == "table" and attrs_dict.get("class") == "params":
+            self.in_param_table = True
+
+        # Inside param table, detect row
+        elif self.in_param_table and tag == "tr":
+            self.in_param_row = True
+            self.current_param_name = ""
+            self.current_param_type = ""
+            self.current_param_desc = ""
+            self.param_cell_type = None
+
+        # Inside param row, detect cells
+        elif self.in_param_row and tag == "td":
+            self.in_param_cell = True
+            self.text_buffer = []
+            # Determine cell type from class
+            cell_class = attrs_dict.get("class", "")
+            if "name" in cell_class:
+                self.param_cell_type = "name"
+            elif "type" in cell_class:
+                self.param_cell_type = "type"
+            elif "description" in cell_class:
+                self.param_cell_type = "description"
+
+        # Detect inherited from: <dt class="inherited-from">
+        elif tag == "dt" and attrs_dict.get("class") == "inherited-from":
+            self.in_inherited_from = True
+
+        # Inside inherited from, detect link: <a href="ClassName.html#methodName">
+        elif self.in_inherited_from and tag == "a":
+            href = attrs_dict.get("href", "")
+            # Extract class name from href like "ClassName.html#methodName"
+            match = re.match(r'([^.]+)\.html#', href)
+            if match and self.current_method:
+                self.current_method.inherited_from = match.group(1)
+
+    def handle_endtag(self, tag):
+        # End of method header
+        if tag == "h4" and self.in_method_header:
+            self.in_method_header = False
+            self.in_method_name = False
+            self.in_signature = False
+            self.in_type_signature = False
+
+        # End of description
+        elif tag == "div" and self.in_description:
+            self.in_description = False
+
+        # End of description paragraph - save description
+        elif self.in_description and tag == "p":
+            if self.current_method and self.text_buffer:
+                # Only save the first paragraph as description
+                if not self.current_method.description:
+                    desc = " ".join(self.text_buffer).strip()
+                    desc = re.sub(r'\s+', ' ', desc)
+                    self.current_method.description = desc
+            self.text_buffer = []
+
+        # End of code tag
+        elif tag == "code":
+            self.in_code = False
+
+        # End of parameter table
+        elif tag == "table" and self.in_param_table:
+            self.in_param_table = False
+
+        # End of parameter row - save parameter
+        elif tag == "tr" and self.in_param_row:
+            self.in_param_row = False
+            if self.current_method and self.current_param_name:
+                self.current_method.params.append((
+                    self.current_param_name,
+                    self.current_param_type,
+                    self.current_param_desc
+                ))
+
+        # End of parameter cell
+        elif tag == "td" and self.in_param_cell:
+            self.in_param_cell = False
+            text = " ".join(self.text_buffer).strip()
+            if self.param_cell_type == "name":
+                self.current_param_name = text
+            elif self.param_cell_type == "type":
+                self.current_param_type = text
+            elif self.param_cell_type == "description":
+                self.current_param_desc = text
+            self.text_buffer = []
+
+        # End of inherited from
+        elif tag == "dd" and self.in_inherited_from:
+            self.in_inherited_from = False
+
+    def handle_data(self, data):
+        data = data.strip()
+        if not data:
+            return
+
+        # Capture method name
+        if self.in_method_name and self.current_method:
+            if not self.current_method.name:
+                self.current_method.name = data
+
+        # Capture return type from type signature
+        elif self.in_type_signature and self.current_method:
+            self.text_buffer.append(data)
+            # Look for return type after arrow: "→ {Type}"
+            full_text = " ".join(self.text_buffer)
+            match = re.search(r'→\s*\{([^}]+)\}', full_text)
+            if match:
+                self.current_method.return_type = match.group(1)
+
+        # Capture description text
+        elif self.in_description:
+            # Add backticks around code
+            if self.in_code:
+                self.text_buffer.append(f"`{data}`")
+            else:
+                self.text_buffer.append(data)
+
+        # Capture parameter cell data
+        elif self.in_param_cell:
+            self.text_buffer.append(data)
+
+    def get_methods(self) -> Dict[str, MethodInfo]:
+        """Get all parsed methods. Call this after parsing is complete."""
+        # Add the last method if exists
+        if self.current_method and self.current_method.name:
+            self.methods[self.current_method.name] = self.current_method
+        return self.methods
 
 
 def parse_html_file(filepath: Path) -> Optional[ClassInfo]:
@@ -55,75 +250,12 @@ def parse_html_file(filepath: Path) -> Optional[ClassInfo]:
         class_name = filepath.stem
         class_info = ClassInfo(class_name)
 
-        # Find all method sections by looking for <h4 class="name" id="...">
-        # Match the entire method section until the next <h4>, <hr>, or end
-        method_sections = re.findall(
-            r'<h4[^>]*class="name"[^>]*id="([^"]+)"[^>]*>(.*?)(?=<h4[^>]*class="name"|<hr|$)',
-            content,
-            re.DOTALL
-        )
+        # Parse the HTML
+        parser = APIDocParser()
+        parser.feed(content)
 
-        for method_id, section_content in method_sections:
-            # Extract method name from the beginning of section_content
-            name_match = re.match(r'^([^<]+)<', section_content)
-            if not name_match:
-                continue
-
-            method_name = name_match.group(1).strip()
-
-            # Skip if we already have this method
-            if method_name in class_info.methods:
-                continue
-
-            method = MethodInfo()
-            method.name = method_name
-
-            # Extract signature (parameters)
-            sig_match = re.search(r'<span class="signature">\(([^)]*)\)</span>', section_content)
-            params_str = sig_match.group(1).strip() if sig_match else ""
-
-            # Extract return type from type-signature span
-            return_match = re.search(r'<span class="type-signature">→\s*\{([^}]+)\}</span>', section_content, re.DOTALL)
-            if return_match:
-                return_type_html = return_match.group(1)
-                method.return_type = clean_html(return_type_html)
-            else:
-                method.return_type = "void"
-
-            # Extract description (first <p> in description usertext div)
-            desc_match = re.search(r'<div[^>]*class="description\s+usertext"[^>]*>\s*<p>(.*?)</p>', section_content, re.DOTALL)
-            if desc_match:
-                desc = desc_match.group(1)
-                desc = re.sub(r'<code>([^<]+)</code>', r'`\1`', desc)  # Convert code tags to backticks
-                desc = clean_html(desc)
-                method.description = desc
-
-            # Extract parameters from table
-            param_table_match = re.search(r'<h5>Parameters:</h5>.*?<table[^>]*class="params"[^>]*>(.*?)</table>', section_content, re.DOTALL)
-            if param_table_match:
-                param_table = param_table_match.group(1)
-
-                # Extract parameter rows
-                param_rows = re.findall(
-                    r'<tr>\s*<td[^>]*class="name"[^>]*><code>([^<]+)</code></td>\s*<td[^>]*class="type"[^>]*><span[^>]*class="param-type"[^>]*>([^<]+)</span></td>\s*<td[^>]*class="description[^"]*"[^>]*>([^<]*)</td>',
-                    param_table,
-                    re.DOTALL
-                )
-
-                for param_name, param_type, param_desc in param_rows:
-                    method.params.append((
-                        param_name.strip(),
-                        param_type.strip(),
-                        param_desc.strip()
-                    ))
-
-            # Check if method is inherited
-            inherited_match = re.search(r'<dt[^>]*class="inherited-from"[^>]*>.*?<a[^>]*href="([^"#]+)\.html#', section_content, re.DOTALL)
-            if inherited_match:
-                method.inherited_from = inherited_match.group(1)
-
-            # Add method to class
-            class_info.methods[method_name] = method
+        # Get the parsed methods
+        class_info.methods = parser.get_methods()
 
         # Check for class inheritance (extends)
         # Look for any inherited method to determine parent class
@@ -258,7 +390,7 @@ def generate_typescript_definitions(classes: List[ClassInfo]) -> str:
 def main():
     """Main function to generate TypeScript definitions."""
     # Input and output paths
-    docs_dir = Path("reamtonics-api")
+    docs_dir = Path("dreamtonics-api")
     output_file = Path("synthesizer-v-api.d.ts")
 
     if not docs_dir.exists():

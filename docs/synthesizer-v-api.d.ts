@@ -4,89 +4,10 @@
  * https://resource.dreamtonics.com/scripting/index.html
  */
 
-declare class ArrangementSelectionState {
-  /**
-   * Unselects all object types supported by this selection state. Return true if the selection has changed.
-   * @returns boolean
-   */
-  clearAll(): boolean;
-
-  /**
-   * Unselect all `NoteGroupReference`. Return true if the selection has changed.
-   * @returns boolean
-   */
-  clearGroups(): boolean;
-
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Get an array of selected `NoteGroupReference` following the order of selection.
-   */
-  getSelectedGroups(): void;
-
-  /**
-   * Check if there's anything selected.
-   */
-  hasSelectedContent(): void;
-
-  /**
-   * Check if there is at least one `NoteGroupReference` selected.
-   */
-  hasSelectedGroups(): void;
-
-  /**
-   * Check if there's any unfinished edit on the selected objects.
-   */
-  hasUnfinishedEdits(): void;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Attach a script function to be called when the selection is cleared. The callback function will receive one argument: the type of the cleared objects.
-   * @param callback
-   */
-  registerClearCallback(callback: Function): void;
-
-  /**
-   * Attach a script function to be called when objects are selected or deselected by the user. The callback function will receive two arguments: the type of the selected objects and whether this is a selection or deselection operation.
-   * @param callback
-   */
-  registerSelectionCallback(callback: Function): void;
-
-  /**
-   * Add a `NoteGroupReference` to the selection.
-   */
-  selectGroup(): void;
-
-  /**
-   * Unselect a `NoteGroupReference`. Return true if the selection has changed.
-   * @returns boolean
-   */
-  unselectGroup(): boolean;
-
+declare class ArrangementSelectionState extends SelectionStateBase {
 }
 
-declare class ArrangementView {
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
+declare class ArrangementView extends NestedObject {
   /**
    * Get the coordinate system for the track arrangement area.
    * @returns CoordinateSystem
@@ -94,38 +15,21 @@ declare class ArrangementView {
   getNavigation(): CoordinateSystem;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
    * Get the selection state object for arrangement view.
    * @returns ArrangementSelectionState
    */
   getSelection(): ArrangementSelectionState;
 
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
 }
 
-declare class Automation {
+declare class Automation extends ScriptableNestedObject {
   /**
-   * Add a control point with position `b` (blicks) and parameter value `v`. If there is already a point on `b`, the parameter value will get updated to `v`.
+   * Add a control point with position `b` (blicks) and parameter value `v` . If there is already a point on `b` , the parameter value will get updated to `v` .
    * @param b
    * @param v
    * @returns boolean
    */
   add(b: number, v: number): boolean;
-
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
 
   /**
    * A deep copy of the current object.
@@ -134,7 +38,7 @@ declare class Automation {
   clone(): Automation;
 
   /**
-   * Get the interpolated parameter value at position `b` (blicks). If a point exists at `b`, the interpolation is guaranteed to return the value for the point, regardless of the interpolation method.
+   * Get the interpolated parameter value at position `b` (blicks). If a point exists at `b` , the interpolation is guaranteed to return the value for the point, regardless of the interpolation method.
    * @param b
    * @returns number
    */
@@ -153,12 +57,6 @@ declare class Automation {
   getDefinition(): any;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
    * Returns how values between control points are interpolated:
    * @returns string
    */
@@ -172,13 +70,7 @@ declare class Automation {
   getLinear(b: number): number;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Get an array of control points whose positions are between `begin` and `end` (blicks). Each element in the array is an array of two elements: a `number` for the position (blicks) and a `number` for the parameter value. For example, `[[0, 0.1], [5000, 0], [10000, -0.1]]`.
+   * Get an array of control points whose positions are between `begin` and `end` (blicks). Each element in the array is an array of two elements: a `number` for the position (blicks) and a `number` for the parameter value. For example, `[[0, 0.1], [5000, 0], [10000, -0.1]]` .
    * @param begin
    * @param end
    * @returns any[]
@@ -186,78 +78,36 @@ declare class Automation {
   getPoints(begin: number, end: number): any[];
 
   /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Get the parameter type for this `Automation`. See the `typeName` column of the table in `Automation#getDefinition`.
+   * Get the parameter type for this `Automation` . See the `typeName` column of the table in `Automation#getDefinition` .
    * @returns string
    */
   getType(): string;
 
   /**
-   * Check whether a key exists in the object's script data storage.
+   * Remove all control points between position `begin` (blicks) and `end` (blicks).
+   * @param begin
+   * @param end
    * @returns boolean
    */
-  hasScriptData(): boolean;
+  remove(begin: number, end: number): boolean;
 
   /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove the control point at position `b` (blicks) if there is one.
-   * @param b
-   * @returns boolean
-   */
-  remove(b: number): boolean;
-
-  /**
-   * Remove all control points in the `Automation`.
+   * Remove all control points in the `Automation` .
    */
   removeAll(): void;
-
-  /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
 
   /**
    * Simplify the parameter curve from position `begin` (blicks) to position `end` (blicks) by removing control points that do not significantly contribute to the curve's shape. If `threshold` is not provided, it will be set to 0.002. Higher values of `threshold` will result in more simplification.
    * @param begin
    * @param end
+   * @param threshold (optional)
+   * @returns boolean
    */
-  simplify(begin: number, end: number): void;
+  simplify(begin: number, end: number, threshold: number): boolean;
 
 }
 
-declare class CoordinateSystem {
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
+declare class CoordinateSystem extends NestedObject {
   /**
    * Get the scaling factor in the horizontal direction.
    * @returns number
@@ -272,40 +122,36 @@ declare class CoordinateSystem {
 
   /**
    * Get the scaling factor in the vertical direction.
+   * @returns number
    */
-  getValuePxPerUnit(): void;
+  getValuePxPerUnit(): number;
 
   /**
    * Get the current visible value range. It returns an array with two `number` elements corresponding to the lower value and upper value. For the piano roll, the unit is MIDI number (semitones); for arrangement view, its value bears no meaning.
+   * @returns any[]
    */
-  getValueViewRange(): void;
+  getValueViewRange(): any[];
 
   /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Move the visible area so the left end is at `time`.
+   * Move the visible area so the left end is at `time` .
    * @param time
    */
   setTimeLeft(time: number): void;
 
   /**
-   * Move the visible area so the right end is at `time`.
+   * Move the visible area so the right end is at `time` .
    * @param time
    */
   setTimeRight(time: number): void;
 
   /**
-   * Set the horizontal scaling factor to `scale`.
+   * Set the horizontal scaling factor to `scale` .
    * @param scale
    */
   setTimeScale(scale: number): void;
 
   /**
-   * Move the visible area so the vertical center is at `v`.
+   * Move the visible area so the vertical center is at `v` .
    * @param v
    */
   setValueCenter(v: number): void;
@@ -349,37 +195,41 @@ declare class CoordinateSystem {
 
 declare class GroupSelection {
   /**
-   * Unselect all `NoteGroupReference`. Return true if the selection has changed.
+   * Unselect all `NoteGroupReference` . Return true if the selection has changed.
    * @returns boolean
    */
   clearGroups(): boolean;
 
   /**
    * Get an array of selected `NoteGroupReference` following the order of selection.
+   * @returns any[]
    */
-  getSelectedGroups(): void;
+  getSelectedGroups(): any[];
 
   /**
    * Check if there is at least one `NoteGroupReference` selected.
+   * @returns boolean
    */
-  hasSelectedGroups(): void;
+  hasSelectedGroups(): boolean;
 
   /**
    * Add a `NoteGroupReference` to the selection.
+   * @param reference
    */
-  selectGroup(): void;
+  selectGroup(reference: NoteGroupReference): void;
 
   /**
-   * Unselect a `NoteGroupReference`. Return true if the selection has changed.
+   * Unselect a `NoteGroupReference` . Return true if the selection has changed.
+   * @param reference
    * @returns boolean
    */
-  unselectGroup(): boolean;
+  unselectGroup(reference: NoteGroupReference): boolean;
 
 }
 
-declare class MainEditorView {
+declare class MainEditorView extends NestedObject {
   /**
-   * Get the current `NoteGroupReference` that the user is working inside. If the user has not entered a `NoteGroupReference`, return the main group of the current track.
+   * Get the current `NoteGroupReference` that the user is working inside. If the user has not entered a `NoteGroupReference` , return the main group of the current track.
    * @returns NoteGroupReference
    */
   getCurrentGroup(): NoteGroupReference;
@@ -391,34 +241,16 @@ declare class MainEditorView {
   getCurrentTrack(): Track;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
    * Get the `CoordinateSystem` of the piano roll.
    * @returns CoordinateSystem
    */
   getNavigation(): CoordinateSystem;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
    * Get the selection state object for the piano roll.
    * @returns TrackInnerSelectionState
    */
   getSelection(): TrackInnerSelectionState;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
 
 }
 
@@ -430,10 +262,10 @@ declare class NestedObject {
   getIndexInParent(): number;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
+   * Get the parent `NestedObject` . Return `undefined` if the current object is not attached to a parent.
+   * @returns NestedObject |undefined
    */
-  getParent(): NestedObject|undefined;
+  getParent(): NestedObject |undefined;
 
   /**
    * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
@@ -443,12 +275,7 @@ declare class NestedObject {
 
 }
 
-declare class Note {
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
-
+declare class Note extends ScriptableNestedObject {
   /**
    * A deep copy of the current object.
    * @returns Note
@@ -480,15 +307,10 @@ declare class Note {
   getEnd(): number;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
    * Get the note-specific language. This returns empty when the note is using the group/track's default language. (supported since 1.9.0b2)
+   * @returns string
    */
-  getLanguageOverride(): void;
+  getLanguageOverride(): string;
 
   /**
    * Get the lyrics for this note.
@@ -507,12 +329,6 @@ declare class Note {
    * @returns number
    */
   getOnset(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
 
   /**
    * Returns the user-specified phonemes, delimited by spaces. For example, "hh ah ll ow".
@@ -545,45 +361,19 @@ declare class Note {
   getRetakes(): RetakeList;
 
   /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
    * Set note properties based on an attribute object. The attribute object does not have to be complete; only the given properties will be updated. For example,
+   * @param object For the definition, see Note#getAttributes .
    */
-  setAttributes(): void;
+  setAttributes(object: any): void;
 
   /**
    * Set the pitch adjustment in cents. 100 cents equals one semitone. This adjustment is applied on top of the base pitch of the note. (supported since 2.1.1)
+   * @param detune The pitch adjustment in cents
    */
-  setDetune(): void;
+  setDetune(detune: number): void;
 
   /**
-   * Resize the note to duration `t`. The unit is blicks. This changes the end as well, but not the onset.
+   * Resize the note to duration `t` . The unit is blicks. This changes the end as well, but not the onset.
    * @param t
    */
   setDuration(t: number): void;
@@ -607,18 +397,19 @@ declare class Note {
   setMusicalType(type: string): void;
 
   /**
-   * Move the note to start at `t`. The unit is blicks. This does not change the duration.
+   * Move the note to start at `t` . The unit is blicks. This does not change the duration.
    * @param t
    */
   setOnset(t: number): void;
 
   /**
-   * Change the phonemes to `phoneme_str`. For example, "hh ah ll ow".
+   * Change the phonemes to `phoneme_str` . For example, "hh ah ll ow".
+   * @param phoneme_str A space-delimited list of phonemes.
    */
-  setPhonemes(): void;
+  setPhonemes(phoneme_str: string): void;
 
   /**
-   * Set the note pitch to `pitchNumber`, a MIDI number.
+   * Set the note pitch to `pitchNumber` , a MIDI number.
    * @param pitchNumber
    */
   setPitch(pitchNumber: number): void;
@@ -636,12 +427,7 @@ declare class Note {
   setRapAccent(accent: string): void;
 
   /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
-
-  /**
-   * Set both onset and duration. This is a shorthand for calling `setOnset(onset)` and `setDuration(duration)`.
+   * Set both onset and duration. This is a shorthand for calling `setOnset(onset)` and `setDuration(duration)` .
    * @param onset
    * @param duration
    */
@@ -649,23 +435,20 @@ declare class Note {
 
 }
 
-declare class NoteGroup {
+declare class NoteGroup extends ScriptableNestedObject {
   /**
    * Add a note to this `NoteGroup` and return the index of the added note. The notes are kept sorted by ascending onset positions.
+   * @param note
    * @returns number
    */
-  addNote(): number;
+  addNote(note: Note): number;
 
   /**
    * Add a pitch control object to this `NoteGroup` and return the index of the added object. The pitch control objects are kept sorted by ascending anchor positions.
+   * @param pitchControl
    * @returns number
    */
-  addPitchControl(): number;
-
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
+  addPitchControl(pitchControl: PitchControlPoint | PitchControlCurve): number;
 
   /**
    * A deep copy of the current object.
@@ -674,120 +457,71 @@ declare class NoteGroup {
   clone(): NoteGroup;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the user-specified name of this `NoteGroup`.
+   * Get the user-specified name of this `NoteGroup` .
    * @returns string
    */
   getName(): string;
 
   /**
-   * Get the note at `index`. The notes inside a `NoteGroup` are always sorted by onset positions.
+   * Get the note at `index` . The notes inside a `NoteGroup` are always sorted by onset positions.
    * @param index
    * @returns Note
    */
   getNote(index: number): Note;
 
   /**
-   * Get the number of notes in the `NoteGroup`.
+   * Get the number of notes in the `NoteGroup` .
    * @returns number
    */
   getNumNotes(): number;
 
   /**
-   * Get the number of pitch control objects in the `NoteGroup`.
+   * Get the number of pitch control objects in the `NoteGroup` .
+   * @returns number
    */
-  getNumPitchControls(): void;
+  getNumPitchControls(): number;
 
   /**
-   * Get the `Automation` object for parameter `type`. It is case-insensitive.
+   * Get the `Automation` object for parameter `type` . It is case-insensitive.
    * @param type
    * @returns Automation
    */
   getParameter(type: string): Automation;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Get the pitch control object at `index`. The pitch control objects inside a `NoteGroup` are kept sorted by anchor positions.
+   * Get the pitch control object at `index` . The pitch control objects inside a `NoteGroup` are kept sorted by anchor positions.
    * @param index
-   * @returns PitchControlPoint|PitchControlCurve
+   * @returns PitchControlPoint | PitchControlCurve
    */
-  getPitchControl(index: number): PitchControlPoint|PitchControlCurve;
+  getPitchControl(index: number): PitchControlPoint | PitchControlCurve;
 
   /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Get the Universally Unique Identifier. Unlike the name, a UUID is unique across the project and can be used to associate a `NoteGroupReference` with a `NoteGroup`.
+   * Get the Universally Unique Identifier. Unlike the name, a UUID is unique across the project and can be used to associate a `NoteGroupReference` with a `NoteGroup` .
    * @returns string
    */
   getUUID(): string;
 
   /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove the note at `index`.
+   * Remove the note at `index` .
    * @param index
    */
   removeNote(index: number): void;
 
   /**
-   * Remove the pitch control object at `index`.
+   * Remove the pitch control object at `index` .
    * @param index
    */
   removePitchControl(index: number): void;
 
   /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
-   * Set the name of this `NoteGroup`.
+   * Set the name of this `NoteGroup` .
    * @param name
    */
   setName(name: string): void;
 
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
-
 }
 
-declare class NoteGroupReference {
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
-
+declare class NoteGroupReference extends ScriptableNestedObject {
   /**
    * A deep copy of the current object.
    * @returns NoteGroupReference
@@ -807,92 +541,52 @@ declare class NoteGroupReference {
   getEnd(): number;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
    * Get the beginning position (blicks), that is, the onset of the first `Note` in the target `NoteGroup` plus the time offset.
    * @returns number
    */
   getOnset(): number;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Get the pitch shift (semitones) applied to all notes in the target `NoteGroup`}.
+   * Get the pitch shift (semitones) applied to all notes in the target `NoteGroup` }.
    * @returns number
    */
   getPitchOffset(): number;
 
   /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Get the target `NoteGroup`.
+   * Get the target `NoteGroup` .
    * @returns NoteGroup
    */
   getTarget(): NoteGroup;
 
   /**
-   * Get the time offset (blicks) applied to all notes in the target `NoteGroup`.
+   * Get the time offset (blicks) applied to all notes in the target `NoteGroup` .
    * @returns number
    */
   getTimeOffset(): number;
 
   /**
-   * Get an object holding the default voice properties for this group, similar to `Note#getAttributes`.
+   * Get an object holding the default voice properties for this group, similar to `Note#getAttributes` .
    * @returns any
    */
   getVoice(): any;
 
   /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Whether this `NoteGroupReference` refers to an external audio file. If so, it must not refer to a `NoteGroup`.
+   * Whether this `NoteGroupReference` refers to an external audio file. If so, it must not refer to a `NoteGroup` .
    * @returns boolean
    */
   isInstrumental(): boolean;
 
   /**
-   * Whether this `NoteGroupReference` refers to the parent `Track`'s main group.
+   * Whether this `NoteGroupReference` refers to the parent `Track` 's main group.
    * @returns boolean
    */
   isMain(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
 
   /**
    * Check if this group is muted.
    * @returns boolean
    */
   isMuted(): boolean;
-
-  /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
 
   /**
    * Set the mute status of this group.
@@ -907,14 +601,10 @@ declare class NoteGroupReference {
   setPitchOffset(pitchOffset: number): void;
 
   /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
+   * Set the target `NoteGroup` .
+   * @param group
    */
-  setScriptData(): void;
-
-  /**
-   * Set the target `NoteGroup`.
-   */
-  setTarget(): void;
+  setTarget(group: NoteGroup): void;
 
   /**
    * Set the time offset to `blickOffset` (blicks).
@@ -930,36 +620,19 @@ declare class NoteGroupReference {
   setTimeRange(onset: number, duration: number): void;
 
   /**
-   * Set voice properties based on an attribute object (for the definition, see `NoteGroupReference#getVoice`). The attribute object does not have to be complete; only the given properties will be updated (see `Note#setAttributes`).
+   * Set voice properties based on an attribute object (for the definition, see `NoteGroupReference#getVoice` ). The attribute object does not have to be complete; only the given properties will be updated (see `Note#setAttributes` ).
    * @param attributes
    */
   setVoice(attributes: any): void;
 
 }
 
-declare class PitchControlCurve {
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
-
+declare class PitchControlCurve extends ScriptableNestedObject {
   /**
    * A deep copy of the current object.
    * @returns PitchControlCurve
    */
   clone(): PitchControlCurve;
-
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
 
   /**
    * Get the anchor pitch value of this pitch control curve in semitones relative to the pitch offset of the note group.
@@ -969,9 +642,9 @@ declare class PitchControlCurve {
 
   /**
    * Get all control points of this pitch control curve.
-   * @returns Array.&lt;Array.&lt;number&gt;&gt;
+   * @returns Array.<Array.<number>>
    */
-  getPoints(): Array.&lt;Array.&lt;number&gt;&gt;;
+  getPoints(): Array.<Array.<number>>;
 
   /**
    * Get the anchor position of this pitch control curve relative to the time offset of the note group (in blicks).
@@ -980,84 +653,38 @@ declare class PitchControlCurve {
   getPosition(): number;
 
   /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
    * Get the interpolated pitch value at a specific time position.
+   * @param time time in blicks relative to the curve's position
    * @returns number
    */
-  getValueAt(): number;
-
-  /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
+  getValueAt(time: number): number;
 
   /**
    * Set the anchor pitch value of this pitch control curve.
+   * @param pitch pitch in semitones
    */
-  setPitch(): void;
+  setPitch(pitch: number): void;
 
   /**
    * Set all control points of this pitch control curve.
+   * @param points array of [time, value] pairs
    */
-  setPoints(): void;
+  setPoints(points: Array.<Array.<number>>): void;
 
   /**
    * Set the anchor position of this pitch control curve.
+   * @param position position in blicks
    */
-  setPosition(): void;
-
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
+  setPosition(position: number): void;
 
 }
 
-declare class PitchControlPoint {
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
-
+declare class PitchControlPoint extends ScriptableNestedObject {
   /**
    * A deep copy of the current object.
    * @returns PitchControlPoint
    */
   clone(): PitchControlPoint;
-
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
 
   /**
    * Get the pitch value of this pitch control point in semitones relative to the pitch offset of the note group.
@@ -1072,63 +699,20 @@ declare class PitchControlPoint {
   getPosition(): number;
 
   /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
    * Set the pitch value of this pitch control point.
+   * @param pitch pitch in semitones
    */
-  setPitch(): void;
+  setPitch(pitch: number): void;
 
   /**
    * Set the time position of this pitch control point.
+   * @param position position in blicks
    */
-  setPosition(): void;
-
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
+  setPosition(position: number): void;
 
 }
 
-declare class PlaybackControl {
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
+declare class PlaybackControl extends NestedObject {
   /**
    * Get the current playhead position in seconds.
    * @returns number
@@ -1140,12 +724,6 @@ declare class PlaybackControl {
    * @returns string
    */
   getStatus(): string;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
 
   /**
    * Start looping between `tBegin` and `tEnd` in seconds.
@@ -1177,25 +755,24 @@ declare class PlaybackControl {
 
 }
 
-declare class Project {
+declare class Project extends ScriptableNestedObject {
   /**
-   * Insert a `NoteGroup` to the project library at `suggestedIndex`. If `suggestedIndex` is not given, the `NoteGroup` is added at the end. Return the index of the added `NoteGroup`.
-   */
-  addNoteGroup(): void;
-
-  /**
-   * Add a `Track` to the `Project`. Return the index of the added `Track`.
+   * Insert a `NoteGroup` to the project library at `suggestedIndex` . If `suggestedIndex` is not given, the `NoteGroup` is added at the end. Return the index of the added `NoteGroup` .
+   * @param group
+   * @param suggestedIndex (optional)
    * @returns number
    */
-  addTrack(): number;
+  addNoteGroup(group: NoteGroup, suggestedIndex: number): number;
 
   /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
+   * Add a `Track` to the `Project` . Return the index of the added `Track` .
+   * @param track
+   * @returns number
    */
-  clearScriptData(): void;
+  addTrack(track: Track): number;
 
   /**
-   * Get the duration of the `Project` (blicks), defined as the duration of the longest `Track`.
+   * Get the duration of the `Project` (blicks), defined as the duration of the longest `Track` .
    * @returns number
    */
   getDuration(): number;
@@ -1207,16 +784,11 @@ declare class Project {
   getFileName(): string;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
+   * If `id` is a number, get the `id` -th `NoteGroup` in the project library.
+   * @param id
+   * @returns NoteGroup |undefined
    */
-  getIndexInParent(): number;
-
-  /**
-   * If `id` is a number, get the `id`-th `NoteGroup` in the project library.
-   * @returns NoteGroup|undefined
-   */
-  getNoteGroup(): NoteGroup|undefined;
+  getNoteGroup(id: any): NoteGroup |undefined;
 
   /**
    * Get the number of `NoteGroup` in the project library.
@@ -1231,97 +803,52 @@ declare class Project {
   getNumTracks(): number;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Get the `TimeAxis` object of this `Project`.
+   * Get the `TimeAxis` object of this `Project` .
    * @returns TimeAxis
    */
   getTimeAxis(): TimeAxis;
 
   /**
-   * Get the `index`-th `Track`. The indexing is based on the storage order rather than display order.
+   * Get the `index` -th `Track` . The indexing is based on the storage order rather than display order.
    * @param index
    * @returns Track
    */
   getTrack(index: number): Track;
 
   /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Add a new undo record for this `Project`. This means that all edits following the last undo record will be undone/redone together when the users press `Ctrl + Z` or `Ctrl + Y`.
+   * Add a new undo record for this `Project` . This means that all edits following the last undo record will be undone/redone together when the users press `Ctrl + Z` or `Ctrl + Y` .
    */
   newUndoRecord(): void;
 
   /**
-   * Remove `index`-th `NoteGroup` from the project library. This also removes all `NoteGroupReference` that refer to the `NoteGroup`.
+   * Remove `index` -th `NoteGroup` from the project library. This also removes all `NoteGroupReference` that refer to the `NoteGroup` .
    * @param index
    */
   removeNoteGroup(index: number): void;
 
   /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
-   * Remove the `index`-th `Track` from the `Project`.
+   * Remove the `index` -th `Track` from the `Project` .
    * @param index
    */
   removeTrack(index: number): void;
 
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
-
 }
 
-declare class RetakeList {
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
-
+declare class RetakeList extends ScriptableNestedObject {
   /**
    * Delete a retake by its ID.
+   * @param takeId the ID of the retake to delete
    */
-  deleteTake(): void;
+  deleteTake(takeId: number): void;
 
   /**
    * Generate a new retake with the specified variation parameters.
-   */
-  generateTake(): void;
-
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
+   * @param newDuration whether to generate new duration variation
+   * @param newPitch whether to generate new pitch variation
+   * @param newTimbre whether to generate new timbre variation
    * @returns number
    */
-  getIndexInParent(): number;
+  generateTake(newDuration: boolean, newPitch: boolean, newTimbre: boolean): number;
 
   /**
    * Get the number of retakes in this list.
@@ -1330,48 +857,10 @@ declare class RetakeList {
   getNumTakes(): number;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
    * Set the active retake by its ID.
+   * @param takeId the ID of the retake to set as active
    */
-  setActiveTake(): void;
-
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
+  setActiveTake(takeId: number): void;
 
 }
 
@@ -1403,7 +892,7 @@ declare class SV {
   blick2Quarter(b: number): number;
 
   /**
-   * Convert `b` from blicks into seconds with the specified beats per minute `bpm`.
+   * Convert `b` from blicks into seconds with the specified beats per minute `bpm` .
    * @param b
    * @param bpm
    * @returns number
@@ -1414,8 +903,9 @@ declare class SV {
    * Rounded division of `dividend` (blicks) over `divisor` (blicks).
    * @param dividend
    * @param divisor
+   * @returns number
    */
-  blickRoundDiv(dividend: number, divisor: number): void;
+  blickRoundDiv(dividend: number, divisor: number): number;
 
   /**
    * Returns the closest multiple of `interval` (blicks) from `b` (blick).
@@ -1427,9 +917,10 @@ declare class SV {
 
   /**
    * Create a new object. `type` can be one of the following type-specifying strings.
+   * @param type A type-specifying string.
    * @returns any
    */
-  create(): any;
+  create(type: string): any;
 
   /**
    * Mark the finish of a script. All subsequent async callbacks will not be executed. Note that this does not cause the current script to exit immediately.
@@ -1451,14 +942,20 @@ declare class SV {
 
   /**
    * Get computed attributes for all notes in a group (passed in as a group reference). (supported since 2.1.1)
+   * @param group
    * @returns any[]
    */
-  getComputedAttributesForGroup(): any[];
+  getComputedAttributesForGroup(group: NoteGroupReference): any[];
 
   /**
    * Get computed pitch values for a group (passed in as a group reference) over a specified time range. (supported since 2.1.1)
+   * @param groupReference The group to get pitch data from
+   * @param blickStart The starting position in blicks
+   * @param blickInterval The interval between samples in blicks
+   * @param numFrames The number of samples to retrieve
+   * @returns any[]
    */
-  getComputedPitchForGroup(): void;
+  getComputedPitchForGroup(groupReference: NoteGroupReference, blickStart: number, blickInterval: number, numFrames: number): any[];
 
   /**
    * Get the text on the system clipboard.
@@ -1480,9 +977,10 @@ declare class SV {
 
   /**
    * Get the phonemes for all notes in a group (passed in as a group reference). The group must be part of the currently open project.
+   * @param group
    * @returns any[]
    */
-  getPhonemesForGroup(): any[];
+  getPhonemesForGroup(group: NoteGroupReference): any[];
 
   /**
    * Get the UI state object for controlling the playback.
@@ -1505,8 +1003,9 @@ declare class SV {
 
   /**
    * Print any number of arguments to the standard output stream.
+   * @param args
    */
-  print(): void;
+  print(args: any): void;
 
   /**
    * Convert `q` from number of quarters into number of blick.
@@ -1521,7 +1020,7 @@ declare class SV {
   refreshSidePanel(): void;
 
   /**
-   * Convert `s` from seconds into blicks with the specified beats per minute `bpm`.
+   * Convert `s` from seconds into blicks with the specified beats per minute `bpm` .
    * @param s
    * @param bpm
    * @returns number
@@ -1549,7 +1048,7 @@ declare class SV {
   showCustomDialog(form: any): any;
 
   /**
-   * Display a custom dialog defined in `form`, without blocking the script execution.
+   * Display a custom dialog defined in `form` , without blocking the script execution.
    * @param form
    * @param callback
    */
@@ -1560,8 +1059,9 @@ declare class SV {
    * @param title
    * @param message
    * @param defaultText
+   * @returns string
    */
-  showInputBox(title: string, message: string, defaultText: string): void;
+  showInputBox(title: string, message: string, defaultText: string): string;
 
   /**
    * Display a dialog with a text box and an "OK" button, without blocking the script execution.
@@ -1583,8 +1083,9 @@ declare class SV {
    * Cause a message box to pop up without blocking the script execution.
    * @param title
    * @param message
+   * @param callback (optional)
    */
-  showMessageBoxAsync(title: string, message: string): void;
+  showMessageBoxAsync(title: string, message: string, callback: Function): void;
 
   /**
    * The synchronous version of `SV#showOkCancelBoxAsync` that blocks the script execution until the user closes the message box. It returns true if "OK" button is pressed.
@@ -1620,56 +1121,44 @@ declare class SV {
 
 }
 
-declare class ScriptableNestedObject {
+declare class ScriptableNestedObject extends NestedObject {
   /**
    * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
    */
   clearScriptData(): void;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
    * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
+   * @param key The key to retrieve the value for
    * @returns any
    */
-  getScriptData(): any;
+  getScriptData(key: string): any;
 
   /**
    * Get all keys currently stored in the object's script data storage.
+   * @returns string[]
    */
-  getScriptDataKeys(): void;
+  getScriptDataKeys(): string[];
 
   /**
    * Check whether a key exists in the object's script data storage.
+   * @param key The key to check for
    * @returns boolean
    */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
+  hasScriptData(key: string): boolean;
 
   /**
    * Remove a key-value pair from the object's script data storage.
+   * @param key The key to remove
    */
-  removeScriptData(): void;
+  removeScriptData(key: string): void;
 
   /**
    * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
+   * @param key The key to store the value under
+   * @param value The value to store (must be JSON-serializable)
    */
-  setScriptData(): void;
+  setScriptData(key: string, value: any): void;
 
 }
 
@@ -1682,13 +1171,15 @@ declare class SelectionStateBase {
 
   /**
    * Check if there's anything selected.
+   * @returns boolean
    */
-  hasSelectedContent(): void;
+  hasSelectedContent(): boolean;
 
   /**
    * Check if there's any unfinished edit on the selected objects.
+   * @returns boolean
    */
-  hasUnfinishedEdits(): void;
+  hasUnfinishedEdits(): boolean;
 
   /**
    * Attach a script function to be called when the selection is cleared. The callback function will receive one argument: the type of the cleared objects.
@@ -1704,9 +1195,9 @@ declare class SelectionStateBase {
 
 }
 
-declare class TimeAxis {
+declare class TimeAxis extends ScriptableNestedObject {
   /**
-   * Insert a `nomin`/`denom` measure mark at position `measure` (a measure number). If a measure mark exists at `measure`, update the information.
+   * Insert a `nomin` / `denom` measure mark at position `measure` (a measure number). If a measure mark exists at `measure` , update the information.
    * @param measure
    * @param nomin
    * @param denom
@@ -1714,16 +1205,11 @@ declare class TimeAxis {
   addMeasureMark(measure: number, nomin: number, denom: number): void;
 
   /**
-   * Insert a tempo mark with beats per minute of `bpm` at position `b` (blicks). If a tempo mark exists at position `b`, update the BPM.
+   * Insert a tempo mark with beats per minute of `bpm` at position `b` (blicks). If a tempo mark exists at position `b` , update the BPM.
    * @param b
    * @param bpm
    */
   addTempoMark(b: number, bpm: number): void;
-
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
 
   /**
    * A deep copy of the current object.
@@ -1732,12 +1218,13 @@ declare class TimeAxis {
   clone(): TimeAxis;
 
   /**
-   * Get all measure marks in this `TimeAxis`. See `TimeAxis#getMeasureMarkAt`.
+   * Get all measure marks in this `TimeAxis` . See `TimeAxis#getMeasureMarkAt` .
+   * @returns any[]
    */
-  getAllMeasureMarks(): void;
+  getAllMeasureMarks(): any[];
 
   /**
-   * Get all tempo marks in this `TimeAxis`. See `TimeAxis#getTempoMarkAt`.
+   * Get all tempo marks in this `TimeAxis` . See `TimeAxis#getTempoMarkAt` .
    * @returns any[]
    */
   getAllTempoMarks(): any[];
@@ -1745,14 +1232,9 @@ declare class TimeAxis {
   /**
    * Convert physical time `t` (second) to musical time (blicks).
    * @param t
-   */
-  getBlickFromSeconds(t: number): void;
-
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
    * @returns number
    */
-  getIndexInParent(): number;
+  getBlickFromSeconds(t: number): number;
 
   /**
    * Get the measure number at position `b` (blicks).
@@ -1762,41 +1244,25 @@ declare class TimeAxis {
   getMeasureAt(b: number): number;
 
   /**
-   * Get the measure mark at measure `measureNumber`.
+   * Get the measure mark at measure `measureNumber` .
    * @param measureNumber
    * @returns any
    */
   getMeasureMarkAt(measureNumber: number): any;
 
   /**
-   * Get the measure mark that is effective at position `b` (blicks). For the returned object, see `TimeAxis#getMeasureMarkAt`.
+   * Get the measure mark that is effective at position `b` (blicks). For the returned object, see `TimeAxis#getMeasureMarkAt` .
    * @param b
    * @returns any
    */
   getMeasureMarkAtBlick(b: number): any;
 
   /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
    * Convert musical time `b` (blicks) to physical time (seconds).
    * @param b
+   * @returns number
    */
-  getSecondsFromBlick(b: number): void;
+  getSecondsFromBlick(b: number): number;
 
   /**
    * Get the tempo mark that is effective at position `b` (blicks).
@@ -1806,54 +1272,28 @@ declare class TimeAxis {
   getTempoMarkAt(b: number): TempoMark;
 
   /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove the measure mark at measure number `measure`. If a measure mark exists at `measure`, return true.
+   * Remove the measure mark at measure number `measure` . If a measure mark exists at `measure` , return true.
    * @param measure
    * @returns boolean
    */
   removeMeasureMark(measure: number): boolean;
 
   /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
-   * Remove the tempo mark at position `b` (blicks). If a tempo mark exists at position `b`, return true.
+   * Remove the tempo mark at position `b` (blicks). If a tempo mark exists at position `b` , return true.
    * @param b
    * @returns boolean
    */
   removeTempoMark(b: number): boolean;
 
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
-
 }
 
-declare class Track {
+declare class Track extends ScriptableNestedObject {
   /**
    * Add a `NoteGroupReference` to this `Track` and return the index of the added group. It keeps all groups sorted by onset position.
+   * @param group
    * @returns number
    */
-  addGroupReference(): number;
-
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
+  addGroupReference(group: NoteGroupReference): number;
 
   /**
    * A deep copy of the current object.
@@ -1868,29 +1308,23 @@ declare class Track {
   getDisplayColor(): string;
 
   /**
-   * Get the display order of the track inside the parent `Project`. A track's display order can be different from its storage index. The order of tracks as displayed in arrangement view is always based on the display order.
+   * Get the display order of the track inside the parent `Project` . A track's display order can be different from its storage index. The order of tracks as displayed in arrangement view is always based on the display order.
    * @returns number
    */
   getDisplayOrder(): number;
 
   /**
-   * Get the duration of the `Track` in blicks, defined as the ending position of the last `NoteGroupReference`.
+   * Get the duration of the `Track` in blicks, defined as the ending position of the last `NoteGroupReference` .
    * @returns number
    */
   getDuration(): number;
 
   /**
-   * Get the `index`-th `NoteGroupReference`. The first is always the main group, followed by groups that refer to `NoteGroup` in the project library. The groups are sorted in ascending onset positions.
+   * Get the `index` -th `NoteGroupReference` . The first is always the main group, followed by groups that refer to `NoteGroup` in the project library. The groups are sorted in ascending onset positions.
    * @param index
    * @returns NoteGroupReference
    */
   getGroupReference(index: number): NoteGroupReference;
-
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
 
   /**
    * Get the track's mixer.
@@ -1905,33 +1339,10 @@ declare class Track {
   getName(): string;
 
   /**
-   * Get the number of `NoteGroupReference` in this `Track`, including the main group.
+   * Get the number of `NoteGroupReference` in this `Track` , including the main group.
    * @returns number
    */
   getNumGroups(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
 
   /**
    * An option for whether or not to be exported to files, shown in Render Panel.
@@ -1940,24 +1351,13 @@ declare class Track {
   isBounced(): boolean;
 
   /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Remove the `index`-th `NoteGroupReference` from this `Track`.
+   * Remove the `index` -th `NoteGroupReference` from this `Track` .
    * @param index
    */
   removeGroupReference(index: number): void;
 
   /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
-   * Set whether or not to have the `Track` exported to files. See `Track#isBounced`.
+   * Set whether or not to have the `Track` exported to files. See `Track#isBounced` .
    * @param enabled
    */
   setBounced(enabled: boolean): void;
@@ -1969,31 +1369,14 @@ declare class Track {
   setDisplayColor(colorStr: string): void;
 
   /**
-   * Set the name of the `Track`.
+   * Set the name of the `Track` .
    * @param name
    */
   setName(name: string): void;
 
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
-
 }
 
-declare class TrackInnerSelectionState {
-  /**
-   * Unselects all object types supported by this selection state. Return true if the selection has changed.
-   * @returns boolean
-   */
-  clearAll(): boolean;
-
-  /**
-   * Unselect all `NoteGroupReference`. Return true if the selection has changed.
-   * @returns boolean
-   */
-  clearGroups(): boolean;
-
+declare class TrackInnerSelectionState extends SelectionStateBase {
   /**
    * Unselect all notes. Return `true` if the selection has changed.
    * @returns boolean
@@ -2002,25 +1385,9 @@ declare class TrackInnerSelectionState {
 
   /**
    * Clear all pitch control selections.
+   * @returns boolean
    */
-  clearPitchControls(): void;
-
-  /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Get an array of selected `NoteGroupReference` following the order of selection.
-   */
-  getSelectedGroups(): void;
+  clearPitchControls(): boolean;
 
   /**
    * Get an array of selected `Note` following the order of selection.
@@ -2036,19 +1403,10 @@ declare class TrackInnerSelectionState {
 
   /**
    * Get an array of selected automation points for the specified parameter type.
+   * @param parameterType The parameter type (e.g., "pitchDelta", "loudness", etc.)
    * @returns any[]
    */
-  getSelectedPoints(): any[];
-
-  /**
-   * Check if there's anything selected.
-   */
-  hasSelectedContent(): void;
-
-  /**
-   * Check if there is at least one `NoteGroupReference` selected.
-   */
-  hasSelectedGroups(): void;
+  getSelectedPoints(parameterType: string): any[];
 
   /**
    * Check if there is at least one `Note` selected.
@@ -2063,78 +1421,47 @@ declare class TrackInnerSelectionState {
   hasSelectedPitchControls(): boolean;
 
   /**
-   * Check if there's any unfinished edit on the selected objects.
+   * Select a `Note` . The note must be inside the current `NoteGroupReference` opened in the piano roll (see `MainEditorView#getCurrentGroup` ).
+   * @param note
    */
-  hasUnfinishedEdits(): void;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
-
-  /**
-   * Attach a script function to be called when the selection is cleared. The callback function will receive one argument: the type of the cleared objects.
-   * @param callback
-   */
-  registerClearCallback(callback: Function): void;
-
-  /**
-   * Attach a script function to be called when objects are selected or deselected by the user. The callback function will receive two arguments: the type of the selected objects and whether this is a selection or deselection operation.
-   * @param callback
-   */
-  registerSelectionCallback(callback: Function): void;
-
-  /**
-   * Add a `NoteGroupReference` to the selection.
-   */
-  selectGroup(): void;
-
-  /**
-   * Select a `Note`. The note must be inside the current `NoteGroupReference` opened in the piano roll (see `MainEditorView#getCurrentGroup`).
-   */
-  selectNote(): void;
+  selectNote(note: Note): void;
 
   /**
    * Select pitch control objects.
+   * @param controls Array of PitchControlPoint or PitchControlCurve objects
    */
-  selectPitchControls(): void;
+  selectPitchControls(controls: any[]): void;
 
   /**
    * Select automation points for the specified parameter type.
+   * @param parameterType The parameter type
+   * @param positions Array of Blick positions to select
    */
-  selectPoints(): void;
+  selectPoints(parameterType: string, positions: any[]): void;
 
   /**
-   * Unselect a `NoteGroupReference`. Return true if the selection has changed.
+   * Unselect a `Note` . Return `true` if the selection has changed.
+   * @param note
    * @returns boolean
    */
-  unselectGroup(): boolean;
-
-  /**
-   * Unselect a `Note`. Return `true` if the selection has changed.
-   * @returns boolean
-   */
-  unselectNote(): boolean;
+  unselectNote(note: Note): boolean;
 
   /**
    * Unselect pitch control objects.
+   * @param controls Array of PitchControlPoint or PitchControlCurve objects
    */
-  unselectPitchControls(): void;
+  unselectPitchControls(controls: any[]): void;
 
   /**
    * Unselect automation points for the specified parameter type.
+   * @param parameterType The parameter type
+   * @param positions Array of Blick positions to unselect
    */
-  unselectPoints(): void;
+  unselectPoints(parameterType: string, positions: any[]): void;
 
 }
 
-declare class TrackMixer {
-  /**
-   * Remove all script data from the object's storage. Note: use with caution as this could also remove data created by other scripts.
-   */
-  clearScriptData(): void;
-
+declare class TrackMixer extends ScriptableNestedObject {
   /**
    * Get the gain in decibels.
    * @returns number
@@ -2142,45 +1469,10 @@ declare class TrackMixer {
   getGainDecibel(): number;
 
   /**
-   * Get index of the current object in its parent. In Lua, this index starts from 1. In JavaScript, this index starts from 0.
-   * @returns number
-   */
-  getIndexInParent(): number;
-
-  /**
    * Get the pan position.
    * @returns number
    */
   getPan(): number;
-
-  /**
-   * Get the parent `NestedObject`. Return `undefined` if the current object is not attached to a parent.
-   * @returns NestedObject|undefined
-   */
-  getParent(): NestedObject|undefined;
-
-  /**
-   * Retrieve a value from the object's script data storage by key. Returns `undefined` if the key does not exist.
-   * @returns any
-   */
-  getScriptData(): any;
-
-  /**
-   * Get all keys currently stored in the object's script data storage.
-   */
-  getScriptDataKeys(): void;
-
-  /**
-   * Check whether a key exists in the object's script data storage.
-   * @returns boolean
-   */
-  hasScriptData(): boolean;
-
-  /**
-   * Check whether or not the current object is memory managed (i.e. garbage collected by the script environment).
-   * @returns boolean
-   */
-  isMemoryManaged(): boolean;
 
   /**
    * Check if the track is muted.
@@ -2195,34 +1487,29 @@ declare class TrackMixer {
   isSolo(): boolean;
 
   /**
-   * Remove a key-value pair from the object's script data storage.
-   */
-  removeScriptData(): void;
-
-  /**
    * Set the gain in decibels.
+   * @param gainDecibel The gain value in decibels (between -24.0 and 24.0)
    */
-  setGainDecibel(): void;
+  setGainDecibel(gainDecibel: number): void;
 
   /**
    * Set the mute state of the track.
+   * @param muted True to mute the track, false to unmute
    */
-  setMuted(): void;
+  setMuted(muted: boolean): void;
 
   /**
    * Set the pan position.
+   * @param pan The pan position (-1.0 for left, 0.0 for center, 1.0 for
+right)
    */
-  setPan(): void;
-
-  /**
-   * Store a value with the specified key in the object's script data storage. The value must be JSON-serializable.
-   */
-  setScriptData(): void;
+  setPan(pan: number): void;
 
   /**
    * Set the solo state of the track.
+   * @param solo True to solo the track, false to unsolo
    */
-  setSolo(): void;
+  setSolo(solo: boolean): void;
 
 }
 
@@ -2247,8 +1534,9 @@ declare class WidgetValue {
 
   /**
    * Update the UI widget with a new value.
+   * @param value The value to be set.
    */
-  setValue(): void;
+  setValue(value: any): void;
 
   /**
    * Set a script function to be called when the UI widget's value is changed by the user. The callback function will receive the new value as its sole argument.
