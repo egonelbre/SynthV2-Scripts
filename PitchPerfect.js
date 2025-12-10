@@ -11,6 +11,7 @@ const SCRIPT_TITLE = "Pitch Perfect";
 const FLAG = "precise-pitch-control";
 
 const ONSET_NATURAL = SV.QUARTER / 16;
+const OFFSET_EPSILON = SV.QUARTER / 16;
 const TRANSITION_DURATION = SV.QUARTER / 4;
 
 function getClientInfo() {
@@ -98,9 +99,11 @@ function processNotes(notes, group, options, groupRef) {
 		var duration = note.getDuration() - ONSET_NATURAL;
 
 		// allow time for a smooth transition between joined notes.
+		var isJoined = false;
 		if(nextNote) {
 			var transition = nextNote.getOnset() - note.getEnd();
 			if (transition < TRANSITION_DURATION) {
+				isJoined = true;
 				duration = duration - (TRANSITION_DURATION - transition);
 				if (duration <= 0) continue;
 			}
@@ -108,7 +111,7 @@ function processNotes(notes, group, options, groupRef) {
 		if (duration <= 0) continue;
 
 		if(options.vibrato_cents > 0) {
-			addVibratePitchControl(groupRef, note, ONSET_NATURAL, duration, options.vibrato_cents, options.vibrato_hz)
+			addVibratePitchControl(groupRef, note, ONSET_NATURAL, duration, options.vibrato_cents, options.vibrato_hz, isJoined)
 		} else {
 			addPrecisePitchControl(group, note, ONSET_NATURAL, duration)
 		}
@@ -130,7 +133,7 @@ function addPrecisePitchControl(group, note, start, duration) {
 	group.addPitchControl(control);
 }
 
-function addVibratePitchControl(groupRef, note, start, duration, cents, hz) {
+function addVibratePitchControl(groupRef, note, start, duration, cents, hz, isJoined) {
 	var group = groupRef.getTarget();
 	var basePitch = note.getPitch();
 
@@ -153,12 +156,15 @@ function addVibratePitchControl(groupRef, note, start, duration, cents, hz) {
 	var currentPosition = note.getOnset() + start;
 	var halfCycleCount = 0;
 	var fadeIn = 0;
+
 	while(currentPosition < noteEnd) {
 		if(halfCycleCount > 0) {
 			var amplitude = (halfCycleCount % 2 === 0) ? -1.0 : 1.0;
 			fadeIn = Math.min(fadeIn + 0.1, 1);
 		 	var pitchOffset = cents * amplitude * fadeIn / 100.0;
 
+			// TODO: use pitch control curves instead to avoid
+			// flutter for some voices.
 			var vibratoPoint = SV.create("PitchControlPoint");
 			vibratoPoint.setPosition(currentPosition);
 			vibratoPoint.setPitch(basePitch + pitchOffset);
@@ -169,6 +175,19 @@ function addVibratePitchControl(groupRef, note, start, duration, cents, hz) {
 		var noise = Math.round(periodBlicks * (Math.random() * 0.15));
 		currentPosition += periodBlicks / 2 + noise;
 		halfCycleCount++;
+	}
+
+	if(!isJoined) {
+		var control = SV.create("PitchControlCurve");
+		control.setScriptData(FLAG, true);
+		control.setPosition(note.getEnd());
+		control.setPitch(note.getPitch());
+		control.setPoints([
+			[-OFFSET_EPSILON, 0],
+			[OFFSET_EPSILON, 0],
+		]);
+
+		group.addPitchControl(control);
 	}
 
 	return control;

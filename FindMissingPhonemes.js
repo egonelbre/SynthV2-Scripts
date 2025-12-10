@@ -62,7 +62,7 @@ function main() {
 // @param group: NoteGroup
 // @param options: Object
 // @param groupRef: NoteGroupReference
-function processNotes(notes, group, options, groupRef) {
+function processNotes(notes, group, options, groupRef, track) {
 	if(notes.length <= 1) {
 		return;
 	}
@@ -73,6 +73,7 @@ function processNotes(notes, group, options, groupRef) {
 	var allPhonemes = SV.getPhonemesForGroup(groupRef);
 	for (var i = 0; i < notes.length; i++) {
 		var phoneme = allPhonemes[i]
+		if (phoneme == "sil") phoneme = null;
 		if (phoneme) continue;
 
 		var lyrics = notes[i].getLyrics();
@@ -86,8 +87,10 @@ function processNotes(notes, group, options, groupRef) {
 		}
 	}
 
+
+
 	if(measures.length > 0) {
-		SV.showMessageBox(SV.T(SCRIPT_TITLE), SV.T("Missing phonemes in measure(s):") + measures.join(", "));
+		SV.showMessageBox(SV.T(SCRIPT_TITLE), SV.T(track.getName() + " is missing phonemes in measure(s):") + measures.join(", "));
 	}
 }
 
@@ -196,9 +199,10 @@ function processSelection(process, options) {
 	var selectedNotes = selection.getSelectedNotes();
 	selectedNotes = sortNotes(selectedNotes);
 
-	var groupRef = SV.getMainEditor().getCurrentGroup()
+	var track = SV.getMainEditor().getCurrentTrack();
+	var groupRef = SV.getMainEditor().getCurrentGroup();
 	var group = groupRef.getTarget();
-	process(selectedNotes, group, options, groupRef);
+	process(selectedNotes, group, options, groupRef, track);
 }
 
 function processTrack(process, options) {
@@ -214,23 +218,7 @@ function processTrack(process, options) {
 			continue;
 		visited.push(group.getUUID());
 
-		process(groupAsNotesArray(group), group, options, groupRef);
-	}
-}
-
-function processProject(process, options) {
-	// process all groups that may be shared between tracks
-	var project = SV.getProject();
-	for(var i = 0; i < project.getNumNoteGroupsInLibrary(); i ++) {
-		var group = project.getNoteGroup(i);
-		process(groupAsNotesArray(group), group, options);
-	}
-
-	// process unique groups for each track
-	for(var i = 0; i < project.getNumTracks(); i ++) {
-		var track = project.getTrack(i);
-		var mainGroup = track.getGroupReference(0).getTarget();
-		process(groupAsNotesArray(mainGroup), mainGroup, options);
+		process(groupAsNotesArray(group), group, options, groupRef, track);
 	}
 }
 
@@ -252,7 +240,7 @@ function processProjectWithRefs(process, options) {
 				continue;
 			visited.push(group.getUUID());
 
-			process(groupAsNotesArray(group), group, options, groupRef);
+			process(groupAsNotesArray(group), group, options, groupRef, track);
 		}
 	}
 }
