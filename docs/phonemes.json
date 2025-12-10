@@ -1,0 +1,1534 @@
+var phonemes = {
+	selectedLanguage: 'en',
+	selectedSynthLanguage: 'EnglishARPABET',
+	supportedLanguages: ['en', 'zh', 'jp'],
+	selectedCategory: 'vowel',
+	selectedItem: 'a',
+	message: 'Hello Vue!',
+	tones: {
+		version: "2.0.0",
+		table: {
+			category_map: {
+				vowel: {
+					en: "Vowel",
+					zh: "元音",
+					jp: "母音",
+				},
+				diphthong: {
+					en: "Diphthong",
+					zh: "双元音",
+					jp: "二重母音",
+				},
+				stop: {
+					en: "Stop",
+					zh: "塞音",
+					jp: "破裂音",
+				},
+				affricate: {
+					en: "Affricate",
+					zh: "塞擦音",
+					jp: "破擦音",
+				},
+				fricative: {
+					en: "Fricative",
+					zh: "摩擦音",
+					jp: "摩擦音",
+				},
+				aspirate: {
+					en: "Aspirate",
+					zh: "送气音",
+					jp: "送気音",
+				},
+				liquid: {
+					en: "Liquid",
+					zh: "液音",
+					jp: "液音",
+				},
+				nasal: {
+					en: "Nasal",
+					zh: "鼻音",
+					jp: "鼻音",
+				},
+				semivowel: {
+					en: "Semivowel",
+					zh: "半元音",
+					jp: "半母音",
+				},
+				coda: {
+					en: "Coda",
+					zh: "尾音",
+					jp: "尾音",
+				},
+			},
+			items_map: {
+				phoneme: {
+					en: "Phoneme",
+					zh: "音素",
+					jp: "音素",
+				},
+				category: {
+					en: "Category",
+					zh: "类别",
+					jp: "カテゴリー",
+				},
+				example: {
+					en: "Example",
+					zh: "发音案例",
+					jp: "例",
+				},
+				desc: {
+					en: "Description",
+					zh: "描述",
+					jp: "説明",
+				},
+			},
+			synth_lang_map: {
+				EnglishARPABET: {
+					en: "English - ARPABET",
+					zh: "英语 - ARPABET",
+					jp: "英語 - ARPABET",
+				},
+				JapaneseROMAJI: {
+					en: "Japanese - ROMAJI",
+					zh: "日文 - 罗马字",
+					jp: "日本語 - ローマ字",
+				},
+				MandarinChineseXSAMPA: {
+					en: "Mandarin Chinese - XSAMPA",
+					zh: "汉语普通话 - XSAMPA",
+					jp: "中国語 - XSAMPA",
+				},
+				CantoneseChineseXSAMPA: {
+					en: "Cantonese Chinese - XSAMPA",
+					zh: "汉语广东话 - XSAMPA",
+					jp: "広東語 - XSAMPA",
+				},
+				SpanishXSAMPA: {
+					en: "Spanish - XSAMPA",
+					zh: "西班牙语 - XSAMPA",
+					jp: "スペイン語 - XSAMPA",
+				},
+				KoreanXSAMPA: {
+					en: "Korean - XSAMPA",
+					zh: "韩语 - XSAMPA",
+					jp: "韓国語 - XSAMPA",
+				},
+				CommonPhonemes: {
+					en: "Common Phonemes",
+					zh: "常用音素",
+					jp: "共通音素",
+				},
+			},
+			groups: [
+				{
+					group_name: {
+						key: "EnglishARPABET",
+						en: "English - ARPABET",
+						zh: "英语 - ARPABET",
+						jp: "英語 - ARPABET",
+					},
+					sections: [
+						{
+							section_name: {
+								en: "Vowels",
+								zh: "元音",
+								jp: "母音",
+							},
+							section_items: [
+								{
+									phoneme: "aa",
+									category: "vowel",
+									example: "f_a_r",
+								},
+								{
+									phoneme: "ae",
+									category: "vowel",
+									example: "b_a_t",
+								},
+								{
+									phoneme: "ah",
+									category: "vowel",
+									example: "d_u_ck",
+								},
+								{
+									phoneme: "ao",
+									category: "vowel",
+									example: "f_ough_t",
+								},
+								{
+									phoneme: "aw",
+									category: "diphthong",
+									example: "ab_ou_t",
+								},
+								{
+									phoneme: "ax",
+									category: "vowel",
+									example: "replic_a_",
+								},
+								{
+									phoneme: "ay",
+									category: "diphthong",
+									example: "d_ye_",
+								},
+								{
+									phoneme: "eh",
+									category: "vowel",
+									example: "b_e_d",
+								},
+								{
+									phoneme: "er",
+									category: "vowel",
+									example: "riv_er_",
+								},
+								{
+									phoneme: "ey",
+									category: "diphthong",
+									example: "d_ay_",
+								},
+								{
+									phoneme: "ih",
+									category: "vowel",
+									example: "s_i_ck",
+								},
+								{
+									phoneme: "iy",
+									category: "vowel",
+									example: "p_ea_k",
+								},
+								{
+									phoneme: "ow",
+									category: "diphthong",
+									example: "l_ow_",
+								},
+								{
+									phoneme: "oy",
+									category: "diphthong",
+									example: "t_oy_",
+								},
+								{
+									phoneme: "uh",
+									category: "vowel",
+									example: "f_u_ll",
+								},
+								{
+									phoneme: "uw",
+									category: "vowel",
+									example: "d_ue_",
+								},
+							],
+						},
+						{
+							section_name: {
+								en: "Consonants",
+								zh: "辅音",
+								jp: "子音",
+							},
+							section_items: [
+								{
+									phoneme: "b",
+									category: "stop",
+									example: "_b_ack",
+								},
+								{
+									phoneme: "ch",
+									category: "affricate",
+									example: "_ch_alk",
+								},
+								{
+									phoneme: "d",
+									category: "stop",
+									example: "_d_ay",
+								},
+								{
+									phoneme: "dx",
+									category: "stop",
+									example: "stu_tt_er",
+								},
+								{
+									phoneme: "dr",
+									category: "affricate",
+									example: "_dr_ive",
+								},
+								{
+									phoneme: "dh",
+									category: "fricative",
+									example: "rhy_th_m",
+								},
+								{
+									phoneme: "f",
+									category: "fricative",
+									example: "_f_right",
+								},
+								{
+									phoneme: "g",
+									category: "stop",
+									example: "_g_lock",
+								},
+								{
+									phoneme: "hh",
+									category: "aspirate",
+									example: "_h_ay",
+								},
+								{
+									phoneme: "jh",
+									category: "affricate",
+									example: "_j_ust",
+								},
+								{
+									phoneme: "k",
+									category: "stop",
+									example: "ro_ck_",
+								},
+								{
+									phoneme: "l",
+									category: "liquid",
+									example: "_l_ife",
+								},
+								{
+									phoneme: "m",
+									category: "nasal",
+									example: "_m_ight",
+								},
+								{
+									phoneme: "n",
+									category: "nasal",
+									example: "_n_ight",
+								},
+								{
+									phoneme: "ng",
+									category: "nasal",
+									example: "si_ng_er",
+								},
+								{
+									phoneme: "p",
+									category: "stop",
+									example: "_p_en",
+								},
+								{
+									phoneme: "r",
+									category: "semivowel",
+									example: "_r_oad",
+								},
+								{
+									phoneme: "s",
+									category: "fricative",
+									example: "_s_teel",
+								},
+								{
+									phoneme: "sh",
+									category: "fricative",
+									example: "_sh_rimp",
+								},
+								{
+									phoneme: "t",
+									category: "stop",
+									example: "_t_ime",
+								},
+								{
+									phoneme: "tr",
+									category: "affricate",
+									example: "_tr_y",
+								},
+								{
+									phoneme: "th",
+									category: "fricative",
+									example: "tru_th_",
+								},
+								{
+									phoneme: "v",
+									category: "fricative",
+									example: "_v_al_ve_",
+								},
+								{
+									phoneme: "w",
+									category: "semivowel",
+									example: "_w_ool",
+								},
+								{
+									phoneme: "y",
+									category: "semivowel",
+									example: "_y_acht",
+								},
+								{
+									phoneme: "z",
+									category: "fricative",
+									example: "_z_ebra",
+								},
+								{
+									phoneme: "zh",
+									category: "fricative",
+									example: "vi_s_ion",
+								},
+							],
+						},
+					],
+				},
+				{
+					group_name: {
+						key: "JapaneseROMAJI",
+						en: "Japanese - ROMAJI",
+						zh: "日文 - 罗马字",
+						jp: "日本語 - ローマ字",
+					},
+					sections: [
+						{
+							section_name: {
+								en: "Vowels and Semivowels",
+								zh: "元音、半元音",
+								jp: "母音、半母音",
+							},
+							section_items: [
+								{
+									phoneme: "a",
+									category: "vowel",
+									example: "あ _a_",
+								},
+								{
+									phoneme: "i",
+									category: "vowel",
+									example: "い _i_",
+								},
+								{
+									phoneme: "u",
+									category: "vowel",
+									example: "う _u_",
+								},
+								{
+									phoneme: "e",
+									category: "vowel",
+									example: "え _e_",
+								},
+								{
+									phoneme: "o",
+									category: "vowel",
+									example: "お _o_",
+								},
+								{
+									phoneme: "N",
+									category: "vowel",
+									example: "ん _n_",
+								},
+								{
+									phoneme: "w",
+									category: "semivowel",
+									example: "わ _w_a",
+								},
+								{
+									phoneme: "v",
+									category: "semivowel",
+									example: "ヴァ _v_a",
+								},
+								{
+									phoneme: "y",
+									category: "semivowel",
+									example: "や _y_a",
+								},
+							],
+						},
+						{
+							section_name: {
+								en: "Consonants",
+								zh: "辅音",
+								jp: "子音",
+							},
+							section_items: [
+								{
+									phoneme: "t",
+									category: "stop",
+									example: "た _t_a",
+								},
+								{
+									phoneme: "d",
+									category: "stop",
+									example: "だ _d_a",
+								},
+								{
+									phoneme: "s",
+									category: "fricative",
+									example: "さ _s_a",
+								},
+								{
+									phoneme: "sh",
+									category: "fricative",
+									example: "しゃ _sh_a",
+								},
+								{
+									phoneme: "j",
+									category: "affricate",
+									example: "じゃ _j_a",
+								},
+								{
+									phoneme: "z",
+									category: "affricate",
+									example: "ざ _z_a",
+								},
+								{
+									phoneme: "ts",
+									category: "affricate",
+									example: "つ _ts_u",
+								},
+								{
+									phoneme: "k",
+									category: "stop",
+									example: "か _k_a",
+								},
+								{
+									phoneme: "g",
+									category: "stop",
+									example: "が _g_a",
+								},
+								{
+									phoneme: "h",
+									category: "aspirate",
+									example: "ハ _h_a",
+								},
+								{
+									phoneme: "b",
+									category: "stop",
+									example: "ば _b_a",
+								},
+								{
+									phoneme: "p",
+									category: "stop",
+									example: "ぱ _p_a",
+								},
+								{
+									phoneme: "f",
+									category: "fricative",
+									example: "ふぁ _f_a",
+								},
+								{
+									phoneme: "ch",
+									category: "affricate",
+									example: "ちゃ _ch_a",
+								},
+								{
+									phoneme: "ry",
+									category: "liquid",
+									example: "りゃ _ry_a",
+								},
+								{
+									phoneme: "ky",
+									category: "stop",
+									example: "きゃ _ky_a",
+								},
+								{
+									phoneme: "py",
+									category: "stop",
+									example: "ぴゃ _py_a",
+								},
+								{
+									phoneme: "dy",
+									category: "stop",
+									example: "でゃ _dy_a",
+								},
+								{
+									phoneme: "ty",
+									category: "stop",
+									example: "てゃ _ty_a",
+								},
+								{
+									phoneme: "ny",
+									category: "nasal",
+									example: "にゃ _ny_a",
+								},
+								{
+									phoneme: "hy",
+									category: "aspirate",
+									example: "ひゃ _hy_a",
+								},
+								{
+									phoneme: "my",
+									category: "nasal",
+									example: "みゃ _my_a",
+								},
+								{
+									phoneme: "gy",
+									category: "stop",
+									example: "ぎゃ _gy_a",
+								},
+								{
+									phoneme: "by",
+									category: "stop",
+									example: "びゃ _by_a",
+								},
+								{
+									phoneme: "n",
+									category: "nasal",
+									example: "な _n_a",
+								},
+								{
+									phoneme: "m",
+									category: "nasal",
+									example: "ま _m_a",
+								},
+								{
+									phoneme: "r",
+									category: "liquid",
+									example: "ら _r_a/_l_a",
+								},
+							],
+						},
+					],
+				},
+				{
+					group_name: {
+						key: "MandarinChineseXSAMPA",
+						en: "Mandarin Chinese - XSAMPA",
+						zh: "汉语普通话 - XSAMPA",
+						jp: "中国語 - XSAMPA",
+					},
+					sections: [
+						{
+							section_name: {
+								en: "Vowels, Semivowels and Diphthongs",
+								zh: "元音、半元音、双元音",
+								jp: "母音、半母音、二重母音",
+							},
+							section_items: [
+								{
+									phoneme: "a",
+									category: "vowel",
+									example: "他 t_a_ 而 _e_r",
+								},
+								{
+									phoneme: "A",
+									category: "vowel",
+									example: "狼 l_a_ng",
+								},
+								{
+									phoneme: "o",
+									category: "vowel",
+									example: "我 w_o_",
+								},
+								{
+									phoneme: "@",
+									category: "vowel",
+									example: "碰 p_e_ng",
+								},
+								{
+									phoneme: "e",
+									category: "vowel",
+									example: "黑 h_e_i",
+								},
+								{
+									phoneme: "7",
+									category: "vowel",
+									example: "的 d_e_",
+								},
+								{
+									phoneme: "U",
+									category: "vowel",
+									example: "从 c_o_ng",
+								},
+								{
+									phoneme: "u",
+									category: "vowel",
+									example: "无 _wu_",
+								},
+								{
+									phoneme: "i",
+									category: "vowel",
+									example: "伊 y_i_",
+								},
+								{
+									phoneme: "i\\",
+									category: "vowel",
+									example: "丝 s_i_",
+								},
+								{
+									phoneme: "i`",
+									category: "vowel",
+									example: "是 sh_i_",
+								},
+								{
+									phoneme: "y",
+									category: "vowel",
+									example: "雨 _yu_",
+								},
+								{
+									phoneme: "AU",
+									category: "diphthong",
+									example: "好 h_ao_",
+								},
+								{
+									phoneme: "@U",
+									category: "diphthong",
+									example: "都 d_ou_",
+								},
+								{
+									phoneme: "ia",
+									category: "diphthong",
+									example: "家 j_ia_",
+								},
+								{
+									phoneme: "iA",
+									category: "diphthong",
+									example: "将 j_ia_ng",
+								},
+								{
+									phoneme: "iAU",
+									category: "diphthong",
+									example: "小 x_iao_",
+								},
+								{
+									phoneme: "ie",
+									category: "diphthong",
+									example: "谢 x_ie_",
+								},
+								{
+									phoneme: "iE",
+									category: "diphthong",
+									example: "先 x_ia_n",
+								},
+								{
+									phoneme: "iU",
+									category: "diphthong",
+									example: "穹 q_io_ng",
+								},
+								{
+									phoneme: "i@U",
+									category: "diphthong",
+									example: "袖 x_iu_",
+								},
+								{
+									phoneme: "y{",
+									category: "diphthong",
+									example: "元 y_ua_n",
+								},
+								{
+									phoneme: "yE",
+									category: "diphthong",
+									example: "学 x_ue_",
+								},
+								{
+									phoneme: "ua",
+									category: "diphthong",
+									example: "花 h_ua_",
+								},
+								{
+									phoneme: "uA",
+									category: "diphthong",
+									example: "黄 h_ua_ng",
+								},
+								{
+									phoneme: "u@",
+									category: "diphthong",
+									example: "顺 sh_u_n",
+								},
+								{
+									phoneme: "ue",
+									category: "diphthong",
+									example: "对 d_u_i",
+								},
+								{
+									phoneme: "uo",
+									category: "diphthong",
+									example: "多 d_uo_",
+								},
+								{
+									phoneme: "z`",
+									category: "semivowel",
+									example: "日 _r_i",
+								},
+								{
+									phoneme: "w",
+									category: "semivowel",
+									example: "网 _w_ang",
+								},
+								{
+									phoneme: "j",
+									category: "semivowel",
+									example: "用 _y_ong",
+								},
+							],
+						},
+						{
+							section_name: {
+								zh: "辅音、尾音",
+								en: "Consonants and Codas",
+								jp: "子音、尾音",
+							},
+							section_items: [
+								{
+									phoneme: ":\\i",
+									category: "coda",
+									example: "还 ha_i_",
+								},
+								{
+									phoneme: "r\\`",
+									category: "coda",
+									example: "而 e_r_",
+								},
+								{
+									phoneme: ":n",
+									category: "coda",
+									example: "岸 a_n_",
+								},
+								{
+									phoneme: "N",
+									category: "coda",
+									example: "从 co_ng_",
+								},
+								{
+									phoneme: "p",
+									category: "stop",
+									example: "并 _b_ing",
+								},
+								{
+									phoneme: "ph",
+									category: "stop",
+									example: "平 _p_ing",
+								},
+								{
+									phoneme: "t",
+									category: "stop",
+									example: "带 _d_ai",
+								},
+								{
+									phoneme: "th",
+									category: "stop",
+									example: "同 _t_ong",
+								},
+								{
+									phoneme: "k",
+									category: "stop",
+									example: "给 _g_ei",
+								},
+								{
+									phoneme: "kh",
+									category: "stop",
+									example: "开 _k_ai",
+								},
+								{
+									phoneme: "ts\\",
+									category: "affricate",
+									example: "几 _j_i",
+								},
+								{
+									phoneme: "ts",
+									category: "affricate",
+									example: "子 _z_i",
+								},
+								{
+									phoneme: "tsh",
+									category: "affricate",
+									example: "从 _c_ong",
+								},
+								{
+									phoneme: "ts`",
+									category: "affricate",
+									example: "只 _zh_i",
+								},
+								{
+									phoneme: "ts`h",
+									category: "affricate",
+									example: "尘 _ch_en",
+								},
+								{
+									phoneme: "x",
+									category: "aspirate",
+									example: "好 _h_ao",
+								},
+								{
+									phoneme: "f",
+									category: "fricative",
+									example: "风 _f_eng",
+								},
+								{
+									phoneme: "s",
+									category: "fricative",
+									example: "三 _s_an",
+								},
+								{
+									phoneme: "s`",
+									category: "fricative",
+									example: "是 _sh_i",
+								},
+								{
+									phoneme: "ts\\h",
+									category: "fricative",
+									example: "七 _q_i",
+								},
+								{
+									phoneme: "s\\",
+									category: "fricative",
+									example: "星 _x_ing",
+								},
+								{
+									phoneme: "m",
+									category: "nasal",
+									example: "吗 _m_a",
+								},
+								{
+									phoneme: "n",
+									category: "nasal",
+									example: "女 _n_v",
+								},
+								{
+									phoneme: "l",
+									category: "liquid",
+									example: "来 _l_ai",
+								},
+							],
+						},
+					],
+				},
+				{
+					group_name: {
+						key: "CantoneseChineseXSAMPA",
+						en: "Cantonese Chinese - XSAMPA",
+						zh: "汉语广东话 - XSAMPA",
+						jp: "広東語 - XSAMPA",
+					},
+					sections: [
+						{
+							section_name: {
+								en: "Vowels and Semivowels",
+								zh: "元音、半元音",
+								jp: "母音、半母音",
+							},
+							section_items: [
+								{
+									phoneme: "a",
+									category: "vowel",
+									example: "责 z_aa_k",
+								},
+								{
+									phoneme: "6",
+									category: "vowel",
+									example: "周 z_a_u",
+								},
+								{
+									phoneme: "E",
+									category: "vowel",
+									example: "些 s_e_",
+								},
+								{
+									phoneme: "e",
+									category: "vowel",
+									example: "伾 p_e_i",
+								},
+								{
+									phoneme: "i",
+									category: "vowel",
+									example: "兒 j_i_",
+								},
+								{
+									phoneme: "l",
+									category: "vowel",
+									example: "升 s_i_ng",
+								},
+								{
+									phoneme: "O",
+									category: "vowel",
+									example: "开 h_o_i",
+								},
+								{
+									phoneme: "o",
+									category: "vowel",
+									example: "數 s_o_u",
+								},
+								{
+									phoneme: "u",
+									category: "vowel",
+									example: "潰 k_u_i",
+								},
+								{
+									phoneme: "U",
+									category: "vowel",
+									example: "用 j_u_ng",
+								},
+								{
+									phoneme: "9",
+									category: "vowel",
+									example: "约 j_oe_k",
+								},
+								{
+									phoneme: "8",
+									category: "vowel",
+									example: "摔 s_eo_t",
+								},
+								{
+									phoneme: "y",
+									category: "vowel",
+									example: "雪 s_yu_t",
+								},
+								{
+									phoneme: "m=",
+									category: "vowel",
+									example: "唔 _m_",
+								},
+								{
+									phoneme: "N=",
+									category: "vowel",
+									example: "五 _ng_",
+								},
+								{
+									phoneme: "w",
+									category: "semivowel",
+									example: "泳 _w_ing",
+								},
+								{
+									phoneme: "j",
+									category: "semivowel",
+									example: "一 _j_at",
+								},
+							],
+						},
+						{
+							section_name: {
+								zh: "辅音、尾音",
+								en: "Consonants and Codas",
+								jp: "子音、尾音",
+							},
+							section_items: [
+								{
+									phoneme: "p",
+									category: "stop",
+									example: "不 _b_at",
+								},
+								{
+									phoneme: "ph",
+									category: "stop",
+									example: "伾 _p_ei",
+								},
+								{
+									phoneme: "t",
+									category: "stop",
+									example: "代 _d_oi",
+								},
+								{
+									phoneme: "th",
+									category: "stop",
+									example: "秃 _t_uk",
+								},
+								{
+									phoneme: "k",
+									category: "stop",
+									example: "九 _g_au",
+								},
+								{
+									phoneme: "kh",
+									category: "stop",
+									example: "期 _k_ei",
+								},
+								{
+									phoneme: "kw",
+									category: "stop",
+									example: "瓜 _gw_aa",
+								},
+								{
+									phoneme: "kwh",
+									category: "stop",
+									example: "夸 _kw_aa",
+								},
+								{
+									phoneme: "ts",
+									category: "affricate",
+									example: "自 _z_i",
+								},
+								{
+									phoneme: "tsh",
+									category: "affricate",
+									example: "次 _c_i",
+								},
+								{
+									phoneme: "f",
+									category: "fricative",
+									example: "风 _f_ung",
+								},
+								{
+									phoneme: "h",
+									category: "fricative",
+									example: "可 _h_o",
+								},
+								{
+									phoneme: "s",
+									category: "fricative",
+									example: "雪 _s_yut",
+								},
+								{
+									phoneme: "l",
+									category: "liquid",
+									example: "哩 _l_e",
+								},
+								{
+									phoneme: "m",
+									category: "nasal",
+									example: "茗 _m_ing",
+								},
+								{
+									phoneme: "n",
+									category: "nasal",
+									example: "年 _n_in",
+								},
+								{
+									phoneme: "N",
+									category: "nasal",
+									example: "外 _ng_oi",
+								},
+								{
+									phoneme: ":i",
+									category: "coda",
+									example: "女 neo_i_",
+								},
+								{
+									phoneme: ":u",
+									category: "coda",
+									example: "好 ho_u_",
+								},
+								{
+									phoneme: ":m",
+									category: "coda",
+									example: "闪 si_m_",
+								},
+								{
+									phoneme: ":n",
+									category: "coda",
+									example: "新 sa_n_",
+								},
+								{
+									phoneme: ":N",
+									category: "coda",
+									example: "风 fu_ng_",
+								},
+								{
+									phoneme: ":p_}",
+									category: "coda",
+									example: "汁 za_p_",
+								},
+								{
+									phoneme: ":t_}",
+									category: "coda",
+									example: "雪 syu_t_",
+								},
+								{
+									phoneme: ":k_}",
+									category: "coda",
+									example: "责 zaa_k_",
+								},
+							],
+						},
+					],
+				},
+				{
+					group_name: {
+						key: "SpanishXSAMPA",
+						en: "Spanish - XSAMPA",
+						zh: "西班牙语 - XSAMPA",
+						jp: "スペイン語 - XSAMPA",
+					},
+					sections: [
+						{
+							section_name: {
+								en: "Vowels and Semivowels",
+								zh: "元音、半元音",
+								jp: "母音、半母音",
+							},
+							section_items: [
+								{
+									phoneme: "a",
+									category: "vowel",
+									example: "p_a_z",
+								},
+								{
+									phoneme: "e",
+									category: "vowel",
+									example: "qu_e_",
+								},
+								{
+									phoneme: "i",
+									category: "vowel",
+									example: "s_i_n",
+								},
+								{
+									phoneme: "o",
+									category: "vowel",
+									example: "v_o_z",
+								},
+								{
+									phoneme: "u",
+									category: "vowel",
+									example: "_u_no",
+								},
+								{
+									phoneme: "I",
+									category: "semivowel",
+									example: "ho_y_",
+								},
+								{
+									phoneme: "U",
+									category: "semivowel",
+									example: "a_u_la",
+								},
+								{
+									phoneme: "ll",
+									category: "semivowel",
+									example: "_ll_uvia",
+								},
+								{
+									phoneme: "y",
+									category: "semivowel",
+									example: "a_y_uno",
+								},
+
+							],
+						},
+						{
+							section_name: {
+								zh: "辅音",
+								en: "Consonants",
+								jp: "子音",
+							},
+							section_items: [
+								{
+									phoneme: "b",
+									category: "stop",
+									example: "_v_idrio",
+								},
+								{
+									phoneme: "B",
+									category: "stop",
+									example: "o_b_tuso",
+								},
+								{
+									phoneme: "d",
+									category: "stop",
+									example: "_d_ía",
+								},
+								{
+									phoneme: "D",
+									category: "stop",
+									example: "ca_d_a",
+								},
+								{
+									phoneme: "g",
+									category: "stop",
+									example: "_g_ato",
+								},
+								{
+									phoneme: "k",
+									category: "stop",
+									example: "_c_ada",
+								},
+								{
+									phoneme: "p",
+									category: "stop",
+									example: "_p_or",
+								},
+								{
+									phoneme: "t",
+									category: "stop",
+									example: "_t_arde",
+								},
+								{
+									phoneme: "l",
+									category: "liquid",
+									example: "_l_ona",
+								},
+								{
+									phoneme: "rr",
+									category: "liquid",
+									example: "_r_atón",
+								},
+								{
+									phoneme: "r",
+									category: "liquid",
+									example: "tene_r_",
+								},
+								{
+									phoneme: "m",
+									category: "nasal",
+									example: "_m_úsica",
+								},
+								{
+									phoneme: "n",
+									category: "nasal",
+									example: "_n_o",
+								},
+								{
+									phoneme: "N",
+									category: "nasal",
+									example: "ci_n_co",
+								},
+								{
+									phoneme: "J",
+									category: "nasal",
+									example: "a_ñ_o",
+								},
+								{
+									phoneme: "f",
+									category: "fricative",
+									example: "_f_oto",
+								},
+								{
+									phoneme: "s",
+									category: "fricative",
+									example: "_s_ol",
+								},
+								{
+									phoneme: "C",
+									category: "fricative",
+									example: "can_c_ión<sup>*</sup> <br /> *European Pronunciation",
+								},
+								{
+									phoneme: "sh",
+									category: "fricative",
+									example: "_X_ela",
+								},
+								{
+									phoneme: "ch",
+									category: "affricate",
+									example: "_ch_ica",
+								},
+								{
+									phoneme: "x",
+									category: "fricative",
+									example: "_j_amón",
+								},
+							],
+						},
+					],
+				},
+				{
+					group_name: {
+						key: "KoreanXSAMPA",
+						en: "Korean - XSAMPA",
+						zh: "韩语 - XSAMPA",
+						jp: "韓国語 - XSAMPA",
+					},
+					sections: [
+						{
+							section_name: {
+								en: "Vowels and Semivowels",
+								zh: "元音、半元音",
+								jp: "母音、半母音",
+							},
+							section_items: [
+								{
+									phoneme: "6",
+									category: "vowel",
+									example: "사랑 S_a_rang",
+								},
+								{
+									phoneme: "e_o",
+									category: "vowel",
+									example: "세상 S_e_sang",
+								},
+								{
+									phoneme: "i",
+									category: "vowel",
+									example: "기쁨 g_i_ppeum",
+								},
+								{
+									phoneme: "M",
+									category: "vowel",
+									example: "그림 g_eu_rim",
+								},
+								{
+									phoneme: "o",
+									category: "vowel",
+									example: "소리 s_o_ri",
+								},
+								{
+									phoneme: "V",
+									category: "vowel",
+									example: "머리 m_eo_ri",
+								},
+								{
+									phoneme: "w",
+									category: "semivowel",
+									example: "좌석 j_w_aseok",
+								},
+								{
+									phoneme: "M_",
+									category: "semivowel",
+									example: "의리 _u_iri",
+								},
+								{
+									phoneme: "j",
+									category: "semivowel",
+									example: "유리 _y_uri",
+								},
+							],
+						},
+						{
+							section_name: {
+								zh: "辅音、尾音",
+								en: "Consonants and Codas",
+								jp: "子音、尾音",
+							},
+							section_items: [
+								{
+									phoneme: "4",
+									category: "liquid",
+									example: "라면 _r_amyeon",
+								},
+								{
+									phoneme: "b",
+									category: "stop",
+									example: "박자 _b_akja",
+								},
+								{
+									phoneme: "d",
+									category: "stop",
+									example: "다리 _d_ari",
+								},
+								{
+									phoneme: "g",
+									category: "stop",
+									example: "국자 _g_ukja",
+								},
+								{
+									phoneme: "h",
+									category: "fricative",
+									example: "하나 _h_ana",
+								},
+								{
+									phoneme: "ts\\h ",
+									category: "affricate",
+									example: "찐빵 _jj_inppang",
+								},
+								{
+									phoneme: "k",
+									category: "stop",
+									example: "코 _k_o",
+								},
+								{
+									phoneme: "k_t",
+									category: "stop",
+									example: "꼬리 _kk_ori",
+								},
+								{
+									phoneme: "l",
+									category: "liquid",
+									example: "물 mu_l_",
+								},
+								{
+									phoneme: "m",
+									category: "nasal",
+									example: "마음 _m_aeum",
+								},
+								{
+									phoneme: "n",
+									category: "nasal",
+									example: "나비 _n_abi",
+								},
+								{
+									phoneme: "N",
+									category: "coda",
+									example: "빵 ppang",
+								},
+								{
+									phoneme: "p",
+									category: "stop",
+									example: "파도 _p_ado",
+								},
+								{
+									phoneme: "pp",
+									category: "stop",
+									example: "뿌리 _pp_uri",
+								},
+								{
+									phoneme: "s",
+									category: "fricative",
+									example: "선물 _s_eonmul",
+								},
+								{
+									phoneme: "s_t",
+									category: "fricative",
+									example: "쓰다 _ss_euda",
+								},
+								{
+									phoneme: "t",
+									category: "stop",
+									example: "통 _t_ong",
+								},
+								{
+									phoneme: "tt",
+									category: "stop",
+									example: "똑딱 _tt_okttak",
+								},
+								{
+									phoneme: "ts\\_h",
+									category: "affricate",
+									example: "추위 _ch_uwi",
+								},
+							],
+						},
+					],
+				},
+				{
+					group_name: {
+						key: "CommonPhonemes",
+						en: "Common phonemes",
+						zh: "常用音素",
+						jp: "一般的な音素",
+					},
+					sections: [
+						{
+							section_name: {
+								en: "",
+								zh: "",
+								jp: "",
+							},
+							section_items: [
+								{
+									phoneme: "cl",
+									desc: {
+										en: "glottal stop",
+										zh: "喉塞音",
+										jp: "声門閉鎖音",
+									},
+								},
+								{
+									phoneme: "sil",
+									desc: {
+										en: "silence _(highly situative)_",
+										zh: "静音 _(高度情境依赖)_",
+										jp: "無音 _(前後の発音により変化)_",
+									},
+								},
+								{
+									phoneme: "br",
+									desc: {
+										en: "breath",
+										zh: "呼吸",
+										jp: "息",
+									},
+								},
+							],
+						},
+					],
+				},
+				{
+					group_name: {
+						en: "STD-exclusive",
+						zh: "STD独占",
+						jp: "STD独占",
+					},
+					sections: [
+						{
+							phoneme: "br1",
+							desc: "breath",
+						},
+						{
+							phoneme: "br2",
+							desc: "breath",
+						},
+						{
+							phoneme: "brl1",
+							desc: "long breath",
+						},
+						{
+							phoneme: "brl2",
+							desc: "long breath",
+						},
+					],
+					footer_notes: "* supported only by specific voice",
+				},
+			],
+		},
+	}
+}
