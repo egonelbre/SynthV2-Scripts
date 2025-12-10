@@ -16,6 +16,7 @@ function getClientInfo() {
 	return {
 		"name": SV.T(SCRIPT_TITLE),
 		"author": "Egon Elbre",
+		"category": "Estonian",
 		"versionNumber": 1,
 		"minEditorVersion": 65537
 	};

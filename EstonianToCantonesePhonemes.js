@@ -18,6 +18,7 @@ function getClientInfo() {
 	return {
 		"name": SV.T(SCRIPT_TITLE),
 		"author": "Egon Elbre",
+		"category": "Estonian",
 		"versionNumber": 1,
 		"minEditorVersion": 65537
 	};
@@ -73,7 +74,7 @@ function processNotes(notes, group, options, groupRef) {
 	for (var i = 0; i < notes.length; i++) {
 		var note = notes[i];
 		var lyrics = note.getLyrics();
-		
+
 		// Skip special markers and silence
 		if (lyrics == "-" || lyrics == "+" || lyrics == "sil" || lyrics == "br" || lyrics == "SP" || lyrics == "AP") {
 			continue;
@@ -92,15 +93,15 @@ function processNotes(notes, group, options, groupRef) {
 // Estonian to Cantonese phoneme conversion
 function estonianToCantonesePhonemes(word) {
 	if (!word) return "";
-	
+
 	var phonemes = [];
 	var i = 0;
-	
+
 	while (i < word.length) {
 		var char = word[i];
 		var nextChar = i + 1 < word.length ? word[i + 1] : "";
 		var prevChar = i > 0 ? word[i - 1] : "";
-		
+
 		// Consonants - mapped to Cantonese initials
 		if (char == 'h') {
 			phonemes.push('h');
@@ -210,7 +211,7 @@ function estonianToCantonesePhonemes(word) {
 			phonemes.push('w');
 			i++;
 		}
-		
+
 		// Vowels - mapped to Cantonese vowels
 		else if (char == 'a') {
 			// Check for long vowel
@@ -302,14 +303,14 @@ function estonianToCantonesePhonemes(word) {
 				phonemes.push('y');
 				i++;
 			}
-		} 
-		
+		}
+
 		// Skip unknown characters
 		else {
 			i++;
 		}
 	}
-	
+
 	return phonemes.join(' ');
 }
 
