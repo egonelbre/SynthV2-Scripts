@@ -28,11 +28,11 @@ const SCRIPT_TITLE = "German Phonemes (Adaptive)";
 
 function getClientInfo() {
 	return {
-		"name": SV.T(SCRIPT_TITLE),
-		"author": "Egon Elbre",
-		"category": "German",
-		"versionNumber": 1,
-		"minEditorVersion": 65537
+		name: SV.T(SCRIPT_TITLE),
+		author: "Egon Elbre",
+		category: "Language",
+		versionNumber: 1,
+		minEditorVersion: 65537,
 	};
 }
 
@@ -42,26 +42,26 @@ function getTranslations(langCode) {
 
 function main() {
 	var form = {
-		"title": SV.T(SCRIPT_TITLE),
-		"buttons": "OkCancel",
-		"widgets": [
+		title: SV.T(SCRIPT_TITLE),
+		buttons: "OkCancel",
+		widgets: [
 			{
-				"name": "scope",
-				"type": "ComboBox",
-				"label": SV.T("Scope"),
-				"choices": [
+				name: "scope",
+				type: "ComboBox",
+				label: SV.T("Scope"),
+				choices: [
 					SV.T("Selected Notes"),
 					SV.T("Current Track"),
-					SV.T("Entire Project")
+					SV.T("Entire Project"),
 				],
-				"default": hasSelectedNotes() ? 0 : 2
+				default: hasSelectedNotes() ? 0 : 2,
 			},
 			{
-				"name": "show_language",
-				"type": "CheckBox",
-				"label": SV.T("Show language selection info"),
-				"default": false
-			}
+				name: "show_language",
+				type: "CheckBox",
+				label: SV.T("Show language selection info"),
+				default: false,
+			},
 		],
 	};
 
@@ -95,7 +95,7 @@ function processNotes(notes, group, options, groupRef) {
 		japanese: 0,
 		english: 0,
 		korean: 0,
-		spanish: 0
+		spanish: 0,
 	};
 
 	for (var i = 0; i < notes.length; i++) {
@@ -103,7 +103,14 @@ function processNotes(notes, group, options, groupRef) {
 		var lyrics = note.getLyrics();
 
 		// Skip special markers and silence
-		if (lyrics == "-" || lyrics == "+" || lyrics == "sil" || lyrics == "br" || lyrics == "SP" || lyrics == "AP") {
+		if (
+			lyrics == "-" ||
+			lyrics == "+" ||
+			lyrics == "sil" ||
+			lyrics == "br" ||
+			lyrics == "SP" ||
+			lyrics == "AP"
+		) {
 			continue;
 		}
 
@@ -117,7 +124,7 @@ function processNotes(notes, group, options, groupRef) {
 		note.setLanguageOverride(selectedLang);
 
 		var phonemes = "";
-		switch(selectedLang) {
+		switch (selectedLang) {
 			case "mandarin":
 				phonemes = germanToMandarinPhonemes(wordLower);
 				break;
@@ -159,28 +166,28 @@ function processNotes(notes, group, options, groupRef) {
 // Analyze word and select best language for phoneme conversion
 function selectBestLanguage(word) {
 	// Priority 1: Words with ü → Mandarin (exact 'y' phoneme match)
-	if (word.indexOf('ü') >= 0) {
+	if (word.indexOf("ü") >= 0) {
 		return "mandarin";
 	}
 
 	// Priority 2: Words with ö → Cantonese (best '9' approximation)
-	if (word.indexOf('ö') >= 0) {
+	if (word.indexOf("ö") >= 0) {
 		return "cantonese";
 	}
 
 	// Priority 3: Check for "ch" sound type
 	// ach-Laut (after a, o, u, au) → Spanish x [x]
 	// ich-Laut (after i, e, ä, ö, ü, consonants, or initial) → Japanese h
-	if (word.indexOf('ch') >= 0) {
-		var chIndex = word.indexOf('ch');
+	if (word.indexOf("ch") >= 0) {
+		var chIndex = word.indexOf("ch");
 		if (chIndex > 0) {
 			var prevChar = word[chIndex - 1];
 			// Check for ach-Laut contexts
-			if (prevChar == 'a' || prevChar == 'o' || prevChar == 'u') {
+			if (prevChar == "a" || prevChar == "o" || prevChar == "u") {
 				return "spanish";
 			}
 			// Check for "au" before ch
-			if (chIndex > 1 && word[chIndex - 2] == 'a' && prevChar == 'u') {
+			if (chIndex > 1 && word[chIndex - 2] == "a" && prevChar == "u") {
 				return "spanish";
 			}
 		}
@@ -189,12 +196,12 @@ function selectBestLanguage(word) {
 	}
 
 	// Priority 4: Words with ä → Cantonese (good 'E' match)
-	if (word.indexOf('ä') >= 0) {
+	if (word.indexOf("ä") >= 0) {
 		return "cantonese";
 	}
 
 	// Priority 5: Words with r → Korean (good flap/tap R)
-	if (word.indexOf('r') >= 0) {
+	if (word.indexOf("r") >= 0) {
 		return "korean";
 	}
 
@@ -211,7 +218,7 @@ function hasOnlyBasicVowels(word) {
 	// Check if word only contains basic vowels (no German umlauts)
 	for (var i = 0; i < word.length; i++) {
 		var c = word[i];
-		if (c == 'ä' || c == 'ö' || c == 'ü') {
+		if (c == "ä" || c == "ö" || c == "ü") {
 			return false;
 		}
 	}
@@ -230,155 +237,155 @@ function germanToMandarinPhonemes(word) {
 		var nextNextChar = i + 2 < word.length ? word[i + 2] : "";
 
 		// German consonant clusters and special consonants
-		if (char == 's' && nextChar == 'c' && nextNextChar == 'h') {
+		if (char == "s" && nextChar == "c" && nextNextChar == "h") {
 			// sch → s` (sh sound)
-			phonemes.push('s`');
+			phonemes.push("s`");
 			i += 3;
-		} else if (char == 'c' && nextChar == 'h') {
+		} else if (char == "c" && nextChar == "h") {
 			// ch → x (aspirated)
-			phonemes.push('x');
+			phonemes.push("x");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'g') {
-			phonemes.push('N');
+		} else if (char == "n" && nextChar == "g") {
+			phonemes.push("N");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'k') {
-			phonemes.push('N', 'k');
+		} else if (char == "n" && nextChar == "k") {
+			phonemes.push("N", "k");
 			i += 2;
-		} else if (char == 'p' && nextChar == 'f') {
-			phonemes.push('p', 'f');
+		} else if (char == "p" && nextChar == "f") {
+			phonemes.push("p", "f");
 			i += 2;
-		} else if (char == 'q' && nextChar == 'u') {
-			phonemes.push('k', 'w');
+		} else if (char == "q" && nextChar == "u") {
+			phonemes.push("k", "w");
 			i += 2;
-		} else if (char == 't' && nextChar == 's') {
-			phonemes.push('ts');
+		} else if (char == "t" && nextChar == "s") {
+			phonemes.push("ts");
 			i += 2;
-		} else if (char == 's' && nextChar == 't') {
+		} else if (char == "s" && nextChar == "t") {
 			// st at beginning often pronounced sht
-			phonemes.push('s`', 't');
+			phonemes.push("s`", "t");
 			i += 2;
-		} else if (char == 's' && nextChar == 'p') {
+		} else if (char == "s" && nextChar == "p") {
 			// sp at beginning often pronounced shp
-			phonemes.push('s`', 'p');
+			phonemes.push("s`", "p");
 			i += 2;
-		} else if (char == 's' && nextChar == 's') {
-			phonemes.push('s', 's');
+		} else if (char == "s" && nextChar == "s") {
+			phonemes.push("s", "s");
 			i += 2;
-		} else if (char == 'ß') {
-			phonemes.push('s');
+		} else if (char == "ß") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 'z') {
+		} else if (char == "z") {
 			// German z = ts
-			phonemes.push('ts');
+			phonemes.push("ts");
 			i++;
-		} else if (char == 'w') {
+		} else if (char == "w") {
 			// German w = v sound
-			phonemes.push('w');
+			phonemes.push("w");
 			i++;
-		} else if (char == 'v') {
+		} else if (char == "v") {
 			// German v often = f, sometimes v
-			phonemes.push('f');
+			phonemes.push("f");
 			i++;
-		} else if (char == 'j') {
-			phonemes.push('j');
+		} else if (char == "j") {
+			phonemes.push("j");
 			i++;
-		} else if (char == 'h') {
-			phonemes.push('x');
+		} else if (char == "h") {
+			phonemes.push("x");
 			i++;
-		} else if (char == 'l') {
-			phonemes.push('l');
+		} else if (char == "l") {
+			phonemes.push("l");
 			i++;
-		} else if (char == 'm') {
-			phonemes.push('m');
+		} else if (char == "m") {
+			phonemes.push("m");
 			i++;
-		} else if (char == 'n') {
-			phonemes.push('n');
+		} else if (char == "n") {
+			phonemes.push("n");
 			i++;
-		} else if (char == 'r') {
-			phonemes.push('r\\`');
+		} else if (char == "r") {
+			phonemes.push("r\\`");
 			i++;
-		} else if (char == 's') {
-			phonemes.push('s');
+		} else if (char == "s") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 't') {
-			phonemes.push('t');
+		} else if (char == "t") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'p') {
-			phonemes.push('p');
+		} else if (char == "p") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'k') {
-			phonemes.push('k');
+		} else if (char == "k") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'b') {
-			phonemes.push('p');
+		} else if (char == "b") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'd') {
-			phonemes.push('t');
+		} else if (char == "d") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'g') {
-			phonemes.push('k');
+		} else if (char == "g") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'f') {
-			phonemes.push('f');
+		} else if (char == "f") {
+			phonemes.push("f");
 			i++;
 		}
 		// German diphthongs
-		else if (char == 'e' && nextChar == 'i') {
+		else if (char == "e" && nextChar == "i") {
 			// ei → ai
-			phonemes.push('a', 'i');
+			phonemes.push("a", "i");
 			i += 2;
-		} else if (char == 'i' && nextChar == 'e') {
+		} else if (char == "i" && nextChar == "e") {
 			// ie → long i
-			phonemes.push('i', 'i');
+			phonemes.push("i", "i");
 			i += 2;
-		} else if (char == 'e' && nextChar == 'u') {
+		} else if (char == "e" && nextChar == "u") {
 			// eu → oi
-			phonemes.push('o', 'i');
+			phonemes.push("o", "i");
 			i += 2;
-		} else if (char == 'ä' && nextChar == 'u') {
+		} else if (char == "ä" && nextChar == "u") {
 			// äu → oi
-			phonemes.push('o', 'i');
+			phonemes.push("o", "i");
 			i += 2;
-		} else if (char == 'a' && nextChar == 'u') {
+		} else if (char == "a" && nextChar == "u") {
 			// au → au
-			phonemes.push('a', 'u');
+			phonemes.push("a", "u");
 			i += 2;
 		}
 		// German vowels
-		else if (char == 'a') {
-			phonemes.push('a');
+		else if (char == "a") {
+			phonemes.push("a");
 			i++;
-		} else if (char == 'e') {
-			phonemes.push('e');
+		} else if (char == "e") {
+			phonemes.push("e");
 			i++;
-		} else if (char == 'i') {
-			phonemes.push('i');
+		} else if (char == "i") {
+			phonemes.push("i");
 			i++;
-		} else if (char == 'o') {
-			phonemes.push('o');
+		} else if (char == "o") {
+			phonemes.push("o");
 			i++;
-		} else if (char == 'u') {
-			phonemes.push('u');
+		} else if (char == "u") {
+			phonemes.push("u");
 			i++;
-		} else if (char == 'ä') {
-			phonemes.push('A');
+		} else if (char == "ä") {
+			phonemes.push("A");
 			i++;
-		} else if (char == 'ö') {
-			phonemes.push('@');
+		} else if (char == "ö") {
+			phonemes.push("@");
 			i++;
-		} else if (char == 'ü') {
+		} else if (char == "ü") {
 			// Exact match - front rounded vowel
-			phonemes.push('y');
+			phonemes.push("y");
 			i++;
-		} else if (char == 'y') {
-			phonemes.push('y');
+		} else if (char == "y") {
+			phonemes.push("y");
 			i++;
 		} else {
 			i++;
 		}
 	}
 
-	return phonemes.join(' ');
+	return phonemes.join(" ");
 }
 
 // ==================== CANTONESE PHONEME CONVERSION ====================
@@ -393,138 +400,138 @@ function germanToCantonesePhonemes(word) {
 		var nextNextChar = i + 2 < word.length ? word[i + 2] : "";
 
 		// German consonant clusters
-		if (char == 's' && nextChar == 'c' && nextNextChar == 'h') {
-			phonemes.push('s');
+		if (char == "s" && nextChar == "c" && nextNextChar == "h") {
+			phonemes.push("s");
 			i += 3;
-		} else if (char == 'c' && nextChar == 'h') {
-			phonemes.push('h');
+		} else if (char == "c" && nextChar == "h") {
+			phonemes.push("h");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'g') {
-			phonemes.push('N');
+		} else if (char == "n" && nextChar == "g") {
+			phonemes.push("N");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'k') {
-			phonemes.push('N', 'k');
+		} else if (char == "n" && nextChar == "k") {
+			phonemes.push("N", "k");
 			i += 2;
-		} else if (char == 'p' && nextChar == 'f') {
-			phonemes.push('p', 'f');
+		} else if (char == "p" && nextChar == "f") {
+			phonemes.push("p", "f");
 			i += 2;
-		} else if (char == 'q' && nextChar == 'u') {
-			phonemes.push('k', 'w');
+		} else if (char == "q" && nextChar == "u") {
+			phonemes.push("k", "w");
 			i += 2;
-		} else if (char == 't' && nextChar == 's') {
-			phonemes.push('ts');
+		} else if (char == "t" && nextChar == "s") {
+			phonemes.push("ts");
 			i += 2;
-		} else if (char == 's' && nextChar == 's') {
-			phonemes.push('s', 's');
+		} else if (char == "s" && nextChar == "s") {
+			phonemes.push("s", "s");
 			i += 2;
-		} else if (char == 'ß') {
-			phonemes.push('s');
+		} else if (char == "ß") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 'z') {
-			phonemes.push('ts');
+		} else if (char == "z") {
+			phonemes.push("ts");
 			i++;
-		} else if (char == 'w') {
-			phonemes.push('w');
+		} else if (char == "w") {
+			phonemes.push("w");
 			i++;
-		} else if (char == 'v') {
-			phonemes.push('f');
+		} else if (char == "v") {
+			phonemes.push("f");
 			i++;
-		} else if (char == 'j') {
-			phonemes.push('j');
+		} else if (char == "j") {
+			phonemes.push("j");
 			i++;
-		} else if (char == 'h') {
-			phonemes.push('h');
+		} else if (char == "h") {
+			phonemes.push("h");
 			i++;
-		} else if (char == 'l') {
-			phonemes.push('l');
+		} else if (char == "l") {
+			phonemes.push("l");
 			i++;
-		} else if (char == 'm') {
-			phonemes.push('m');
+		} else if (char == "m") {
+			phonemes.push("m");
 			i++;
-		} else if (char == 'n') {
-			phonemes.push('n');
+		} else if (char == "n") {
+			phonemes.push("n");
 			i++;
-		} else if (char == 'r') {
-			phonemes.push('l');
+		} else if (char == "r") {
+			phonemes.push("l");
 			i++;
-		} else if (char == 's') {
-			phonemes.push('s');
+		} else if (char == "s") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 't') {
-			phonemes.push('t');
+		} else if (char == "t") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'p') {
-			phonemes.push('p');
+		} else if (char == "p") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'k') {
-			phonemes.push('k');
+		} else if (char == "k") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'b') {
-			phonemes.push('p');
+		} else if (char == "b") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'd') {
-			phonemes.push('t');
+		} else if (char == "d") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'g') {
-			phonemes.push('k');
+		} else if (char == "g") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'f') {
-			phonemes.push('f');
+		} else if (char == "f") {
+			phonemes.push("f");
 			i++;
 		}
 		// German diphthongs
-		else if (char == 'e' && nextChar == 'i') {
-			phonemes.push('6', 'i');
+		else if (char == "e" && nextChar == "i") {
+			phonemes.push("6", "i");
 			i += 2;
-		} else if (char == 'i' && nextChar == 'e') {
-			phonemes.push('i', 'i');
+		} else if (char == "i" && nextChar == "e") {
+			phonemes.push("i", "i");
 			i += 2;
-		} else if (char == 'e' && nextChar == 'u') {
-			phonemes.push('O', 'i');
+		} else if (char == "e" && nextChar == "u") {
+			phonemes.push("O", "i");
 			i += 2;
-		} else if (char == 'ä' && nextChar == 'u') {
-			phonemes.push('O', 'i');
+		} else if (char == "ä" && nextChar == "u") {
+			phonemes.push("O", "i");
 			i += 2;
-		} else if (char == 'a' && nextChar == 'u') {
-			phonemes.push('a', 'u');
+		} else if (char == "a" && nextChar == "u") {
+			phonemes.push("a", "u");
 			i += 2;
 		}
 		// German vowels
-		else if (char == 'a') {
-			phonemes.push('a');
+		else if (char == "a") {
+			phonemes.push("a");
 			i++;
-		} else if (char == 'e') {
-			phonemes.push('e');
+		} else if (char == "e") {
+			phonemes.push("e");
 			i++;
-		} else if (char == 'i') {
-			phonemes.push('i');
+		} else if (char == "i") {
+			phonemes.push("i");
 			i++;
-		} else if (char == 'o') {
-			phonemes.push('o');
+		} else if (char == "o") {
+			phonemes.push("o");
 			i++;
-		} else if (char == 'u') {
-			phonemes.push('u');
+		} else if (char == "u") {
+			phonemes.push("u");
 			i++;
-		} else if (char == 'ä') {
+		} else if (char == "ä") {
 			// Good match - open front vowel
-			phonemes.push('E');
+			phonemes.push("E");
 			i++;
-		} else if (char == 'ö') {
+		} else if (char == "ö") {
 			// Best match - front rounded vowel
-			phonemes.push('9');
+			phonemes.push("9");
 			i++;
-		} else if (char == 'ü') {
-			phonemes.push('y');
+		} else if (char == "ü") {
+			phonemes.push("y");
 			i++;
-		} else if (char == 'y') {
-			phonemes.push('y');
+		} else if (char == "y") {
+			phonemes.push("y");
 			i++;
 		} else {
 			i++;
 		}
 	}
 
-	return phonemes.join(' ');
+	return phonemes.join(" ");
 }
 
 // ==================== JAPANESE PHONEME CONVERSION ====================
@@ -539,137 +546,137 @@ function germanToJapanesePhonemes(word) {
 		var nextNextChar = i + 2 < word.length ? word[i + 2] : "";
 
 		// German consonant clusters
-		if (char == 's' && nextChar == 'c' && nextNextChar == 'h') {
-			phonemes.push('sh');
+		if (char == "s" && nextChar == "c" && nextNextChar == "h") {
+			phonemes.push("sh");
 			i += 3;
-		} else if (char == 'c' && nextChar == 'h') {
+		} else if (char == "c" && nextChar == "h") {
 			// ich-Laut approximation
-			phonemes.push('h');
+			phonemes.push("h");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'g') {
-			phonemes.push('N', 'g');
+		} else if (char == "n" && nextChar == "g") {
+			phonemes.push("N", "g");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'k') {
-			phonemes.push('N', 'k');
+		} else if (char == "n" && nextChar == "k") {
+			phonemes.push("N", "k");
 			i += 2;
-		} else if (char == 'p' && nextChar == 'f') {
-			phonemes.push('p', 'f');
+		} else if (char == "p" && nextChar == "f") {
+			phonemes.push("p", "f");
 			i += 2;
-		} else if (char == 'q' && nextChar == 'u') {
-			phonemes.push('k', 'w');
+		} else if (char == "q" && nextChar == "u") {
+			phonemes.push("k", "w");
 			i += 2;
-		} else if (char == 't' && nextChar == 's') {
-			phonemes.push('ts');
+		} else if (char == "t" && nextChar == "s") {
+			phonemes.push("ts");
 			i += 2;
-		} else if (char == 's' && nextChar == 's') {
-			phonemes.push('s', 's');
+		} else if (char == "s" && nextChar == "s") {
+			phonemes.push("s", "s");
 			i += 2;
-		} else if (char == 'ß') {
-			phonemes.push('s');
+		} else if (char == "ß") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 'z') {
-			phonemes.push('ts');
+		} else if (char == "z") {
+			phonemes.push("ts");
 			i++;
-		} else if (char == 'w') {
-			phonemes.push('v');
+		} else if (char == "w") {
+			phonemes.push("v");
 			i++;
-		} else if (char == 'v') {
-			phonemes.push('f');
+		} else if (char == "v") {
+			phonemes.push("f");
 			i++;
-		} else if (char == 'j') {
-			phonemes.push('y');
+		} else if (char == "j") {
+			phonemes.push("y");
 			i++;
-		} else if (char == 'h') {
-			phonemes.push('h');
+		} else if (char == "h") {
+			phonemes.push("h");
 			i++;
-		} else if (char == 'l') {
-			phonemes.push('r');
+		} else if (char == "l") {
+			phonemes.push("r");
 			i++;
-		} else if (char == 'm') {
-			phonemes.push('m');
+		} else if (char == "m") {
+			phonemes.push("m");
 			i++;
-		} else if (char == 'n') {
-			phonemes.push('n');
+		} else if (char == "n") {
+			phonemes.push("n");
 			i++;
-		} else if (char == 'r') {
-			phonemes.push('r');
+		} else if (char == "r") {
+			phonemes.push("r");
 			i++;
-		} else if (char == 's') {
-			phonemes.push('s');
+		} else if (char == "s") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 't') {
-			phonemes.push('t');
+		} else if (char == "t") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'p') {
-			phonemes.push('p');
+		} else if (char == "p") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'k') {
-			phonemes.push('k');
+		} else if (char == "k") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'b') {
-			phonemes.push('b');
+		} else if (char == "b") {
+			phonemes.push("b");
 			i++;
-		} else if (char == 'd') {
-			phonemes.push('d');
+		} else if (char == "d") {
+			phonemes.push("d");
 			i++;
-		} else if (char == 'g') {
-			phonemes.push('g');
+		} else if (char == "g") {
+			phonemes.push("g");
 			i++;
-		} else if (char == 'f') {
-			phonemes.push('f');
+		} else if (char == "f") {
+			phonemes.push("f");
 			i++;
 		}
 		// German diphthongs
-		else if (char == 'e' && nextChar == 'i') {
-			phonemes.push('a', 'i');
+		else if (char == "e" && nextChar == "i") {
+			phonemes.push("a", "i");
 			i += 2;
-		} else if (char == 'i' && nextChar == 'e') {
-			phonemes.push('i', 'i');
+		} else if (char == "i" && nextChar == "e") {
+			phonemes.push("i", "i");
 			i += 2;
-		} else if (char == 'e' && nextChar == 'u') {
-			phonemes.push('o', 'i');
+		} else if (char == "e" && nextChar == "u") {
+			phonemes.push("o", "i");
 			i += 2;
-		} else if (char == 'ä' && nextChar == 'u') {
-			phonemes.push('o', 'i');
+		} else if (char == "ä" && nextChar == "u") {
+			phonemes.push("o", "i");
 			i += 2;
-		} else if (char == 'a' && nextChar == 'u') {
-			phonemes.push('a', 'u');
+		} else if (char == "a" && nextChar == "u") {
+			phonemes.push("a", "u");
 			i += 2;
 		}
 		// German vowels
-		else if (char == 'a') {
-			phonemes.push('a');
+		else if (char == "a") {
+			phonemes.push("a");
 			i++;
-		} else if (char == 'e') {
-			phonemes.push('e');
+		} else if (char == "e") {
+			phonemes.push("e");
 			i++;
-		} else if (char == 'i') {
-			phonemes.push('i');
+		} else if (char == "i") {
+			phonemes.push("i");
 			i++;
-		} else if (char == 'o') {
-			phonemes.push('o');
+		} else if (char == "o") {
+			phonemes.push("o");
 			i++;
-		} else if (char == 'u') {
-			phonemes.push('u');
+		} else if (char == "u") {
+			phonemes.push("u");
 			i++;
-		} else if (char == 'ä') {
-			phonemes.push('a');
+		} else if (char == "ä") {
+			phonemes.push("a");
 			i++;
-		} else if (char == 'ö') {
-			phonemes.push('o');
+		} else if (char == "ö") {
+			phonemes.push("o");
 			i++;
-		} else if (char == 'ü') {
-			phonemes.push('u');
+		} else if (char == "ü") {
+			phonemes.push("u");
 			i++;
-		} else if (char == 'y') {
-			phonemes.push('u');
+		} else if (char == "y") {
+			phonemes.push("u");
 			i++;
 		} else {
 			i++;
 		}
 	}
 
-	return phonemes.join(' ');
+	return phonemes.join(" ");
 }
 
 // ==================== ENGLISH PHONEME CONVERSION ====================
@@ -684,136 +691,136 @@ function germanToEnglishPhonemes(word) {
 		var nextNextChar = i + 2 < word.length ? word[i + 2] : "";
 
 		// German consonant clusters
-		if (char == 's' && nextChar == 'c' && nextNextChar == 'h') {
-			phonemes.push('sh');
+		if (char == "s" && nextChar == "c" && nextNextChar == "h") {
+			phonemes.push("sh");
 			i += 3;
-		} else if (char == 'c' && nextChar == 'h') {
-			phonemes.push('hh');
+		} else if (char == "c" && nextChar == "h") {
+			phonemes.push("hh");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'g') {
-			phonemes.push('ng');
+		} else if (char == "n" && nextChar == "g") {
+			phonemes.push("ng");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'k') {
-			phonemes.push('ng', 'k');
+		} else if (char == "n" && nextChar == "k") {
+			phonemes.push("ng", "k");
 			i += 2;
-		} else if (char == 'p' && nextChar == 'f') {
-			phonemes.push('p', 'f');
+		} else if (char == "p" && nextChar == "f") {
+			phonemes.push("p", "f");
 			i += 2;
-		} else if (char == 'q' && nextChar == 'u') {
-			phonemes.push('k', 'w');
+		} else if (char == "q" && nextChar == "u") {
+			phonemes.push("k", "w");
 			i += 2;
-		} else if (char == 't' && nextChar == 's') {
-			phonemes.push('t', 's');
+		} else if (char == "t" && nextChar == "s") {
+			phonemes.push("t", "s");
 			i += 2;
-		} else if (char == 's' && nextChar == 's') {
-			phonemes.push('s', 's');
+		} else if (char == "s" && nextChar == "s") {
+			phonemes.push("s", "s");
 			i += 2;
-		} else if (char == 'ß') {
-			phonemes.push('s');
+		} else if (char == "ß") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 'z') {
-			phonemes.push('t', 's');
+		} else if (char == "z") {
+			phonemes.push("t", "s");
 			i++;
-		} else if (char == 'w') {
-			phonemes.push('v');
+		} else if (char == "w") {
+			phonemes.push("v");
 			i++;
-		} else if (char == 'v') {
-			phonemes.push('f');
+		} else if (char == "v") {
+			phonemes.push("f");
 			i++;
-		} else if (char == 'j') {
-			phonemes.push('y');
+		} else if (char == "j") {
+			phonemes.push("y");
 			i++;
-		} else if (char == 'h') {
-			phonemes.push('hh');
+		} else if (char == "h") {
+			phonemes.push("hh");
 			i++;
-		} else if (char == 'l') {
-			phonemes.push('l');
+		} else if (char == "l") {
+			phonemes.push("l");
 			i++;
-		} else if (char == 'm') {
-			phonemes.push('m');
+		} else if (char == "m") {
+			phonemes.push("m");
 			i++;
-		} else if (char == 'n') {
-			phonemes.push('n');
+		} else if (char == "n") {
+			phonemes.push("n");
 			i++;
-		} else if (char == 'r') {
-			phonemes.push('r');
+		} else if (char == "r") {
+			phonemes.push("r");
 			i++;
-		} else if (char == 's') {
-			phonemes.push('s');
+		} else if (char == "s") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 't') {
-			phonemes.push('t');
+		} else if (char == "t") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'p') {
-			phonemes.push('p');
+		} else if (char == "p") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'k') {
-			phonemes.push('k');
+		} else if (char == "k") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'b') {
-			phonemes.push('b');
+		} else if (char == "b") {
+			phonemes.push("b");
 			i++;
-		} else if (char == 'd') {
-			phonemes.push('d');
+		} else if (char == "d") {
+			phonemes.push("d");
 			i++;
-		} else if (char == 'g') {
-			phonemes.push('g');
+		} else if (char == "g") {
+			phonemes.push("g");
 			i++;
-		} else if (char == 'f') {
-			phonemes.push('f');
+		} else if (char == "f") {
+			phonemes.push("f");
 			i++;
 		}
 		// German diphthongs
-		else if (char == 'e' && nextChar == 'i') {
-			phonemes.push('ay');
+		else if (char == "e" && nextChar == "i") {
+			phonemes.push("ay");
 			i += 2;
-		} else if (char == 'i' && nextChar == 'e') {
-			phonemes.push('iy', 'iy');
+		} else if (char == "i" && nextChar == "e") {
+			phonemes.push("iy", "iy");
 			i += 2;
-		} else if (char == 'e' && nextChar == 'u') {
-			phonemes.push('oy');
+		} else if (char == "e" && nextChar == "u") {
+			phonemes.push("oy");
 			i += 2;
-		} else if (char == 'ä' && nextChar == 'u') {
-			phonemes.push('oy');
+		} else if (char == "ä" && nextChar == "u") {
+			phonemes.push("oy");
 			i += 2;
-		} else if (char == 'a' && nextChar == 'u') {
-			phonemes.push('aw');
+		} else if (char == "a" && nextChar == "u") {
+			phonemes.push("aw");
 			i += 2;
 		}
 		// German vowels
-		else if (char == 'a') {
-			phonemes.push('aa');
+		else if (char == "a") {
+			phonemes.push("aa");
 			i++;
-		} else if (char == 'e') {
-			phonemes.push('eh');
+		} else if (char == "e") {
+			phonemes.push("eh");
 			i++;
-		} else if (char == 'i') {
-			phonemes.push('iy');
+		} else if (char == "i") {
+			phonemes.push("iy");
 			i++;
-		} else if (char == 'o') {
-			phonemes.push('ow');
+		} else if (char == "o") {
+			phonemes.push("ow");
 			i++;
-		} else if (char == 'u') {
-			phonemes.push('uw');
+		} else if (char == "u") {
+			phonemes.push("uw");
 			i++;
-		} else if (char == 'ä') {
-			phonemes.push('ae');
+		} else if (char == "ä") {
+			phonemes.push("ae");
 			i++;
-		} else if (char == 'ö') {
-			phonemes.push('er');
+		} else if (char == "ö") {
+			phonemes.push("er");
 			i++;
-		} else if (char == 'ü') {
-			phonemes.push('iy');
+		} else if (char == "ü") {
+			phonemes.push("iy");
 			i++;
-		} else if (char == 'y') {
-			phonemes.push('iy');
+		} else if (char == "y") {
+			phonemes.push("iy");
 			i++;
 		} else {
 			i++;
 		}
 	}
 
-	return phonemes.join(' ');
+	return phonemes.join(" ");
 }
 
 // ==================== KOREAN PHONEME CONVERSION ====================
@@ -828,137 +835,137 @@ function germanToKoreanPhonemes(word) {
 		var nextNextChar = i + 2 < word.length ? word[i + 2] : "";
 
 		// German consonant clusters
-		if (char == 's' && nextChar == 'c' && nextNextChar == 'h') {
-			phonemes.push('s');
+		if (char == "s" && nextChar == "c" && nextNextChar == "h") {
+			phonemes.push("s");
 			i += 3;
-		} else if (char == 'c' && nextChar == 'h') {
-			phonemes.push('h');
+		} else if (char == "c" && nextChar == "h") {
+			phonemes.push("h");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'g') {
-			phonemes.push('N');
+		} else if (char == "n" && nextChar == "g") {
+			phonemes.push("N");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'k') {
-			phonemes.push('N', 'k');
+		} else if (char == "n" && nextChar == "k") {
+			phonemes.push("N", "k");
 			i += 2;
-		} else if (char == 'p' && nextChar == 'f') {
-			phonemes.push('p', 'p');
+		} else if (char == "p" && nextChar == "f") {
+			phonemes.push("p", "p");
 			i += 2;
-		} else if (char == 'q' && nextChar == 'u') {
-			phonemes.push('k', 'w');
+		} else if (char == "q" && nextChar == "u") {
+			phonemes.push("k", "w");
 			i += 2;
-		} else if (char == 't' && nextChar == 's') {
-			phonemes.push('ts\\_h');
+		} else if (char == "t" && nextChar == "s") {
+			phonemes.push("ts\\_h");
 			i += 2;
-		} else if (char == 's' && nextChar == 's') {
-			phonemes.push('s_t');
+		} else if (char == "s" && nextChar == "s") {
+			phonemes.push("s_t");
 			i += 2;
-		} else if (char == 'ß') {
-			phonemes.push('s');
+		} else if (char == "ß") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 'z') {
-			phonemes.push('ts\\_h');
+		} else if (char == "z") {
+			phonemes.push("ts\\_h");
 			i++;
-		} else if (char == 'w') {
-			phonemes.push('b');
+		} else if (char == "w") {
+			phonemes.push("b");
 			i++;
-		} else if (char == 'v') {
-			phonemes.push('p');
+		} else if (char == "v") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'j') {
-			phonemes.push('j');
+		} else if (char == "j") {
+			phonemes.push("j");
 			i++;
-		} else if (char == 'h') {
-			phonemes.push('h');
+		} else if (char == "h") {
+			phonemes.push("h");
 			i++;
-		} else if (char == 'l') {
-			phonemes.push('l');
+		} else if (char == "l") {
+			phonemes.push("l");
 			i++;
-		} else if (char == 'm') {
-			phonemes.push('m');
+		} else if (char == "m") {
+			phonemes.push("m");
 			i++;
-		} else if (char == 'n') {
-			phonemes.push('n');
+		} else if (char == "n") {
+			phonemes.push("n");
 			i++;
-		} else if (char == 'r') {
+		} else if (char == "r") {
 			// Korean flap - best match for German r
-			phonemes.push('4');
+			phonemes.push("4");
 			i++;
-		} else if (char == 's') {
-			phonemes.push('s');
+		} else if (char == "s") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 't') {
-			phonemes.push('t');
+		} else if (char == "t") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'p') {
-			phonemes.push('p');
+		} else if (char == "p") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'k') {
-			phonemes.push('k');
+		} else if (char == "k") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'b') {
-			phonemes.push('b');
+		} else if (char == "b") {
+			phonemes.push("b");
 			i++;
-		} else if (char == 'd') {
-			phonemes.push('d');
+		} else if (char == "d") {
+			phonemes.push("d");
 			i++;
-		} else if (char == 'g') {
-			phonemes.push('g');
+		} else if (char == "g") {
+			phonemes.push("g");
 			i++;
-		} else if (char == 'f') {
-			phonemes.push('p');
+		} else if (char == "f") {
+			phonemes.push("p");
 			i++;
 		}
 		// German diphthongs
-		else if (char == 'e' && nextChar == 'i') {
-			phonemes.push('6', 'i');
+		else if (char == "e" && nextChar == "i") {
+			phonemes.push("6", "i");
 			i += 2;
-		} else if (char == 'i' && nextChar == 'e') {
-			phonemes.push('i', 'i');
+		} else if (char == "i" && nextChar == "e") {
+			phonemes.push("i", "i");
 			i += 2;
-		} else if (char == 'e' && nextChar == 'u') {
-			phonemes.push('o', 'i');
+		} else if (char == "e" && nextChar == "u") {
+			phonemes.push("o", "i");
 			i += 2;
-		} else if (char == 'ä' && nextChar == 'u') {
-			phonemes.push('o', 'i');
+		} else if (char == "ä" && nextChar == "u") {
+			phonemes.push("o", "i");
 			i += 2;
-		} else if (char == 'a' && nextChar == 'u') {
-			phonemes.push('6', 'M');
+		} else if (char == "a" && nextChar == "u") {
+			phonemes.push("6", "M");
 			i += 2;
 		}
 		// German vowels
-		else if (char == 'a') {
-			phonemes.push('6');
+		else if (char == "a") {
+			phonemes.push("6");
 			i++;
-		} else if (char == 'e') {
-			phonemes.push('e_o');
+		} else if (char == "e") {
+			phonemes.push("e_o");
 			i++;
-		} else if (char == 'i') {
-			phonemes.push('i');
+		} else if (char == "i") {
+			phonemes.push("i");
 			i++;
-		} else if (char == 'o') {
-			phonemes.push('o');
+		} else if (char == "o") {
+			phonemes.push("o");
 			i++;
-		} else if (char == 'u') {
-			phonemes.push('M');
+		} else if (char == "u") {
+			phonemes.push("M");
 			i++;
-		} else if (char == 'ä') {
-			phonemes.push('6');
+		} else if (char == "ä") {
+			phonemes.push("6");
 			i++;
-		} else if (char == 'ö') {
-			phonemes.push('V');
+		} else if (char == "ö") {
+			phonemes.push("V");
 			i++;
-		} else if (char == 'ü') {
-			phonemes.push('M');
+		} else if (char == "ü") {
+			phonemes.push("M");
 			i++;
-		} else if (char == 'y') {
-			phonemes.push('M');
+		} else if (char == "y") {
+			phonemes.push("M");
 			i++;
 		} else {
 			i++;
 		}
 	}
 
-	return phonemes.join(' ');
+	return phonemes.join(" ");
 }
 
 // ==================== SPANISH PHONEME CONVERSION ====================
@@ -973,140 +980,140 @@ function germanToSpanishPhonemes(word) {
 		var nextNextChar = i + 2 < word.length ? word[i + 2] : "";
 
 		// German consonant clusters
-		if (char == 's' && nextChar == 'c' && nextNextChar == 'h') {
-			phonemes.push('sh');
+		if (char == "s" && nextChar == "c" && nextNextChar == "h") {
+			phonemes.push("sh");
 			i += 3;
-		} else if (char == 'c' && nextChar == 'h') {
+		} else if (char == "c" && nextChar == "h") {
 			// ach-Laut - Spanish x [x] is a good match
-			phonemes.push('x');
+			phonemes.push("x");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'g') {
-			phonemes.push('N');
+		} else if (char == "n" && nextChar == "g") {
+			phonemes.push("N");
 			i += 2;
-		} else if (char == 'n' && nextChar == 'k') {
-			phonemes.push('N', 'k');
+		} else if (char == "n" && nextChar == "k") {
+			phonemes.push("N", "k");
 			i += 2;
-		} else if (char == 'p' && nextChar == 'f') {
-			phonemes.push('p', 'f');
+		} else if (char == "p" && nextChar == "f") {
+			phonemes.push("p", "f");
 			i += 2;
-		} else if (char == 'q' && nextChar == 'u') {
-			phonemes.push('k', 'U');
+		} else if (char == "q" && nextChar == "u") {
+			phonemes.push("k", "U");
 			i += 2;
-		} else if (char == 't' && nextChar == 's') {
-			phonemes.push('t', 's');
+		} else if (char == "t" && nextChar == "s") {
+			phonemes.push("t", "s");
 			i += 2;
-		} else if (char == 's' && nextChar == 's') {
-			phonemes.push('s', 's');
+		} else if (char == "s" && nextChar == "s") {
+			phonemes.push("s", "s");
 			i += 2;
-		} else if (char == 'r' && nextChar == 'r') {
-			phonemes.push('rr');
+		} else if (char == "r" && nextChar == "r") {
+			phonemes.push("rr");
 			i += 2;
-		} else if (char == 'ß') {
-			phonemes.push('s');
+		} else if (char == "ß") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 'z') {
-			phonemes.push('t', 's');
+		} else if (char == "z") {
+			phonemes.push("t", "s");
 			i++;
-		} else if (char == 'w') {
-			phonemes.push('b');
+		} else if (char == "w") {
+			phonemes.push("b");
 			i++;
-		} else if (char == 'v') {
-			phonemes.push('f');
+		} else if (char == "v") {
+			phonemes.push("f");
 			i++;
-		} else if (char == 'j') {
-			phonemes.push('y');
+		} else if (char == "j") {
+			phonemes.push("y");
 			i++;
-		} else if (char == 'h') {
-			phonemes.push('x');
+		} else if (char == "h") {
+			phonemes.push("x");
 			i++;
-		} else if (char == 'l') {
-			phonemes.push('l');
+		} else if (char == "l") {
+			phonemes.push("l");
 			i++;
-		} else if (char == 'm') {
-			phonemes.push('m');
+		} else if (char == "m") {
+			phonemes.push("m");
 			i++;
-		} else if (char == 'n') {
-			phonemes.push('n');
+		} else if (char == "n") {
+			phonemes.push("n");
 			i++;
-		} else if (char == 'r') {
-			phonemes.push('r');
+		} else if (char == "r") {
+			phonemes.push("r");
 			i++;
-		} else if (char == 's') {
-			phonemes.push('s');
+		} else if (char == "s") {
+			phonemes.push("s");
 			i++;
-		} else if (char == 't') {
-			phonemes.push('t');
+		} else if (char == "t") {
+			phonemes.push("t");
 			i++;
-		} else if (char == 'p') {
-			phonemes.push('p');
+		} else if (char == "p") {
+			phonemes.push("p");
 			i++;
-		} else if (char == 'k') {
-			phonemes.push('k');
+		} else if (char == "k") {
+			phonemes.push("k");
 			i++;
-		} else if (char == 'b') {
-			phonemes.push('b');
+		} else if (char == "b") {
+			phonemes.push("b");
 			i++;
-		} else if (char == 'd') {
-			phonemes.push('d');
+		} else if (char == "d") {
+			phonemes.push("d");
 			i++;
-		} else if (char == 'g') {
-			phonemes.push('g');
+		} else if (char == "g") {
+			phonemes.push("g");
 			i++;
-		} else if (char == 'f') {
-			phonemes.push('f');
+		} else if (char == "f") {
+			phonemes.push("f");
 			i++;
 		}
 		// German diphthongs
-		else if (char == 'e' && nextChar == 'i') {
-			phonemes.push('a', 'I');
+		else if (char == "e" && nextChar == "i") {
+			phonemes.push("a", "I");
 			i += 2;
-		} else if (char == 'i' && nextChar == 'e') {
-			phonemes.push('i', 'i');
+		} else if (char == "i" && nextChar == "e") {
+			phonemes.push("i", "i");
 			i += 2;
-		} else if (char == 'e' && nextChar == 'u') {
-			phonemes.push('o', 'I');
+		} else if (char == "e" && nextChar == "u") {
+			phonemes.push("o", "I");
 			i += 2;
-		} else if (char == 'ä' && nextChar == 'u') {
-			phonemes.push('o', 'I');
+		} else if (char == "ä" && nextChar == "u") {
+			phonemes.push("o", "I");
 			i += 2;
-		} else if (char == 'a' && nextChar == 'u') {
-			phonemes.push('a', 'U');
+		} else if (char == "a" && nextChar == "u") {
+			phonemes.push("a", "U");
 			i += 2;
 		}
 		// German vowels
-		else if (char == 'a') {
-			phonemes.push('a');
+		else if (char == "a") {
+			phonemes.push("a");
 			i++;
-		} else if (char == 'e') {
-			phonemes.push('e');
+		} else if (char == "e") {
+			phonemes.push("e");
 			i++;
-		} else if (char == 'i') {
-			phonemes.push('i');
+		} else if (char == "i") {
+			phonemes.push("i");
 			i++;
-		} else if (char == 'o') {
-			phonemes.push('o');
+		} else if (char == "o") {
+			phonemes.push("o");
 			i++;
-		} else if (char == 'u') {
-			phonemes.push('u');
+		} else if (char == "u") {
+			phonemes.push("u");
 			i++;
-		} else if (char == 'ä') {
-			phonemes.push('e');
+		} else if (char == "ä") {
+			phonemes.push("e");
 			i++;
-		} else if (char == 'ö') {
-			phonemes.push('e');
+		} else if (char == "ö") {
+			phonemes.push("e");
 			i++;
-		} else if (char == 'ü') {
-			phonemes.push('i');
+		} else if (char == "ü") {
+			phonemes.push("i");
 			i++;
-		} else if (char == 'y') {
-			phonemes.push('i');
+		} else if (char == "y") {
+			phonemes.push("i");
 			i++;
 		} else {
 			i++;
 		}
 	}
 
-	return phonemes.join(' ');
+	return phonemes.join(" ");
 }
 
 // ==================== COMMON HELPER FUNCTIONS ====================
@@ -1134,8 +1141,7 @@ function processTrack(process, options) {
 		var group = groupRef.getTarget();
 
 		// some note groups may be shared between or within tracks
-		if (visited.indexOf(group.getUUID()) >= 0)
-			continue;
+		if (visited.indexOf(group.getUUID()) >= 0) continue;
 		visited.push(group.getUUID());
 
 		process(groupAsNotesArray(group), group, options, groupRef);
@@ -1156,8 +1162,7 @@ function processProjectWithRefs(process, options) {
 			var group = groupRef.getTarget();
 
 			// some note groups may be shared between or within tracks
-			if (visited.indexOf(group.getUUID()) >= 0)
-				continue;
+			if (visited.indexOf(group.getUUID()) >= 0) continue;
 			visited.push(group.getUUID());
 
 			process(groupAsNotesArray(group), group, options, groupRef);
@@ -1176,13 +1181,13 @@ function sortNotes(notes) {
 function groupAsNotesArray(noteGroup) {
 	return new Proxy(noteGroup, {
 		get: function (target, prop) {
-			if (prop === 'length') {
+			if (prop === "length") {
 				return target.getNumNotes();
 			}
 			if (typeof prop == "number") {
 				return target.getNote(prop);
 			}
 			return target[prop];
-		}
+		},
 	});
 }

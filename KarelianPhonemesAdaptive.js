@@ -2,20 +2,28 @@
 
 /*
 
-This script converts Estonian lyrics to Synthesizer V phonemes using an adaptive
+This script converts Karelian lyrics to Synthesizer V phonemes using an adaptive
 multi-language approach. It analyzes each word and selects the best phoneme set
 (Mandarin, Cantonese, Japanese, or English) based on the word's characteristics.
 
+Karelian is a Finnic language closely related to Finnish and Estonian.
+Key phonological features:
+- Vowels: a, e, i, o, u, y [y], ä [æ], ö [ø]
+- Special consonants: č [tʃ], š [ʃ], ž [ʒ]
+- Palatalized consonants marked with apostrophe: l', n', s', t', d', r'
+- Geminate consonants (doubled letters)
+- No õ (Estonian-specific vowel)
+
 Strategy:
-- Words with ü → Mandarin/Cantonese (exact 'y' phoneme match)
+- Words with y (ü) → Mandarin/Cantonese (exact 'y' phoneme match)
 - Words with ö → Cantonese (best '9' approximation)
-- Words with õ → Mandarin (good '7' schwa match)
+- Words with ä → Cantonese (good 'E' match)
 - Simple words → Japanese (cleanest basic vowels)
 - Default → English (widely compatible)
 
 */
 
-const SCRIPT_TITLE = "Estonian Phonemes (Adaptive)";
+const SCRIPT_TITLE = "Karelian Phonemes (Adaptive)";
 
 function getClientInfo() {
 	return {
@@ -85,6 +93,7 @@ function processNotes(notes, group, options, groupRef) {
 		cantonese: 0,
 		japanese: 0,
 		english: 0,
+		korean: 0,
 	};
 
 	for (var i = 0; i < notes.length; i++) {
@@ -115,19 +124,19 @@ function processNotes(notes, group, options, groupRef) {
 		var phonemes = "";
 		switch (selectedLang) {
 			case "mandarin":
-				phonemes = estonianToMandarinPhonemes(wordLower);
+				phonemes = karelianToMandarinPhonemes(wordLower);
 				break;
 			case "cantonese":
-				phonemes = estonianToCantonesePhonemes(wordLower);
+				phonemes = karelianToCantonesePhonemes(wordLower);
 				break;
 			case "japanese":
-				phonemes = estonianToJapanesePhonemes(wordLower);
+				phonemes = karelianToJapanesePhonemes(wordLower);
 				break;
 			case "english":
-				phonemes = estonianToEnglishPhonemes(wordLower);
+				phonemes = karelianToEnglishPhonemes(wordLower);
 				break;
 			case "korean":
-				phonemes = estonianToKoreanPhonemes(wordLower);
+				phonemes = karelianToKoreanPhonemes(wordLower);
 				break;
 		}
 
@@ -142,7 +151,7 @@ function processNotes(notes, group, options, groupRef) {
 		msg += "Mandarin: " + languageStats.mandarin + " words\n";
 		msg += "Cantonese: " + languageStats.cantonese + " words\n";
 		msg += "Japanese: " + languageStats.japanese + " words\n";
-		msg += "English: " + languageStats.english + " words";
+		msg += "English: " + languageStats.english + " words\n";
 		msg += "Korean: " + languageStats.korean + " words";
 		SV.showMessageBox(SV.T(SCRIPT_TITLE), msg);
 	}
@@ -150,8 +159,8 @@ function processNotes(notes, group, options, groupRef) {
 
 // Analyze word and select best language for phoneme conversion
 function selectBestLanguage(word) {
-	// Priority 1: Words with ü → Mandarin (exact match)
-	if (word.indexOf("ü") >= 0 || word.indexOf("y") >= 0) {
+	// Priority 1: Words with y (front rounded vowel) → Mandarin (exact match)
+	if (word.indexOf("y") >= 0) {
 		return "mandarin";
 	}
 
@@ -160,22 +169,17 @@ function selectBestLanguage(word) {
 		return "cantonese";
 	}
 
-	// Priority 3: Words with õ → Mandarin (good schwa match)
-	if (word.indexOf("õ") >= 0) {
-		return "mandarin";
-	}
-
-	// Priority 4: Words with ä → Cantonese (good E match)
+	// Priority 3: Words with ä → Cantonese (good E match)
 	if (word.indexOf("ä") >= 0) {
 		return "cantonese";
 	}
 
-	// Priority 5: Words with r → Korean (good R match)
+	// Priority 4: Words with r → Korean (good R match)
 	if (word.indexOf("r") >= 0) {
 		return "korean";
 	}
 
-	// Priority 6: Simple basic vowels only → Japanese (cleanest)
+	// Priority 5: Simple basic vowels only → Japanese (cleanest)
 	if (hasOnlyBasicVowels(word)) {
 		return "japanese";
 	}
@@ -185,26 +189,50 @@ function selectBestLanguage(word) {
 }
 
 function hasOnlyBasicVowels(word) {
-	// Check if word only contains a, e, i, o, u (no special Estonian vowels)
+	// Check if word only contains a, e, i, o, u (no special Karelian vowels)
 	for (var i = 0; i < word.length; i++) {
 		var c = word[i];
-		if (c == "ä" || c == "ö" || c == "ü" || c == "õ") {
+		if (c == "ä" || c == "ö" || c == "y") {
 			return false;
 		}
 	}
 	return true;
 }
 
+// Strip palatalization marks (apostrophes) and return cleaned character
+// Karelian uses ' after consonants to mark palatalization
+function isPalatalizationMark(char) {
+	return (
+		char == "'" || char == "\u2018" || char == "\u2019" || char == "\u02BC"
+	);
+}
+
 // Mandarin phoneme conversion
-function estonianToMandarinPhonemes(word) {
+function karelianToMandarinPhonemes(word) {
 	var phonemes = [];
 	var i = 0;
 
 	while (i < word.length) {
 		var char = word[i];
 		var nextChar = i + 1 < word.length ? word[i + 1] : "";
+		var afterNext = i + 2 < word.length ? word[i + 2] : "";
 
-		if (char == "h") {
+		// Skip palatalization marks
+		if (isPalatalizationMark(char)) {
+			i++;
+			continue;
+		}
+
+		if (char == "č") {
+			phonemes.push("ts`");
+			i++;
+		} else if (char == "š") {
+			phonemes.push("s`");
+			i++;
+		} else if (char == "ž") {
+			phonemes.push("s`");
+			i++;
+		} else if (char == "h") {
 			phonemes.push("x");
 			i++;
 		} else if (char == "j") {
@@ -246,10 +274,7 @@ function estonianToMandarinPhonemes(word) {
 				i++;
 			}
 		} else if (char == "s") {
-			if (nextChar == "h") {
-				phonemes.push("s`");
-				i += 2;
-			} else if (nextChar == "s") {
+			if (nextChar == "s") {
 				phonemes.push("s", "s");
 				i += 2;
 			} else {
@@ -344,14 +369,6 @@ function estonianToMandarinPhonemes(word) {
 				phonemes.push("u");
 				i++;
 			}
-		} else if (char == "õ") {
-			if (nextChar == "õ") {
-				phonemes.push("7", "7");
-				i += 2;
-			} else {
-				phonemes.push("7");
-				i++;
-			}
 		} else if (char == "ä") {
 			if (nextChar == "ä") {
 				phonemes.push("A", "A");
@@ -368,8 +385,8 @@ function estonianToMandarinPhonemes(word) {
 				phonemes.push("@");
 				i++;
 			}
-		} else if (char == "ü" || char == "y") {
-			if (nextChar == "ü" || nextChar == "y") {
+		} else if (char == "y") {
+			if (nextChar == "y") {
 				phonemes.push("y", "y");
 				i += 2;
 			} else {
@@ -385,7 +402,7 @@ function estonianToMandarinPhonemes(word) {
 }
 
 // Cantonese phoneme conversion
-function estonianToCantonesePhonemes(word) {
+function karelianToCantonesePhonemes(word) {
 	var phonemes = [];
 	var i = 0;
 
@@ -393,7 +410,22 @@ function estonianToCantonesePhonemes(word) {
 		var char = word[i];
 		var nextChar = i + 1 < word.length ? word[i + 1] : "";
 
-		if (char == "h") {
+		// Skip palatalization marks
+		if (isPalatalizationMark(char)) {
+			i++;
+			continue;
+		}
+
+		if (char == "č") {
+			phonemes.push("ts");
+			i++;
+		} else if (char == "š") {
+			phonemes.push("s");
+			i++;
+		} else if (char == "ž") {
+			phonemes.push("s");
+			i++;
+		} else if (char == "h") {
 			phonemes.push("h");
 			i++;
 		} else if (char == "j") {
@@ -435,10 +467,7 @@ function estonianToCantonesePhonemes(word) {
 				i++;
 			}
 		} else if (char == "s") {
-			if (nextChar == "h") {
-				phonemes.push("s");
-				i += 2;
-			} else if (nextChar == "s") {
+			if (nextChar == "s") {
 				phonemes.push("s", "s");
 				i += 2;
 			} else {
@@ -533,14 +562,6 @@ function estonianToCantonesePhonemes(word) {
 				phonemes.push("u");
 				i++;
 			}
-		} else if (char == "õ") {
-			if (nextChar == "õ") {
-				phonemes.push("8", "8");
-				i += 2;
-			} else {
-				phonemes.push("8");
-				i++;
-			}
 		} else if (char == "ä") {
 			if (nextChar == "ä") {
 				phonemes.push("E", "E");
@@ -557,8 +578,8 @@ function estonianToCantonesePhonemes(word) {
 				phonemes.push("9");
 				i++;
 			}
-		} else if (char == "ü" || char == "y") {
-			if (nextChar == "ü" || nextChar == "y") {
+		} else if (char == "y") {
+			if (nextChar == "y") {
 				phonemes.push("y", "y");
 				i += 2;
 			} else {
@@ -574,7 +595,7 @@ function estonianToCantonesePhonemes(word) {
 }
 
 // Japanese phoneme conversion
-function estonianToJapanesePhonemes(word) {
+function karelianToJapanesePhonemes(word) {
 	var phonemes = [];
 	var i = 0;
 
@@ -582,7 +603,22 @@ function estonianToJapanesePhonemes(word) {
 		var char = word[i];
 		var nextChar = i + 1 < word.length ? word[i + 1] : "";
 
-		if (char == "h") {
+		// Skip palatalization marks
+		if (isPalatalizationMark(char)) {
+			i++;
+			continue;
+		}
+
+		if (char == "č") {
+			phonemes.push("ch");
+			i++;
+		} else if (char == "š") {
+			phonemes.push("sh");
+			i++;
+		} else if (char == "ž") {
+			phonemes.push("j");
+			i++;
+		} else if (char == "h") {
 			phonemes.push("h");
 			i++;
 		} else if (char == "j") {
@@ -624,10 +660,7 @@ function estonianToJapanesePhonemes(word) {
 				i++;
 			}
 		} else if (char == "s") {
-			if (nextChar == "h") {
-				phonemes.push("sh");
-				i += 2;
-			} else if (nextChar == "s") {
+			if (nextChar == "s") {
 				phonemes.push("s", "s");
 				i += 2;
 			} else {
@@ -722,8 +755,8 @@ function estonianToJapanesePhonemes(word) {
 				phonemes.push("u");
 				i++;
 			}
-		} else if (char == "õ" || char == "ö") {
-			if (nextChar == "õ" || nextChar == "ö") {
+		} else if (char == "ö") {
+			if (nextChar == "ö") {
 				phonemes.push("o", "o");
 				i += 2;
 			} else {
@@ -738,8 +771,8 @@ function estonianToJapanesePhonemes(word) {
 				phonemes.push("a");
 				i++;
 			}
-		} else if (char == "ü" || char == "y") {
-			if (nextChar == "ü" || nextChar == "y") {
+		} else if (char == "y") {
+			if (nextChar == "y") {
 				phonemes.push("u", "u");
 				i += 2;
 			} else {
@@ -755,7 +788,7 @@ function estonianToJapanesePhonemes(word) {
 }
 
 // English phoneme conversion
-function estonianToEnglishPhonemes(word) {
+function karelianToEnglishPhonemes(word) {
 	var phonemes = [];
 	var i = 0;
 
@@ -763,7 +796,22 @@ function estonianToEnglishPhonemes(word) {
 		var char = word[i];
 		var nextChar = i + 1 < word.length ? word[i + 1] : "";
 
-		if (char == "h") {
+		// Skip palatalization marks
+		if (isPalatalizationMark(char)) {
+			i++;
+			continue;
+		}
+
+		if (char == "č") {
+			phonemes.push("ch");
+			i++;
+		} else if (char == "š") {
+			phonemes.push("sh");
+			i++;
+		} else if (char == "ž") {
+			phonemes.push("zh");
+			i++;
+		} else if (char == "h") {
 			phonemes.push("hh");
 			i++;
 		} else if (char == "j") {
@@ -805,10 +853,7 @@ function estonianToEnglishPhonemes(word) {
 				i++;
 			}
 		} else if (char == "s") {
-			if (nextChar == "h") {
-				phonemes.push("sh");
-				i += 2;
-			} else if (nextChar == "s") {
+			if (nextChar == "s") {
 				phonemes.push("s", "s");
 				i += 2;
 			} else {
@@ -903,14 +948,6 @@ function estonianToEnglishPhonemes(word) {
 				phonemes.push("uw");
 				i++;
 			}
-		} else if (char == "õ") {
-			if (nextChar == "õ") {
-				phonemes.push("uh", "uh");
-				i += 2;
-			} else {
-				phonemes.push("uh");
-				i++;
-			}
 		} else if (char == "ä") {
 			if (nextChar == "ä") {
 				phonemes.push("ae", "ae");
@@ -927,8 +964,8 @@ function estonianToEnglishPhonemes(word) {
 				phonemes.push("er");
 				i++;
 			}
-		} else if (char == "ü" || char == "y") {
-			if (nextChar == "ü" || nextChar == "y") {
+		} else if (char == "y") {
+			if (nextChar == "y") {
 				phonemes.push("iy", "iy");
 				i += 2;
 			} else {
@@ -942,8 +979,9 @@ function estonianToEnglishPhonemes(word) {
 
 	return phonemes.join(" ");
 }
-// Estonian to Korean phoneme conversion
-function estonianToKoreanPhonemes(word) {
+
+// Korean phoneme conversion
+function karelianToKoreanPhonemes(word) {
 	if (!word) return "";
 
 	var phonemes = [];
@@ -952,23 +990,35 @@ function estonianToKoreanPhonemes(word) {
 	while (i < word.length) {
 		var char = word[i];
 		var nextChar = i + 1 < word.length ? word[i + 1] : "";
-		var prevChar = i > 0 ? word[i - 1] : "";
 
-		// Consonants - mapped to Korean consonants
-		if (char == "h") {
+		// Skip palatalization marks
+		if (isPalatalizationMark(char)) {
+			i++;
+			continue;
+		}
+
+		// Consonants
+		if (char == "č") {
+			phonemes.push("ts\\_h");
+			i++;
+		} else if (char == "š") {
+			phonemes.push("s");
+			i++;
+		} else if (char == "ž") {
+			phonemes.push("s");
+			i++;
+		} else if (char == "h") {
 			phonemes.push("h");
 			i++;
 		} else if (char == "j") {
-			// Estonian j is like English y, Korean has j (semivowel)
 			phonemes.push("j");
 			i++;
 		} else if (char == "l") {
-			// ll -> geminate l
 			if (nextChar == "l") {
 				phonemes.push("l", "l");
 				i += 2;
 			} else {
-				phonemes.push("4"); // Korean flap r/l
+				phonemes.push("4");
 				i++;
 			}
 		} else if (char == "m") {
@@ -980,7 +1030,6 @@ function estonianToKoreanPhonemes(word) {
 				i++;
 			}
 		} else if (char == "n") {
-			// ng cluster -> N (coda)
 			if (nextChar == "g") {
 				phonemes.push("N");
 				i += 2;
@@ -993,31 +1042,26 @@ function estonianToKoreanPhonemes(word) {
 			}
 		} else if (char == "r") {
 			if (nextChar == "r") {
-				phonemes.push("4", "4"); // Korean r/l flap
+				phonemes.push("4", "4");
 				i += 2;
 			} else {
 				phonemes.push("4");
 				i++;
 			}
 		} else if (char == "s") {
-			// sh digraph -> just use s (Korean doesn't have sh)
-			if (nextChar == "h") {
-				phonemes.push("s");
-				i += 2;
-			} else if (nextChar == "s") {
-				phonemes.push("s_t"); // Korean tense s
+			if (nextChar == "s") {
+				phonemes.push("s_t");
 				i += 2;
 			} else {
 				phonemes.push("s");
 				i++;
 			}
 		} else if (char == "t") {
-			// ts cluster -> Korean ts\_h (ch)
 			if (nextChar == "s") {
 				phonemes.push("ts\\_h");
 				i += 2;
 			} else if (nextChar == "t") {
-				phonemes.push("tt"); // Korean tense t
+				phonemes.push("tt");
 				i += 2;
 			} else {
 				phonemes.push("t");
@@ -1025,7 +1069,7 @@ function estonianToKoreanPhonemes(word) {
 			}
 		} else if (char == "p") {
 			if (nextChar == "p") {
-				phonemes.push("pp"); // Korean tense p
+				phonemes.push("pp");
 				i += 2;
 			} else {
 				phonemes.push("p");
@@ -1033,7 +1077,7 @@ function estonianToKoreanPhonemes(word) {
 			}
 		} else if (char == "k") {
 			if (nextChar == "k") {
-				phonemes.push("k_t"); // Korean tense k
+				phonemes.push("k_t");
 				i += 2;
 			} else {
 				phonemes.push("k");
@@ -1049,15 +1093,12 @@ function estonianToKoreanPhonemes(word) {
 			phonemes.push("g");
 			i++;
 		} else if (char == "f") {
-			// Korean doesn't have f, use p
 			phonemes.push("p");
 			i++;
 		} else if (char == "v") {
-			// Korean doesn't have v, use b
 			phonemes.push("b");
 			i++;
 		} else if (char == "z") {
-			// Korean doesn't have z, use s
 			phonemes.push("s");
 			i++;
 		} else if (char == "w") {
@@ -1065,11 +1106,10 @@ function estonianToKoreanPhonemes(word) {
 			i++;
 		}
 
-		// Vowels - mapped to Korean vowels
+		// Vowels
 		else if (char == "a") {
-			// Check for long vowel
 			if (nextChar == "a") {
-				phonemes.push("6", "6"); // Korean 'a'
+				phonemes.push("6", "6");
 				i += 2;
 			} else {
 				phonemes.push("6");
@@ -1077,7 +1117,7 @@ function estonianToKoreanPhonemes(word) {
 			}
 		} else if (char == "e") {
 			if (nextChar == "e") {
-				phonemes.push("e_o", "e_o"); // Korean 'e'
+				phonemes.push("e_o", "e_o");
 				i += 2;
 			} else {
 				phonemes.push("e_o");
@@ -1101,25 +1141,13 @@ function estonianToKoreanPhonemes(word) {
 			}
 		} else if (char == "u") {
 			if (nextChar == "u") {
-				phonemes.push("M", "M"); // Korean 'eu'
+				phonemes.push("M", "M");
 				i += 2;
 			} else {
 				phonemes.push("M");
 				i++;
 			}
-		} else if (char == "õ") {
-			// Estonian õ is a close-mid back unrounded vowel
-			// Korean 'V' (eo) is somewhat similar
-			if (nextChar == "õ") {
-				phonemes.push("V", "V");
-				i += 2;
-			} else {
-				phonemes.push("V");
-				i++;
-			}
 		} else if (char == "ä") {
-			// Estonian ä is like [æ]
-			// Use Korean '6' (a)
 			if (nextChar == "ä") {
 				phonemes.push("6", "6");
 				i += 2;
@@ -1128,8 +1156,6 @@ function estonianToKoreanPhonemes(word) {
 				i++;
 			}
 		} else if (char == "ö") {
-			// Estonian ö [ø] - front rounded vowel
-			// Approximate with Korean 'V' (eo)
 			if (nextChar == "ö") {
 				phonemes.push("V", "V");
 				i += 2;
@@ -1137,18 +1163,7 @@ function estonianToKoreanPhonemes(word) {
 				phonemes.push("V");
 				i++;
 			}
-		} else if (char == "ü") {
-			// Estonian ü [y] is close front rounded vowel
-			// Approximate with Korean 'M' (eu)
-			if (nextChar == "ü") {
-				phonemes.push("M", "M");
-				i += 2;
-			} else {
-				phonemes.push("M");
-				i++;
-			}
 		} else if (char == "y") {
-			// Sometimes used instead of ü in older texts
 			if (nextChar == "y") {
 				phonemes.push("M", "M");
 				i += 2;
