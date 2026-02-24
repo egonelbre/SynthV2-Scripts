@@ -20,6 +20,10 @@ interface VoiceParameters {
       pronunciation: number;
     };
   };
+  /** Number of choir singers/stems. (supported since 2.0.0) */
+  singers: number;
+  /** Choir seating separation. (supported since 2.0.0) */
+  spacing: number;
 }
 
 /**
@@ -46,7 +50,13 @@ interface NoteAttributes {
   dF0VbrMod: number;
   expValueX: number;
   expValueY: number;
-  phonemes: {;
+  /** Time dispersion control. (supported since 2.0.0) */
+  cTimeDispersion: number;
+  /** Phrase tail dispersion control. (supported since 2.0.0) */
+  cPhraseTailDispersion: number;
+  /** Pitch dispersion control. (supported since 2.0.0) */
+  cPitchDispersion: number;
+  phonemes: {
     leftOffset: number;
     position: number;
     activity: number;
@@ -649,6 +659,18 @@ declare class NoteGroup extends ScriptableNestedObject {
   removePitchControl(index: number): void;
 
   /**
+   * Get the musical scale for this `NoteGroup` . (supported since 2.0.0)
+   * @returns any
+   */
+  getScale(): any;
+
+  /**
+   * Set the musical scale for this `NoteGroup` . (supported since 2.0.0)
+   * @param scale
+   */
+  setScale(scale: any): void;
+
+  /**
    * Set the name of this `NoteGroup` .
    * @param name
    */
@@ -970,6 +992,9 @@ declare class Project extends ScriptableNestedObject {
 }
 
 declare class RetakeList extends ScriptableNestedObject {
+  /** The type identifier string. Value is "RetakeList". */
+  type: string;
+
   /**
    * Delete a retake by its ID.
    * @param takeId the ID of the retake to delete
@@ -1138,6 +1163,13 @@ declare const SV : {
   pitch2freq(p: number): number;
 
   /**
+   * Alias for `pitch2freq` with different casing. Convert a MIDI number to Hz.
+   * @param p
+   * @returns number
+   */
+  pitch2Freq(p: number): number;
+
+  /**
    * Print any number of arguments to the standard output stream.
    * @param args
    */
@@ -1154,6 +1186,18 @@ declare const SV : {
    * Force Synthesizer V Studio to reload the side panel section for the current script.
    */
   refreshSidePanel(): void;
+
+  /**
+   * Get available scale types. (supported since 2.0.0)
+   * @returns any
+   */
+  scaleTypes(): any;
+
+  /**
+   * Get scale notes. (supported since 2.0.0)
+   * @returns any
+   */
+  scaleNotes(): any;
 
   /**
    * Convert `s` from seconds into blicks with the specified beats per minute `bpm` .
@@ -1598,11 +1642,20 @@ declare class TrackInnerSelectionState extends SelectionStateBase {
 }
 
 declare class TrackMixer extends ScriptableNestedObject {
+  /** The type identifier string. Value is "TrackMixer". */
+  type: string;
+
   /**
    * Get the gain in decibels.
    * @returns number
    */
   getGainDecibel(): number;
+
+  /**
+   * Get the effects parameters. (supported since 2.0.0)
+   * @returns any
+   */
+  getFxParams(): any;
 
   /**
    * Get the pan position.
@@ -1646,6 +1699,12 @@ right)
    * @param solo True to solo the track, false to unsolo
    */
   setSolo(solo: boolean): void;
+
+  /**
+   * Set the effects parameters. (supported since 2.0.0)
+   * @param params
+   */
+  setFxParams(params: any): void;
 
 }
 
