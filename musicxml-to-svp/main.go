@@ -296,6 +296,7 @@ func main() {
 		}
 
 		divisions := 4
+		transpose := 0 // semitone offset from MusicXML <transpose>
 		cursor := int64(0)
 		var notes []*SVPNote
 		var dynEvents []dynEvent
@@ -315,6 +316,10 @@ func main() {
 				case *musicxml.Attributes:
 					if value.Divisions != 0 {
 						divisions = value.Divisions
+					}
+					for _, tr := range value.Transpose {
+						chromatic, _ := strconv.Atoi(tr.Chromatic)
+						transpose = chromatic + tr.OctaveChange*12
 					}
 				case *musicxml.Direction:
 					for _, dt := range value.DirectionType {
@@ -409,6 +414,7 @@ func main() {
 					}
 
 					midi, detune := pitchToMIDI(value.Pitch)
+					midi += transpose
 					tieStart, tieStop := noteTieTypes(value)
 
 					if tieStop {

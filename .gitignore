@@ -3,4 +3,4 @@ docs/dreamtonics-api/
 /svp-voice/svp-voice
 /musicxml-to-svp/musicxml-to-svp
 
-musicxml-to-svp/testdata/Põhjatuul ja päike.svp
+musicxml-to-svp/testdata/Põhjatuul*.svp
