@@ -20,24 +20,16 @@ type dynEvent struct {
 	position int64
 	kind     dynEventKind
 	loudness float64 // only meaningful for dynLevel
+	tension  float64 // only meaningful for dynLevel
 	number   int     // wedge number for matching start/stop
 }
 
-// buildLoudnessCurve takes a chronological list of dynamic events and produces
-// SVP loudness curve points [pos, val, pos, val, ...].
-//
-// Strategy:
-//   - At each dynLevel event, emit a quick step transition (two points close
-//     together) from the previous level to the new level.
-//   - Between a cresc/dim start and the following wedge stop, emit a linear
-//     ramp. The ramp target is the loudness of the next dynLevel event after
-//     the stop (if one exists at the same position), otherwise we estimate
-//     +6 dB for crescendo, -6 dB for diminuendo.
-//   - Between other events, hold the current level (no points needed, cubic
-//     interpolation holds the last value).
 const stepTransitionBlicks = int64(blicksPerQuarter / 8) // 1/8 quarter note
 
-func buildLoudnessCurve(events []dynEvent) []float64 {
+// buildCurve builds an SVP parameter curve from dynamic events using the given
+// value extractor. defaultDelta is used to estimate cresc/dim targets when no
+// following dynLevel event exists.
+func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta float64) []float64 {
 	if len(events) == 0 {
 		return nil
 	}
@@ -92,7 +84,7 @@ func buildLoudnessCurve(events []dynEvent) []float64 {
 	findNextLevel := func(fromIdx int) (float64, bool) {
 		for j := fromIdx; j < len(events); j++ {
 			if events[j].kind == dynLevel {
-				return events[j].loudness, true
+				return getValue(events[j]), true
 			}
 		}
 		return 0, false
@@ -103,6 +95,8 @@ func buildLoudnessCurve(events []dynEvent) []float64 {
 	}
 
 	for i, ev := range events {
+		evVal := getValue(ev)
+
 		switch ev.kind {
 		case dynLevel:
 			// Check if this level is the target of a just-ended wedge.
@@ -118,7 +112,7 @@ func buildLoudnessCurve(events []dynEvent) []float64 {
 
 			if isWedgeTarget {
 				// End of ramp — just place the final point.
-				addPoint(ev.position, ev.loudness)
+				addPoint(ev.position, evVal)
 			} else if hasLevel {
 				// Step transition: hold old level, then jump to new.
 				transitionStart := ev.position - stepTransitionBlicks
@@ -126,13 +120,13 @@ func buildLoudnessCurve(events []dynEvent) []float64 {
 					transitionStart = 0
 				}
 				addPoint(transitionStart, currentLevel)
-				addPoint(ev.position, ev.loudness)
+				addPoint(ev.position, evVal)
 			} else {
 				// First dynamic marking — set initial level.
-				addPoint(ev.position, ev.loudness)
+				addPoint(ev.position, evVal)
 			}
 
-			currentLevel = ev.loudness
+			currentLevel = evVal
 			hasLevel = true
 
 		case dynCrescStart, dynDimStart:
@@ -150,9 +144,9 @@ func buildLoudnessCurve(events []dynEvent) []float64 {
 					} else {
 						// Estimate.
 						if ev.kind == dynCrescStart {
-							targetLevel = currentLevel + 6
+							targetLevel = currentLevel + defaultDelta
 						} else {
-							targetLevel = currentLevel - 6
+							targetLevel = currentLevel - defaultDelta
 						}
 					}
 					found = true
@@ -164,9 +158,9 @@ func buildLoudnessCurve(events []dynEvent) []float64 {
 				// Unpaired cresc/dim text — estimate over 2 measures.
 				stopPos = ev.position + 2*4*blicksPerQuarter
 				if ev.kind == dynCrescStart {
-					targetLevel = currentLevel + 6
+					targetLevel = currentLevel + defaultDelta
 				} else {
-					targetLevel = currentLevel - 6
+					targetLevel = currentLevel - defaultDelta
 				}
 			}
 
@@ -185,76 +179,86 @@ func buildLoudnessCurve(events []dynEvent) []float64 {
 	return points
 }
 
-// dynamicsToLoudness maps a MusicXML dynamics element to a dB loudness value.
-// It uses InnerXML to detect which child elements are present, since empty
-// elements like <p/> parse to empty strings and can't be detected via field values.
-func dynamicsToLoudness(d *musicxml.Dynamics) (float64, bool) {
+type dynLevel2 struct {
+	loudness float64
+	tension  float64
+}
+
+// dynamicsToLevel maps a MusicXML dynamics element to loudness (dB) and tension values.
+//
+// Loudness is kept within -12 to 12 dB. For extreme dynamics (pp and softer,
+// ff and louder), loudness stays close to p/f range while tension is adjusted
+// to convey the additional intensity difference.
+func dynamicsToLevel(d *musicxml.Dynamics) (dynLevel2, bool) {
 	xml := d.InnerXML
 
 	// Check from most specific to least specific to avoid prefix matching issues.
-	// E.g. check <pppppp before <ppppp before <pppp etc.
 	switch {
+	// Fortissimo variants: loudness near f, tension increases.
 	case strings.Contains(xml, "<ffffff"):
-		return 15, true
+		return dynLevel2{12, 0.8}, true
 	case strings.Contains(xml, "<fffff"):
-		return 12, true
+		return dynLevel2{11, 0.7}, true
 	case strings.Contains(xml, "<ffff"):
-		return 9, true
+		return dynLevel2{10, 0.5}, true
 	case strings.Contains(xml, "<fff"):
-		return 6, true
+		return dynLevel2{9, 0.4}, true
 	case strings.Contains(xml, "<ff"):
-		return 3, true
+		return dynLevel2{8, 0.2}, true
 
+	// Pianissimo variants: loudness near p, tension decreases.
 	case strings.Contains(xml, "<pppppp"):
-		return -36, true
+		return dynLevel2{-12, -0.8}, true
 	case strings.Contains(xml, "<ppppp"):
-		return -33, true
+		return dynLevel2{-11, -0.7}, true
 	case strings.Contains(xml, "<pppp"):
-		return -30, true
+		return dynLevel2{-10, -0.5}, true
 	case strings.Contains(xml, "<ppp"):
-		return -27, true
+		return dynLevel2{-9, -0.4}, true
 	case strings.Contains(xml, "<pp"):
-		return -24, true
+		return dynLevel2{-8, -0.2}, true
 
+	// Sforzando variants.
 	case strings.Contains(xml, "<sffz"):
-		return 3, true
+		return dynLevel2{6, 0.3}, true
 	case strings.Contains(xml, "<sfzp"):
-		return 0, true
+		return dynLevel2{3, 0}, true
 	case strings.Contains(xml, "<sfpp"):
-		return 0, true
+		return dynLevel2{3, 0}, true
 	case strings.Contains(xml, "<sfz"):
-		return 3, true
+		return dynLevel2{6, 0.3}, true
 	case strings.Contains(xml, "<sfp"):
-		return 0, true
+		return dynLevel2{3, 0}, true
 	case strings.Contains(xml, "<sf"):
-		return 3, true
+		return dynLevel2{6, 0.3}, true
 
+	// Core dynamics.
 	case strings.Contains(xml, "<mp"):
-		return -12, true
+		return dynLevel2{-3, 0}, true
 	case strings.Contains(xml, "<mf"):
-		return -6, true
+		return dynLevel2{3, 0}, true
 
 	case strings.Contains(xml, "<fp"):
-		return 0, true
+		return dynLevel2{0, 0}, true
 	case strings.Contains(xml, "<fz"):
-		return 3, true
+		return dynLevel2{6, 0.3}, true
 	case strings.Contains(xml, "<f"):
-		return 0, true
+		return dynLevel2{6, 0}, true
 
 	case strings.Contains(xml, "<rfz"):
-		return 0, true
+		return dynLevel2{3, 0.2}, true
 	case strings.Contains(xml, "<rf"):
-		return 0, true
+		return dynLevel2{3, 0.2}, true
 
 	case strings.Contains(xml, "<pf"):
-		return -6, true
+		return dynLevel2{0, 0}, true
 	case strings.Contains(xml, "<p"):
-		return -18, true
+		return dynLevel2{-6, 0}, true
 
 	case strings.Contains(xml, "<n"):
-		return -48, true
+		return dynLevel2{-12, -0.8}, true
 	}
-	return 0, false
+	return dynLevel2{}, false
 }
 
 // isTextCresc checks if a words element indicates crescendo.

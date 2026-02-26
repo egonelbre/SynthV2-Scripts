@@ -289,11 +289,12 @@ func main() {
 					for _, dt := range value.DirectionType {
 						// Dynamics markings (p, mf, f, ...)
 						for _, dyn := range dt.Dynamics {
-							if loudness, ok := dynamicsToLoudness(dyn); ok {
+							if lvl, ok := dynamicsToLevel(dyn); ok {
 								dynEvents = append(dynEvents, dynEvent{
 									position: cursor,
 									kind:     dynLevel,
-									loudness: loudness,
+									loudness: lvl.loudness,
+									tension:  lvl.tension,
 								})
 							}
 						}
@@ -449,7 +450,8 @@ func main() {
 		// Build loudness curve from collected dynamic events
 		params := newEmptyParameters()
 		if len(dynEvents) > 0 {
-			params.Loudness.Points = buildLoudnessCurve(dynEvents)
+			params.Loudness.Points = buildCurve(dynEvents, func(e dynEvent) float64 { return e.loudness }, 6)
+			params.Tension.Points = buildCurve(dynEvents, func(e dynEvent) float64 { return e.tension }, 0.15)
 		}
 
 		group := &SVPGroup{
