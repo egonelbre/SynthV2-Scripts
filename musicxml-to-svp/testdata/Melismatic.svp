@@ -1,0 +1,444 @@
+{
+  "version": 196,
+  "time": {
+    "meter": [
+      {
+        "index": 0,
+        "numerator": 4,
+        "denominator": 4
+      }
+    ],
+    "tempo": [
+      {
+        "position": 0,
+        "bpm": 120
+      }
+    ]
+  },
+  "library": [
+    {
+      "name": "Soprano",
+      "uuid": "a2c3b24e-c6bc-4b86-a9b5-bfa9bdd69eef",
+      "notes": [
+        {
+          "onset": 0,
+          "duration": 705600000,
+          "lyrics": "aa",
+          "phonemes": "",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 705600000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 74,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 1411200000,
+          "duration": 705600000,
+          "lyrics": "aa",
+          "phonemes": "",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 2116800000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 69,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 2822400000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 67,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 5644800000,
+          "duration": 705600000,
+          "lyrics": "a",
+          "phonemes": "",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 6350400000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 74,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 7056000000,
+          "duration": 705600000,
+          "lyrics": "e",
+          "phonemes": "",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 7761600000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 69,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 8467200000,
+          "duration": 705600000,
+          "lyrics": "a",
+          "phonemes": "",
+          "pitch": 67,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "parameters": {
+        "pitchDelta": {
+          "mode": "cubic",
+          "points": []
+        },
+        "vibratoEnv": {
+          "mode": "cubic",
+          "points": []
+        },
+        "loudness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "tension": {
+          "mode": "cubic",
+          "points": []
+        },
+        "breathiness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "voicing": {
+          "mode": "cubic",
+          "points": []
+        },
+        "gender": {
+          "mode": "cubic",
+          "points": []
+        },
+        "toneShift": {
+          "mode": "cubic",
+          "points": []
+        },
+        "mouthOpening": {
+          "mode": "cubic",
+          "points": []
+        }
+      }
+    },
+    {
+      "name": "main",
+      "uuid": "b1fdcfb4-5b64-4d22-b4b0-d0b9887cfe81",
+      "notes": [],
+      "parameters": {
+        "pitchDelta": {
+          "mode": "cubic",
+          "points": []
+        },
+        "vibratoEnv": {
+          "mode": "cubic",
+          "points": []
+        },
+        "loudness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "tension": {
+          "mode": "cubic",
+          "points": []
+        },
+        "breathiness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "voicing": {
+          "mode": "cubic",
+          "points": []
+        },
+        "gender": {
+          "mode": "cubic",
+          "points": []
+        },
+        "toneShift": {
+          "mode": "cubic",
+          "points": []
+        },
+        "mouthOpening": {
+          "mode": "cubic",
+          "points": []
+        }
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "name": "Soprano",
+      "dispColor": "#6699cc",
+      "dispOrder": 0,
+      "mixer": {
+        "gainDecibel": 0,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "display": true
+      },
+      "mainGroup": {
+        "groupID": "b1fdcfb4-5b64-4d22-b4b0-d0b9887cfe81",
+        "blickOffset": 0,
+        "pitchOffset": 0,
+        "isInstrumental": false,
+        "uuid": "166a2887-b1b9-4ba0-a610-0986006f66ee"
+      },
+      "mainRef": {
+        "groupID": "b1fdcfb4-5b64-4d22-b4b0-d0b9887cfe81",
+        "blickOffset": 0,
+        "pitchOffset": 0,
+        "isInstrumental": false,
+        "database": {
+          "name": "Choir Voices #1",
+          "language": "english",
+          "phoneset": "arpabet",
+          "languageOverride": "",
+          "phonesetOverride": "",
+          "backendType": "SVR3",
+          "version": "202"
+        },
+        "voice": {
+          "vocalModeInherited": true,
+          "vocalModePreset": "",
+          "vocalModeParams": {},
+          "choirSeatingSeparation": 0.7
+        },
+        "uuid": "8a26375c-695a-4072-a86e-278099a226d1"
+      },
+      "groups": [
+        {
+          "groupID": "a2c3b24e-c6bc-4b86-a9b5-bfa9bdd69eef",
+          "blickOffset": 0,
+          "pitchOffset": 0,
+          "isInstrumental": false,
+          "voice": {
+            "vocalModeInherited": true,
+            "vocalModePreset": "",
+            "vocalModeParams": {},
+            "choirSeatingSeparation": 0.7,
+            "choirNumStems": 4
+          },
+          "uuid": "18486b49-5418-4600-af93-96b0a9ba5d0b"
+        }
+      ],
+      "uuid": "f177e021-3119-4fff-94c3-f21efcdcc1c7"
+    }
+  ],
+  "renderConfig": {
+    "destination": "",
+    "filename": "",
+    "numChannels": 1,
+    "aspirationFormat": "noAspiration",
+    "bitDepth": 16,
+    "sampleRate": 44100,
+    "exportMixDown": true
+  },
+  "projectMixer": {
+    "gainDecibel": 0,
+    "pan": 0,
+    "mute": false,
+    "solo": false,
+    "linkRoomSettings": true
+  },
+  "uuid": "a823e7d6-9f5b-4632-8c28-1cdb4b69d519"
+}

@@ -65,11 +65,17 @@ type SVPNote struct {
 }
 
 type SVPTakes struct {
-	EvenSyllableDuration bool         `json:"evenSyllableDuration"`
-	Muted                bool         `json:"muted"`
-	TF0Offset            float64      `json:"tF0Offset"`
-	SystemPitchDelta     SVPParamMode `json:"systemPitchDelta"`
-	Takes                []SVPTake    `json:"dur,omitempty"`
+	EvenSyllableDuration    bool         `json:"evenSyllableDuration"`
+	Muted                   bool         `json:"muted"`
+	TF0Offset               float64      `json:"tF0Offset"`
+	SystemPitchDelta        SVPParamMode `json:"systemPitchDelta"`
+	CPhraseTailDispersion   float64      `json:"cPhraseTailDispersion,omitempty"`
+	CPitchDispersion        float64      `json:"cPitchDispersion,omitempty"`
+	CTimeDispersion         float64      `json:"cTimeDispersion,omitempty"`
+	DF0VbrMod               float64      `json:"dF0VbrMod,omitempty"`
+	ExpValueX               float64      `json:"expValueX,omitempty"`
+	ExpValueY               float64      `json:"expValueY,omitempty"`
+	Takes                   []SVPTake    `json:"dur,omitempty"`
 }
 
 type SVPParamMode struct {
@@ -311,12 +317,7 @@ func extractLyric(note *musicxml.Note) string {
 	if text == "" {
 		return ""
 	}
-	switch lyric.Syllabic {
-	case "begin", "middle":
-		return text + " -"
-	default:
-		return text
-	}
+	return text
 }
 
 func beatUnitToQuarters(beatUnit musicxml.NoteTypeValue, hasDot bool) float64 {
@@ -886,6 +887,13 @@ func main() {
 			measureIdx++
 		}
 
+		// Mark melismatic continuation notes with "-".
+		for _, n := range notes {
+			if n.Lyrics == "" {
+				n.Lyrics = "-"
+			}
+		}
+
 		// Build loudness curve from collected dynamic events
 		params := newEmptyParameters()
 		if len(dynEvents) > 0 {
@@ -940,6 +948,7 @@ func main() {
 	// Assign voices if requested.
 	if *voiceFlag != "" {
 		assignVoices(tracks, strings.ToLower(*voiceFlag))
+		setNoteAttributes(library)
 	}
 
 	project := SVPProject{
@@ -1081,6 +1090,19 @@ func applySoloistsToTracks(tracks []*SVPTrack, infos []voice.TrackInfo) {
 		t.MainRef.Voice = &SVPVoice{
 			VocalModeInherited: true,
 			VocalModeParams:    map[string]float64{},
+		}
+	}
+}
+
+func setNoteAttributes(library []*SVPGroup) {
+	for _, group := range library {
+		for _, note := range group.Notes {
+			note.Takes.CPhraseTailDispersion = 0.2
+			note.Takes.CPitchDispersion = 0.1
+			note.Takes.CTimeDispersion = 0.2
+			note.Takes.DF0VbrMod = 0.05
+			note.Takes.ExpValueX = -0.9
+			note.Takes.ExpValueY = -0.9
 		}
 	}
 }
