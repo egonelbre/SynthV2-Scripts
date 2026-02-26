@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/egonelbre/synthv2-scripts/internal/phonemes"
 	"github.com/egonelbre/synthv2-scripts/internal/voice"
 )
 
-func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool) {
+func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool, panScheme string) {
 	relaxedStr := "false"
 	if relaxed {
 		relaxedStr = "true"
@@ -37,6 +38,95 @@ func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool) {
 		fmt.Fprintf(os.Stderr, "unknown voice source: %q (options: choir1, choir2, choir3, soloists)\n", voiceArg)
 		os.Exit(1)
 	}
+
+	// Apply panning.
+	panning := computePanning(infos, panScheme)
+	for i, t := range tracks {
+		if pan, ok := panning[i]; ok {
+			t.Mixer.Pan = pan
+		}
+	}
+}
+
+// computePanning returns pan values keyed by track index.
+func computePanning(infos []voice.TrackInfo, scheme string) map[int]float64 {
+	result := map[int]float64{}
+
+	switch scheme {
+	case "center":
+		for i, info := range infos {
+			if info.Part != voice.Unknown {
+				result[i] = 0
+			}
+		}
+
+	case "spread":
+		spreadPan := map[voice.VoicePart]float64{
+			voice.Soprano:      -0.6,
+			voice.MezzoSoprano: -0.3,
+			voice.Alto:         0.6,
+			voice.Tenor:        -0.3,
+			voice.Baritone:     0.3,
+			voice.Bass:         0.3,
+		}
+		for i, info := range infos {
+			if pan, ok := spreadPan[info.Part]; ok {
+				result[i] = pan
+			}
+		}
+
+	default: // "default"
+		// Choir seating order left-to-right: S, MS, B, Bar, T, A.
+		// Tracks are placed as slots in this order, evenly spaced across
+		// the stereo field. Within each part section, sub-numbering follows
+		// the convention: ascending for left/center-left parts, descending
+		// for center-right/right parts.
+		seatingOrder := []voice.VoicePart{
+			voice.Soprano, voice.MezzoSoprano, voice.Bass, voice.Baritone, voice.Tenor, voice.Alto,
+		}
+		ascending := map[voice.VoicePart]bool{
+			voice.Soprano: true, voice.MezzoSoprano: true,
+			voice.Bass: false, voice.Baritone: false,
+			voice.Tenor: true, voice.Alto: false,
+		}
+
+		type slot struct {
+			trackIdx int
+		}
+		var slots []slot
+
+		for _, part := range seatingOrder {
+			var partTracks []struct{ idx, num int }
+			for i, info := range infos {
+				if info.Part == part {
+					partTracks = append(partTracks, struct{ idx, num int }{i, info.PartNum})
+				}
+			}
+			sort.Slice(partTracks, func(a, b int) bool {
+				if ascending[part] {
+					return partTracks[a].num < partTracks[b].num
+				}
+				return partTracks[a].num > partTracks[b].num
+			})
+			for _, pt := range partTracks {
+				slots = append(slots, slot{trackIdx: pt.idx})
+			}
+		}
+
+		n := len(slots)
+		if n == 1 {
+			result[slots[0].trackIdx] = 0
+		}
+		for i, s := range slots {
+			if n <= 1 {
+				break
+			}
+			t := float64(i) / float64(n-1)
+			result[s.trackIdx] = -0.65 + t*1.3
+		}
+	}
+
+	return result
 }
 
 func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice.ChoirInfo, relaxed string) {
