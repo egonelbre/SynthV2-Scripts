@@ -7,140 +7,14 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
+
+	"github.com/egonelbre/synthv2-scripts/internal/voice"
 )
-
-// VoicePart represents a choir voice part.
-type VoicePart string
-
-const (
-	Soprano      VoicePart = "S"
-	MezzoSoprano VoicePart = "MS"
-	Alto         VoicePart = "A"
-	Tenor        VoicePart = "T"
-	Baritone     VoicePart = "Bar"
-	Bass         VoicePart = "B"
-	Unknown      VoicePart = ""
-)
-
-func (p VoicePart) String() string {
-	switch p {
-	case Soprano:
-		return "Soprano"
-	case MezzoSoprano:
-		return "Mezzo-Soprano"
-	case Alto:
-		return "Alto"
-	case Tenor:
-		return "Tenor"
-	case Baritone:
-		return "Baritone"
-	case Bass:
-		return "Bass"
-	default:
-		return "Unknown"
-	}
-}
-
-// ChoirInfo holds the database configuration for a choir voice collection.
-type ChoirInfo struct {
-	Name     string
-	Language string
-	Phoneset string
-	// Parts available in this choir. Choir #2 has Mezzo-Soprano and Baritone
-	// instead of Alto and Bass.
-	Parts []VoicePart
-}
-
-var choirs = []ChoirInfo{
-	{
-		Name:     "Choir Voices #1",
-		Language: "english",
-		Phoneset: "arpabet",
-		Parts:    []VoicePart{Soprano, Alto, Tenor, Bass},
-	},
-	{
-		Name:     "Choir Voices #2",
-		Language: "mandarin",
-		Phoneset: "xsampa",
-		Parts:    []VoicePart{Soprano, MezzoSoprano, Tenor, Baritone},
-	},
-	{
-		Name:     "Choir Voices #3",
-		Language: "japanese",
-		Phoneset: "romaji",
-		Parts:    []VoicePart{Soprano, Alto, Tenor, Bass},
-	},
-}
-
-// SoloistDB holds a soloist voice database configuration.
-type SoloistDB struct {
-	Name     string
-	Language string
-	Phoneset string
-	// Preferred track numbers (1-indexed) within the voice part, tried in
-	// order. E.g. []int{2, 1} means: prefer "Bass 2", then "Bass 1".
-	// A single unnumbered track (e.g. just "Bass") counts as track 1.
-	Preferred []int
-}
-
-// Ranges from the installed voice databases:
-//
-//	SOLARIA II:  A#3-A4  (soprano, EN)
-//	Sheena 2:    A#3-A#4 (soprano, EN/JA)
-//	Mai 2:       B3-B4   (soprano, JA)
-//	Ayame 2:     B3-A#4  (soprano, JA)
-//	Felicia 2:   A#3-B4  (mezzo/soprano, EN)
-//	Natalie 2:   G3-A4   (mezzo/alto, EN)
-//	Eri 2:       G#3-E4  (alto, JA)
-//	Wei Shu 2:   D3-D4   (alto, ZH/YUE)
-//	Kevin 2:     E3-F4   (tenor, EN)
-//	Hayden 2:    G3-F#4  (tenor, EN)
-//	Ninezero 2:  G#3-G#4 (tenor, EN)
-//	Liam:        D3-E4   (baritone, EN)
-//	ASTERIAN II: F2-G#3  (bass, EN)
-//	Ritchy 2:    G#2-A#3 (bass, EN)
-var soloists = map[VoicePart][]SoloistDB{
-	Soprano: {
-		{Name: "SOLARIA II", Language: "english", Phoneset: "arpabet"},
-		{Name: "Sheena 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Mai 2", Language: "japanese", Phoneset: "romaji"},
-		{Name: "Ayame 2", Language: "japanese", Phoneset: "romaji"},
-		{Name: "Felicia 2", Language: "english", Phoneset: "arpabet"},
-	},
-	MezzoSoprano: {
-		{Name: "Felicia 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Natalie 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "SOLARIA II", Language: "english", Phoneset: "arpabet"},
-		{Name: "Sheena 2", Language: "english", Phoneset: "arpabet"},
-	},
-	Alto: {
-		{Name: "Natalie 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Felicia 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Eri 2", Language: "japanese", Phoneset: "romaji"},
-		{Name: "Wei Shu 2", Language: "cantonese", Phoneset: "xsampa"},
-	},
-	Tenor: {
-		{Name: "Kevin 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Hayden 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Ninezero 2", Language: "english", Phoneset: "arpabet"},
-	},
-	Baritone: {
-		{Name: "Liam", Language: "english", Phoneset: "arpabet"},
-		{Name: "Kevin 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Hayden 2", Language: "english", Phoneset: "arpabet"},
-	},
-	Bass: {
-		{Name: "ASTERIAN II", Language: "english", Phoneset: "arpabet", Preferred: []int{3, 2, 1}},
-		{Name: "Ritchy 2", Language: "english", Phoneset: "arpabet"},
-		{Name: "Liam", Language: "english", Phoneset: "arpabet"},
-	},
-}
 
 type trackInfo struct {
 	Name    string
-	Part    VoicePart
+	Part    voice.VoicePart
 	PartNum int // Track number within part (1 for "Bass", 1 for "Bass 1", 2 for "Bass 2", etc.)
 	DB      string
 }
@@ -187,7 +61,7 @@ func main() {
 	for _, t := range tracks {
 		track := t.(map[string]any)
 		name := track["name"].(string)
-		part := parseVoicePart(name)
+		part := voice.ParseVoicePart(name)
 
 		db := ""
 		if mainRef, ok := track["mainRef"].(map[string]any); ok {
@@ -196,14 +70,14 @@ func main() {
 			}
 		}
 
-		infos = append(infos, trackInfo{Name: name, Part: part, PartNum: parsePartNum(name), DB: db})
+		infos = append(infos, trackInfo{Name: name, Part: part, PartNum: voice.ParsePartNum(name), DB: db})
 	}
 
 	// Display tracks
 	fmt.Println("Tracks:")
 	for i, info := range infos {
 		partStr := info.Part.String()
-		if info.Part == Unknown {
+		if info.Part == voice.Unknown {
 			partStr = "???"
 		}
 		fmt.Printf("  %d. %-20s  [%s]  (current: %s)\n", i+1, info.Name, partStr, info.DB)
@@ -212,18 +86,18 @@ func main() {
 
 	// Check for unknown parts
 	for _, info := range infos {
-		if info.Part == Unknown {
+		if info.Part == voice.Unknown {
 			fmt.Fprintf(os.Stderr, "Warning: cannot determine voice part for track %q\n", info.Name)
 		}
 	}
 
 	switch voiceArg {
 	case "choir1", "1":
-		applyChoir(tracks, infos, choirs[0])
+		applyChoir(tracks, infos, voice.Choirs[0])
 	case "choir2", "2":
-		applyChoir(tracks, infos, choirs[1])
+		applyChoir(tracks, infos, voice.Choirs[1])
 	case "choir3", "3":
-		applyChoir(tracks, infos, choirs[2])
+		applyChoir(tracks, infos, voice.Choirs[2])
 	case "soloists", "solo", "4":
 		applySoloists(tracks, infos)
 	default:
@@ -263,91 +137,19 @@ func main() {
 	fmt.Printf("Written %s\n", outPath)
 }
 
-func parseVoicePart(name string) VoicePart {
-	lower := strings.ToLower(strings.TrimSpace(name))
-
-	// Check for mezzo-soprano first (multi-word).
-	if strings.HasPrefix(lower, "mezzo") {
-		return MezzoSoprano
-	}
-
-	// Take the first word.
-	first := strings.Fields(lower)[0]
-
-	switch first {
-	case "soprano", "sop":
-		return Soprano
-	case "alto":
-		return Alto
-	case "tenor":
-		return Tenor
-	case "baritone", "bariton":
-		return Baritone
-	case "bass":
-		return Bass
-	default:
-		return Unknown
-	}
-}
-
-// parsePartNum extracts the track number from a name like "Bass 2" → 2, "Bass" → 1.
-func parsePartNum(name string) int {
-	fields := strings.Fields(strings.TrimSpace(name))
-	if len(fields) >= 2 {
-		// Try to parse the second field as a number (handles "Bass 2", "Soprano 1a" → 1).
-		numStr := fields[1]
-		// Strip trailing non-digit characters (e.g. "1a" → "1").
-		for len(numStr) > 0 && (numStr[len(numStr)-1] < '0' || numStr[len(numStr)-1] > '9') {
-			numStr = numStr[:len(numStr)-1]
-		}
-		if n, err := strconv.Atoi(numStr); err == nil && n > 0 {
-			return n
-		}
-	}
-	return 1
-}
-
-// mapPartToChoir maps a detected voice part to the closest choir part available.
-func mapPartToChoir(part VoicePart, choir ChoirInfo) VoicePart {
-	// Check if the part is directly available.
-	for _, p := range choir.Parts {
-		if p == part {
-			return part
-		}
-	}
-
-	// Fallback mappings.
-	switch part {
-	case MezzoSoprano:
-		// Choir #1/#3 don't have mezzo, use alto.
-		return Alto
-	case Alto:
-		// Choir #2 doesn't have alto, use mezzo.
-		return MezzoSoprano
-	case Baritone:
-		// Choir #1/#3 don't have baritone, use bass.
-		return Bass
-	case Bass:
-		// Choir #2 doesn't have bass, use baritone.
-		return Baritone
-	default:
-		return Soprano
-	}
-}
-
-func applyChoir(tracks []any, infos []trackInfo, choir ChoirInfo) {
+func applyChoir(tracks []any, infos []trackInfo, choir voice.ChoirInfo) {
 	fmt.Printf("\nApplying %s to all tracks...\n", choir.Name)
 
 	for i, t := range tracks {
 		track := t.(map[string]any)
 		info := infos[i]
 
-		if info.Part == Unknown {
+		if info.Part == voice.Unknown {
 			fmt.Printf("  Skipping %q (unknown voice part)\n", info.Name)
 			continue
 		}
 
-		choirPart := mapPartToChoir(info.Part, choir)
+		choirPart := voice.MapPartToChoir(info.Part, choir)
 		fmt.Printf("  %s → %s (%s)\n", info.Name, choir.Name, choirPart.String())
 
 		// Update mainRef.database
@@ -362,20 +164,20 @@ func applyChoir(tracks []any, infos []trackInfo, choir ChoirInfo) {
 		database["phonesetOverride"] = ""
 
 		// Update mainRef.voice for choir
-		voice := mainRef["voice"].(map[string]any)
-		voice["vocalModeInherited"] = true
-		voice["vocalModePreset"] = ""
-		if _, ok := voice["vocalModeParams"]; !ok {
-			voice["vocalModeParams"] = map[string]any{}
+		v := mainRef["voice"].(map[string]any)
+		v["vocalModeInherited"] = true
+		v["vocalModePreset"] = ""
+		if _, ok := v["vocalModeParams"]; !ok {
+			v["vocalModeParams"] = map[string]any{}
 		}
 		// Set choir separation, preserve existing if present.
-		if _, ok := voice["choirSeatingSeparation"]; !ok {
-			voice["choirSeatingSeparation"] = 0.7
+		if _, ok := v["choirSeatingSeparation"]; !ok {
+			v["choirSeatingSeparation"] = 0.7
 		}
 		// Remove soloist fields that don't belong on choir mainRef.
-		delete(voice, "choirNumStems")
+		delete(v, "choirNumStems")
 		// choirPartName is not set on mainRef (Soprano is default).
-		delete(voice, "choirPartName")
+		delete(v, "choirPartName")
 
 		// Update groups
 		groups, _ := track["groups"].([]any)
@@ -384,7 +186,7 @@ func applyChoir(tracks []any, infos []trackInfo, choir ChoirInfo) {
 			gVoice := group["voice"].(map[string]any)
 
 			// Set choir part name (omit for Soprano as it's the default).
-			if choirPart != Soprano {
+			if choirPart != voice.Soprano {
 				gVoice["choirPartName"] = string(choirPart)
 			} else {
 				delete(gVoice, "choirPartName")
@@ -402,67 +204,12 @@ func applyChoir(tracks []any, infos []trackInfo, choir ChoirInfo) {
 }
 
 func applySoloists(tracks []any, infos []trackInfo) {
-	// Build assignment map: track index → soloist.
-	assignments := make(map[int]SoloistDB)
-
-	// For each voice part, resolve assignments.
-	// Group track indices by part.
-	partTracks := map[VoicePart][]int{}
+	// Convert trackInfo to voice.TrackInfo for the shared assignment logic.
+	vInfos := make([]voice.TrackInfo, len(infos))
 	for i, info := range infos {
-		if info.Part != Unknown {
-			partTracks[info.Part] = append(partTracks[info.Part], i)
-		}
+		vInfos[i] = voice.TrackInfo{Name: info.Name, Part: info.Part, PartNum: info.PartNum}
 	}
-
-	for part, trackIdxs := range partTracks {
-		pool := soloists[part]
-		if len(pool) == 0 {
-			continue
-		}
-
-		assigned := map[int]bool{}   // track indices already assigned
-		usedVoice := map[int]bool{} // pool indices already used
-
-		// First pass: assign voices that have Preferred set.
-		for vi, voice := range pool {
-			if len(voice.Preferred) == 0 {
-				continue
-			}
-			for _, prefNum := range voice.Preferred {
-				// Find a track with this part number that isn't assigned yet.
-				for _, ti := range trackIdxs {
-					if !assigned[ti] && infos[ti].PartNum == prefNum {
-						assignments[ti] = voice
-						assigned[ti] = true
-						usedVoice[vi] = true
-						break
-					}
-				}
-				if usedVoice[vi] {
-					break
-				}
-			}
-		}
-
-		// Second pass: assign remaining tracks from unused voices in pool order.
-		vi := 0
-		for _, ti := range trackIdxs {
-			if assigned[ti] {
-				continue
-			}
-			// Skip used voices.
-			for vi < len(pool) && usedVoice[vi] {
-				vi++
-			}
-			if vi >= len(pool) {
-				// Wrap around if we run out.
-				vi = 0
-			}
-			assignments[ti] = pool[vi]
-			usedVoice[vi] = true
-			vi++
-		}
-	}
+	assignments := voice.AssignSoloists(vInfos)
 
 	fmt.Println("\nAssigning soloists to tracks...")
 	fmt.Println()
@@ -473,7 +220,7 @@ func applySoloists(tracks []any, infos []trackInfo) {
 
 		soloist, ok := assignments[i]
 		if !ok {
-			if info.Part == Unknown {
+			if info.Part == voice.Unknown {
 				fmt.Printf("  Skipping %q (unknown voice part)\n", info.Name)
 			} else {
 				fmt.Printf("  Skipping %q (no soloists for %s)\n", info.Name, info.Part.String())
@@ -495,15 +242,15 @@ func applySoloists(tracks []any, infos []trackInfo) {
 		database["phonesetOverride"] = ""
 
 		// Update mainRef.voice for soloist (remove choir fields).
-		voice := mainRef["voice"].(map[string]any)
-		voice["vocalModeInherited"] = true
-		voice["vocalModePreset"] = ""
-		if _, ok := voice["vocalModeParams"]; !ok {
-			voice["vocalModeParams"] = map[string]any{}
+		v := mainRef["voice"].(map[string]any)
+		v["vocalModeInherited"] = true
+		v["vocalModePreset"] = ""
+		if _, ok := v["vocalModeParams"]; !ok {
+			v["vocalModeParams"] = map[string]any{}
 		}
-		delete(voice, "choirSeatingSeparation")
-		delete(voice, "choirNumStems")
-		delete(voice, "choirPartName")
+		delete(v, "choirSeatingSeparation")
+		delete(v, "choirNumStems")
+		delete(v, "choirPartName")
 
 		// Update groups - remove choir fields.
 		groups, _ := track["groups"].([]any)
@@ -525,7 +272,7 @@ func applyOctaveFix(project map[string]any, infos []trackInfo) {
 	tracks, _ := project["tracks"].([]any)
 	for i, t := range tracks {
 		info := infos[i]
-		if info.Part != Tenor && info.Part != Baritone && info.Part != Bass {
+		if info.Part != voice.Tenor && info.Part != voice.Baritone && info.Part != voice.Bass {
 			continue
 		}
 
