@@ -7,6 +7,7 @@ import "strings"
 // Result holds the conversion result for a single note.
 type Result struct {
 	Language string // target SynthV language (e.g., "mandarin", "english")
+	Phoneset string // phoneset for the language (e.g., "xsampa", "romaji", "arpabet")
 	Phonemes string // space-separated phoneme string
 }
 
@@ -54,6 +55,7 @@ func (c *Converter) Convert(word string) Result {
 
 	return Result{
 		Language: lang,
+		Phoneset: phonesetForLanguage(lang),
 		Phonemes: table.convert(w, c.skip),
 	}
 }
@@ -104,6 +106,17 @@ func (t *phoneTable) convert(word string, skip func(rune) bool) string {
 	}
 
 	return strings.Join(phonemes, " ")
+}
+
+func phonesetForLanguage(lang string) string {
+	switch lang {
+	case "japanese":
+		return "romaji"
+	case "english":
+		return "arpabet"
+	default:
+		return "xsampa"
+	}
 }
 
 func hasOnlyBasicVowels(word string, special string) bool {

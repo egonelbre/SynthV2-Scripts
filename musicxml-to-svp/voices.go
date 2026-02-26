@@ -114,6 +114,7 @@ func applyPhonemes(library []*SVPGroup, conv *phonemes.Converter) {
 			if result.Phonemes != "" {
 				note.Phonemes = result.Phonemes
 				note.Takes.LanguageOverride = result.Language
+				note.Takes.PhonesetOverride = result.Phoneset
 			}
 		}
 	}

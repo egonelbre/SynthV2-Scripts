@@ -63,6 +63,7 @@ type SVPTakes struct {
 	ExpValueX               float64      `json:"expValueX,omitempty"`
 	ExpValueY               float64      `json:"expValueY,omitempty"`
 	LanguageOverride        string       `json:"languageOverride,omitempty"`
+	PhonesetOverride        string       `json:"phonesetOverride,omitempty"`
 	Takes                   []SVPTake    `json:"dur,omitempty"`
 }
 
