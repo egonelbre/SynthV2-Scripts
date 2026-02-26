@@ -127,6 +127,7 @@ func parseDuration(s string) int {
 func main() {
 	voiceFlag := flag.String("voice", "", "assign voices: choir1, choir2, choir3, or soloists")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian")
+	relaxedFlag := flag.Bool("relaxed", false, "enable relaxed consonant pronunciation")
 	outputFlag := flag.String("o", "", "output file path (default: input with .svp extension)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: musicxml-to-svp [flags] <input.musicxml>\n\nFlags:\n")
@@ -564,7 +565,7 @@ func main() {
 
 	// Assign voices if requested.
 	if *voiceFlag != "" {
-		assignVoices(tracks, strings.ToLower(*voiceFlag))
+		assignVoices(tracks, strings.ToLower(*voiceFlag), *relaxedFlag)
 		setNoteAttributes(library)
 	}
 

@@ -8,7 +8,12 @@ import (
 	"github.com/egonelbre/synthv2-scripts/internal/voice"
 )
 
-func assignVoices(tracks []*SVPTrack, voiceArg string) {
+func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool) {
+	relaxedStr := "false"
+	if relaxed {
+		relaxedStr = "true"
+	}
+
 	// Parse track names into voice parts.
 	infos := make([]voice.TrackInfo, len(tracks))
 	for i, t := range tracks {
@@ -21,20 +26,20 @@ func assignVoices(tracks []*SVPTrack, voiceArg string) {
 
 	switch voiceArg {
 	case "choir1", "1":
-		applyChoirToTracks(tracks, infos, voice.Choirs[0])
+		applyChoirToTracks(tracks, infos, voice.Choirs[0], relaxedStr)
 	case "choir2", "2":
-		applyChoirToTracks(tracks, infos, voice.Choirs[1])
+		applyChoirToTracks(tracks, infos, voice.Choirs[1], relaxedStr)
 	case "choir3", "3":
-		applyChoirToTracks(tracks, infos, voice.Choirs[2])
+		applyChoirToTracks(tracks, infos, voice.Choirs[2], relaxedStr)
 	case "soloists", "solo", "4":
-		applySoloistsToTracks(tracks, infos)
+		applySoloistsToTracks(tracks, infos, relaxedStr)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown voice source: %q (options: choir1, choir2, choir3, soloists)\n", voiceArg)
 		os.Exit(1)
 	}
 }
 
-func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice.ChoirInfo) {
+func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice.ChoirInfo, relaxed string) {
 	db := &SVPDatabase{
 		Name:     choir.Name,
 		Language: choir.Language,
@@ -56,6 +61,7 @@ func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice
 		// Set database and voice on MainRef.
 		t.MainRef.Database = db
 		t.MainRef.Voice = &SVPVoice{
+			RelaxedPronunciation:   relaxed,
 			VocalModeInherited:     true,
 			VocalModeParams:        map[string]float64{},
 			ChoirSeatingSeparation: 0.7,
@@ -68,6 +74,7 @@ func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice
 				partName = string(choirPart)
 			}
 			t.Groups[j].Voice = &SVPVoice{
+				RelaxedPronunciation:   relaxed,
 				VocalModeInherited:     true,
 				VocalModeParams:        map[string]float64{},
 				ChoirNumStems:          4,
@@ -78,7 +85,7 @@ func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice
 	}
 }
 
-func applySoloistsToTracks(tracks []*SVPTrack, infos []voice.TrackInfo) {
+func applySoloistsToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, relaxed string) {
 	assignments := voice.AssignSoloists(infos)
 
 	for i, t := range tracks {
@@ -101,8 +108,9 @@ func applySoloistsToTracks(tracks []*SVPTrack, infos []voice.TrackInfo) {
 			Version:     "201",
 		}
 		t.MainRef.Voice = &SVPVoice{
-			VocalModeInherited: true,
-			VocalModeParams:    map[string]float64{},
+			RelaxedPronunciation: relaxed,
+			VocalModeInherited:   true,
+			VocalModeParams:      map[string]float64{},
 		}
 	}
 }

@@ -131,6 +131,7 @@ type SVPDatabase struct {
 }
 
 type SVPVoice struct {
+	RelaxedPronunciation   string            `json:"relaxedPronunciation,omitempty"`
 	VocalModeInherited     bool              `json:"vocalModeInherited"`
 	VocalModePreset        string            `json:"vocalModePreset"`
 	VocalModeParams        map[string]float64 `json:"vocalModeParams"`
