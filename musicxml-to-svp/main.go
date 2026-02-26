@@ -40,18 +40,12 @@ func durationToBlicks(duration, divisions int) int64 {
 }
 
 func extractLyric(note *musicxml.Note) string {
-	if len(note.Lyric) == 0 {
-		return ""
+	for _, lyric := range note.Lyric {
+		if len(lyric.Text) > 0 && lyric.Text[0].EnclosedText != "" {
+			return lyric.Text[0].EnclosedText
+		}
 	}
-	lyric := note.Lyric[0]
-	text := ""
-	if len(lyric.Text) > 0 {
-		text = lyric.Text[0].EnclosedText
-	}
-	if text == "" {
-		return ""
-	}
-	return text
+	return ""
 }
 
 func beatUnitToQuarters(beatUnit musicxml.NoteTypeValue, hasDot bool) float64 {
