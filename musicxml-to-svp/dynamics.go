@@ -261,6 +261,95 @@ func dynamicsToLevel(d *musicxml.Dynamics) (dynLevel2, bool) {
 	return dynLevel2{}, false
 }
 
+type accentEvent struct {
+	position int64
+	duration int64 // full note duration, used to scale spike width
+	strong   bool  // strong accent (marcato) = bigger bump
+}
+
+// applyAccents overlays accent spikes onto an existing parameter curve.
+// Each accent inserts a brief spike: a sharp rise at the note onset that
+// decays over 1/4 of the note duration. normalBump is used for regular
+// accents, strongBump for strong accents (marcato).
+func applyAccents(points []float64, accents []accentEvent, normalBump, strongBump float64) []float64 {
+	for _, acc := range accents {
+		bump := normalBump
+		if acc.strong {
+			bump = strongBump
+		}
+
+		// Spike decays over 1/4 of the note duration (min 1/16 quarter note).
+		spikeWidth := acc.duration / 4
+		if min := int64(blicksPerQuarter / 16); spikeWidth < min {
+			spikeWidth = min
+		}
+
+		// Find the current curve value at the accent position.
+		baseVal := curveValueAt(points, acc.position)
+
+		// Insert spike: peak at onset, decay back to base.
+		points = insertCurvePoints(points, acc.position, baseVal+bump, acc.position+spikeWidth, baseVal)
+	}
+	return points
+}
+
+// curveValueAt returns the interpolated value of a curve at a given position.
+// Uses simple linear interpolation between surrounding points.
+func curveValueAt(points []float64, pos int64) float64 {
+	if len(points) < 2 {
+		return 0
+	}
+	fpos := float64(pos)
+
+	// Before first point: use first value.
+	if fpos <= points[0] {
+		return points[1]
+	}
+	// After last point: use last value.
+	if fpos >= points[len(points)-2] {
+		return points[len(points)-1]
+	}
+
+	// Find surrounding segment.
+	for i := 0; i < len(points)-2; i += 2 {
+		p0, v0 := points[i], points[i+1]
+		p1, v1 := points[i+2], points[i+3]
+		if fpos >= p0 && fpos <= p1 {
+			if p1 == p0 {
+				return v1
+			}
+			t := (fpos - p0) / (p1 - p0)
+			return v0 + t*(v1-v0)
+		}
+	}
+	return points[len(points)-1]
+}
+
+// insertCurvePoints inserts two points (pos1,val1) and (pos2,val2) into a
+// sorted curve point array, maintaining position order.
+func insertCurvePoints(points []float64, pos1 int64, val1 float64, pos2 int64, val2 float64) []float64 {
+	newPts := []float64{float64(pos1), val1, float64(pos2), val2}
+
+	if len(points) == 0 {
+		return newPts
+	}
+
+	// Find insertion index (before the first point >= pos1).
+	idx := len(points)
+	for i := 0; i < len(points); i += 2 {
+		if points[i] >= float64(pos1) {
+			idx = i
+			break
+		}
+	}
+
+	result := make([]float64, 0, len(points)+4)
+	result = append(result, points[:idx]...)
+	result = append(result, newPts...)
+	result = append(result, points[idx:]...)
+	return result
+}
+
 // isTextCresc checks if a words element indicates crescendo.
 func isTextCresc(text string) bool {
 	t := strings.ToLower(strings.TrimSpace(text))

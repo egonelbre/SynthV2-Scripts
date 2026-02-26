@@ -98,6 +98,18 @@ func noteHasArticulation(note *musicxml.Note, name string) bool {
 				if len(a.Staccatissimo) > 0 {
 					return true
 				}
+			case "tenuto":
+				if len(a.Tenuto) > 0 {
+					return true
+				}
+			case "accent":
+				if len(a.Accent) > 0 {
+					return true
+				}
+			case "strong-accent":
+				if len(a.StrongAccent) > 0 {
+					return true
+				}
 			}
 		}
 	}
@@ -287,6 +299,7 @@ func main() {
 		cursor := int64(0)
 		var notes []*SVPNote
 		var dynEvents []dynEvent
+		var accents []accentEvent
 		pendingTies := map[int]*SVPNote{} // keyed by MIDI pitch
 		var prevOnset int64
 
@@ -432,11 +445,26 @@ func main() {
 							}},
 						},
 					}
-					// Shorten staccato notes.
-					if noteHasArticulation(value, "staccatissimo") {
-						note.Duration = note.Duration / 4
-					} else if noteHasArticulation(value, "staccato") {
-						note.Duration = note.Duration / 2
+					// Apply articulation adjustments.
+					hasTenuto := noteHasArticulation(value, "tenuto")
+					if !hasTenuto {
+						if noteHasArticulation(value, "staccatissimo") {
+							note.Duration = note.Duration / 4
+						} else if noteHasArticulation(value, "staccato") {
+							note.Duration = note.Duration / 2
+						}
+					}
+					if noteHasArticulation(value, "strong-accent") {
+						accents = append(accents, accentEvent{
+							position: onset,
+							duration: blicks,
+							strong:   true,
+						})
+					} else if noteHasArticulation(value, "accent") {
+						accents = append(accents, accentEvent{
+							position: onset,
+							duration: blicks,
+						})
 					}
 
 					notes = append(notes, note)
@@ -477,6 +505,10 @@ func main() {
 		if len(dynEvents) > 0 {
 			params.Loudness.Points = buildCurve(dynEvents, func(e dynEvent) float64 { return e.loudness }, 6)
 			params.Tension.Points = buildCurve(dynEvents, func(e dynEvent) float64 { return e.tension }, 0.15)
+		}
+		if len(accents) > 0 {
+			params.Loudness.Points = applyAccents(params.Loudness.Points, accents, 1.5, 3)
+			params.Tension.Points = applyAccents(params.Tension.Points, accents, 0.15, 0.3)
 		}
 
 		group := &SVPGroup{
