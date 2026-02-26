@@ -86,6 +86,24 @@ func noteTieTypes(note *musicxml.Note) (hasStart, hasStop bool) {
 	return
 }
 
+func noteHasArticulation(note *musicxml.Note, name string) bool {
+	for _, n := range note.Notations {
+		for _, a := range n.Articulations {
+			switch name {
+			case "staccato":
+				if len(a.Staccato) > 0 {
+					return true
+				}
+			case "staccatissimo":
+				if len(a.Staccatissimo) > 0 {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func parseDuration(s string) int {
 	if s == "" {
 		return 0
@@ -414,6 +432,13 @@ func main() {
 							}},
 						},
 					}
+					// Shorten staccato notes.
+					if noteHasArticulation(value, "staccatissimo") {
+						note.Duration = note.Duration / 4
+					} else if noteHasArticulation(value, "staccato") {
+						note.Duration = note.Duration / 2
+					}
+
 					notes = append(notes, note)
 
 					if tieStart {
