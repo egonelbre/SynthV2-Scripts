@@ -8,7 +8,7 @@
     <creator type="composer">Composer / arranger</creator>
     <encoding>
       <software>MuseScore Studio 4.6.5</software>
-      <encoding-date>2026-02-26</encoding-date>
+      <encoding-date>2026-02-27</encoding-date>
       <supports element="accidental" type="yes"/>
       <supports element="beam" type="yes"/>
       <supports element="print" attribute="new-page" type="no"/>
@@ -105,6 +105,10 @@
         </note>
       </measure>
     <measure number="2">
+      <barline location="left">
+        <bar-style>heavy-light</bar-style>
+        <repeat direction="forward"/>
+        </barline>
       <note>
         <pitch>
           <step>G</step>
@@ -114,6 +118,14 @@
         <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
+        <lyric number="2">
+          <syllabic>single</syllabic>
+          <text>u</text>
+          </lyric>
+        <lyric number="3">
+          <syllabic>single</syllabic>
+          <text>m</text>
+          </lyric>
         </note>
       <note>
         <rest/>
@@ -129,6 +141,9 @@
         </note>
       </measure>
     <measure number="3">
+      <barline location="left">
+        <ending number="1, 2" type="start">1.</ending>
+        </barline>
       <note>
         <pitch>
           <step>C</step>
@@ -141,6 +156,14 @@
         <lyric number="1">
           <syllabic>begin</syllabic>
           <text>a</text>
+          </lyric>
+        <lyric number="2">
+          <syllabic>begin</syllabic>
+          <text>e</text>
+          </lyric>
+        <lyric number="3">
+          <syllabic>begin</syllabic>
+          <text>m</text>
           </lyric>
         </note>
       <note>
@@ -163,8 +186,16 @@
         <type>quarter</type>
         <stem>down</stem>
         <lyric number="1">
-          <syllabic>middle</syllabic>
+          <syllabic>end</syllabic>
           <text>e</text>
+          </lyric>
+        <lyric number="2">
+          <syllabic>end</syllabic>
+          <text>e</text>
+          </lyric>
+        <lyric number="3">
+          <syllabic>middle</syllabic>
+          <text>m</text>
           </lyric>
         </note>
       <note>
@@ -177,6 +208,11 @@
         <type>quarter</type>
         <stem>up</stem>
         </note>
+      <barline location="right">
+        <bar-style>light-heavy</bar-style>
+        <ending number="1, 2" type="stop"/>
+        <repeat direction="backward" times="3"/>
+        </barline>
       </measure>
     <measure number="4">
       <note>

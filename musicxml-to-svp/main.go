@@ -39,7 +39,32 @@ func durationToBlicks(duration, divisions int) int64 {
 	return int64(duration) * blicksPerQuarter / int64(divisions)
 }
 
-func extractLyric(note *musicxml.Note) string {
+func extractLyric(note *musicxml.Note, verse int) string {
+	if verse > 0 {
+		// Look for exact match first, then fall back to highest lyric number ≤ verse.
+		bestNum := 0
+		bestText := ""
+		for _, lyric := range note.Lyric {
+			if len(lyric.Text) == 0 || lyric.Text[0].EnclosedText == "" {
+				continue
+			}
+			num, err := strconv.Atoi(lyric.Number)
+			if err != nil {
+				continue
+			}
+			if num == verse {
+				return lyric.Text[0].EnclosedText
+			}
+			if num <= verse && num > bestNum {
+				bestNum = num
+				bestText = lyric.Text[0].EnclosedText
+			}
+		}
+		if bestText != "" {
+			return bestText
+		}
+	}
+	// Fallback: first non-empty lyric.
 	for _, lyric := range note.Lyric {
 		if len(lyric.Text) > 0 && lyric.Text[0].EnclosedText != "" {
 			return lyric.Text[0].EnclosedText
@@ -118,6 +143,172 @@ func parseDuration(s string) int {
 	return v
 }
 
+type playedMeasure struct {
+	measureIdx int // index into part.Measure
+	verse      int // 1-based lyric number for this pass
+}
+
+func measureHasForwardRepeat(m *musicxml.Measure) bool {
+	for _, el := range m.Element {
+		if bl, ok := el.Value.(*musicxml.Barline); ok {
+			if bl.Repeat != nil && bl.Repeat.Direction == "forward" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func measureBackwardRepeat(m *musicxml.Measure) *musicxml.Repeat {
+	for _, el := range m.Element {
+		if bl, ok := el.Value.(*musicxml.Barline); ok {
+			if bl.Repeat != nil && bl.Repeat.Direction == "backward" {
+				return bl.Repeat
+			}
+		}
+	}
+	return nil
+}
+
+func measureEndingStart(m *musicxml.Measure) *musicxml.Ending {
+	for _, el := range m.Element {
+		if bl, ok := el.Value.(*musicxml.Barline); ok {
+			if bl.Ending != nil && bl.Ending.Type == "start" {
+				return bl.Ending
+			}
+		}
+	}
+	return nil
+}
+
+func measureHasEndingStop(m *musicxml.Measure) bool {
+	for _, el := range m.Element {
+		if bl, ok := el.Value.(*musicxml.Barline); ok {
+			if bl.Ending != nil && (bl.Ending.Type == "stop" || bl.Ending.Type == "discontinue") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func parseEndingNumbers(s string) []int {
+	var nums []int
+	for _, part := range strings.Split(s, ",") {
+		part = strings.TrimSpace(part)
+		if n, err := strconv.Atoi(part); err == nil {
+			nums = append(nums, n)
+		}
+	}
+	return nums
+}
+
+func intSliceContains(s []int, v int) bool {
+	for _, n := range s {
+		if n == v {
+			return true
+		}
+	}
+	return false
+}
+
+func unrollMeasures(measures []*musicxml.Measure) []playedMeasure {
+	// Pre-scan to find repeat regions.
+	type repeatRegion struct {
+		start, end int
+		times      int
+	}
+	var regions []repeatRegion
+	repeatStart := 0
+	for i, m := range measures {
+		if measureHasForwardRepeat(m) {
+			repeatStart = i
+		}
+		if br := measureBackwardRepeat(m); br != nil {
+			times := br.Times
+			if times == 0 {
+				times = 2
+			}
+			regions = append(regions, repeatRegion{start: repeatStart, end: i, times: times})
+			repeatStart = i + 1
+		}
+	}
+
+	// Emit the unrolled sequence.
+	var result []playedMeasure
+	i := 0
+	regionIdx := 0
+
+	for i < len(measures) {
+		if regionIdx < len(regions) && i == regions[regionIdx].start {
+			r := regions[regionIdx]
+			regionIdx++
+
+			// Find endings and track which measures are inside which ending.
+			type endingInfo struct {
+				inEnding bool
+				numbers  []int
+			}
+			endingInfos := make([]endingInfo, r.end-r.start+1)
+			var currentEndingNums []int
+			inEnding := false
+			maxEndingNum := 0
+			hasEndings := false
+
+			for j := r.start; j <= r.end; j++ {
+				if startEnding := measureEndingStart(measures[j]); startEnding != nil {
+					inEnding = true
+					currentEndingNums = parseEndingNumbers(startEnding.Number)
+					hasEndings = true
+					for _, n := range currentEndingNums {
+						if n > maxEndingNum {
+							maxEndingNum = n
+						}
+					}
+				}
+				if inEnding {
+					endingInfos[j-r.start] = endingInfo{inEnding: true, numbers: currentEndingNums}
+				}
+				if measureHasEndingStop(measures[j]) {
+					inEnding = false
+				}
+			}
+
+			// Emit passes.
+			for pass := 1; pass <= r.times; pass++ {
+				for j := r.start; j <= r.end; j++ {
+					ei := endingInfos[j-r.start]
+					if ei.inEnding && !intSliceContains(ei.numbers, pass) {
+						continue
+					}
+					result = append(result, playedMeasure{measureIdx: j, verse: pass})
+				}
+			}
+
+			i = r.end + 1
+
+			// If there are endings and the final pass exceeds all ending numbers,
+			// consume continuation measures (implicit final volta) with the final verse.
+			if hasEndings && r.times > maxEndingNum {
+				finalVerse := r.times
+				for i < len(measures) {
+					if regionIdx < len(regions) && i == regions[regionIdx].start {
+						break
+					}
+					result = append(result, playedMeasure{measureIdx: i, verse: finalVerse})
+					i++
+				}
+			}
+			continue
+		}
+
+		result = append(result, playedMeasure{measureIdx: i, verse: 1})
+		i++
+	}
+
+	return result
+}
+
 func main() {
 	voiceFlag := flag.String("voice", "", "assign voices: choir1, choir2, choir3, or soloists")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
@@ -172,14 +363,18 @@ func main() {
 		divisions   int
 	}
 	var measureInfos []measureInfo
+	var unrolled []playedMeasure
 
 	if len(score.Part) > 0 {
 		firstPart := score.Part[0]
+		unrolled = unrollMeasures(firstPart.Measure)
+
 		divisions := 4
 		cursor := int64(0)
-		measureIdx := 0
 
-		for _, measure := range firstPart.Measure {
+		for measureIdx, pm := range unrolled {
+			measure := firstPart.Measure[pm.measureIdx]
+
 			measureInfos = append(measureInfos, measureInfo{
 				startBlicks: cursor,
 				divisions:   divisions,
@@ -263,8 +458,6 @@ func main() {
 			}
 			expectedDuration := int64(meterNum) * blicksPerQuarter * 4 / int64(meterDen)
 			cursor += expectedDuration
-
-			measureIdx++
 		}
 	}
 
@@ -300,11 +493,12 @@ func main() {
 		pendingTies := map[int]*SVPNote{} // keyed by MIDI pitch
 		var prevOnset int64
 
-		measureIdx := 0
-		for _, measure := range part.Measure {
+		for unrolledIdx, pm := range unrolled {
+			measure := part.Measure[pm.measureIdx]
+
 			// Reset cursor to measure start if we have timing info
-			if measureIdx < len(measureInfos) {
-				cursor = measureInfos[measureIdx].startBlicks
+			if unrolledIdx < len(measureInfos) {
+				cursor = measureInfos[unrolledIdx].startBlicks
 			}
 
 			for _, el := range measure.Element {
@@ -428,7 +622,7 @@ func main() {
 						continue
 					}
 
-					lyric := extractLyric(value)
+					lyric := extractLyric(value, pm.verse)
 
 					note := &SVPNote{
 						Onset:    onset,
@@ -492,7 +686,6 @@ func main() {
 					}
 				}
 			}
-			measureIdx++
 		}
 
 		// Mark melismatic continuation notes with "-".
