@@ -224,6 +224,183 @@ func unrollMeasures(measures []*musicxml.Measure) []playedMeasure {
 	return result
 }
 
+// navigationMarkers holds positions of segno, coda, fine, and jump instructions
+// found in a sequence of measures.
+type navigationMarkers struct {
+	// segnoIdx maps segno ID -> measure index
+	segnoIdx map[string]int
+	// codaIdx maps coda ID -> measure index
+	codaIdx map[string]int
+	// fineIdx is the measure index of the Fine marker, or -1
+	fineIdx int
+	// jumpIdx is the measure index where a D.C. or D.S. jump occurs, or -1
+	jumpIdx int
+	// jumpType is "dacapo" or "dalsegno"
+	jumpType string
+	// jumpTarget is the segno ID for D.S. jumps (empty for D.C.)
+	jumpTarget string
+	// tocodaIdx is the measure index of the To Coda instruction, or -1
+	tocodaIdx int
+	// tocodaTarget is the coda ID referenced by the To Coda instruction
+	tocodaTarget string
+}
+
+func scanNavigation(measures []*musicxml.Measure) navigationMarkers {
+	nav := navigationMarkers{
+		segnoIdx: make(map[string]int),
+		codaIdx:  make(map[string]int),
+		fineIdx:  -1,
+		jumpIdx:  -1,
+		tocodaIdx: -1,
+	}
+
+	for i, m := range measures {
+		for _, el := range m.Element {
+			switch v := el.Value.(type) {
+			case *musicxml.Barline:
+				if v.Segno != "" {
+					nav.segnoIdx[v.Segno] = i
+				}
+				if v.Coda != "" {
+					nav.codaIdx[v.Coda] = i
+				}
+			case *musicxml.Direction:
+				if v.Sound == nil {
+					continue
+				}
+				s := v.Sound
+				if s.Segno != "" {
+					nav.segnoIdx[s.Segno] = i
+				}
+				if s.Coda != "" {
+					nav.codaIdx[s.Coda] = i
+				}
+				if s.Fine != "" {
+					nav.fineIdx = i
+				}
+				if s.Dacapo == "yes" {
+					nav.jumpIdx = i
+					nav.jumpType = "dacapo"
+				}
+				if s.Dalsegno != "" {
+					nav.jumpIdx = i
+					nav.jumpType = "dalsegno"
+					nav.jumpTarget = s.Dalsegno
+				}
+				if s.Tocoda != "" {
+					nav.tocodaIdx = i
+					nav.tocodaTarget = s.Tocoda
+				}
+			}
+		}
+	}
+	return nav
+}
+
+// measureHasAfterJumpRepeat checks if a measure has a backward repeat
+// with after-jump="yes".
+func measureHasAfterJumpRepeat(m *musicxml.Measure) bool {
+	if br := measureBackwardRepeat(m); br != nil {
+		return br.AfterJump == "yes"
+	}
+	return false
+}
+
+// unrollMeasureRange unrolls measures[start:end+1] using the repeat logic.
+// When afterJump is true, repeats and voltas are skipped unless the backward
+// repeat has after-jump="yes".
+func unrollMeasureRange(measures []*musicxml.Measure, start, end int, afterJump bool) []playedMeasure {
+	sub := measures[start : end+1]
+	if !afterJump {
+		result := unrollMeasures(sub)
+		// Remap indices back to the original measure array.
+		for i := range result {
+			result[i].measureIdx += start
+		}
+		return result
+	}
+
+	// After a jump: play each measure once, except for repeats with after-jump="yes".
+	var result []playedMeasure
+	i := 0
+	for i < len(sub) {
+		// Check for after-jump repeat regions.
+		if measureHasForwardRepeat(sub[i]) {
+			// Find the matching backward repeat with after-jump="yes".
+			regionStart := i
+			foundAfterJump := false
+			for j := i; j < len(sub); j++ {
+				if measureHasAfterJumpRepeat(sub[j]) {
+					// Unroll this region normally.
+					regionMeasures := sub[regionStart : j+1]
+					regionResult := unrollMeasures(regionMeasures)
+					for k := range regionResult {
+						regionResult[k].measureIdx += start + regionStart
+					}
+					result = append(result, regionResult...)
+					i = j + 1
+					foundAfterJump = true
+					break
+				}
+			}
+			if foundAfterJump {
+				continue
+			}
+		}
+		result = append(result, playedMeasure{measureIdx: start + i, verse: 1})
+		i++
+	}
+	return result
+}
+
+// unrollWithNavigation handles D.C., D.S., Coda, and Fine navigation on top
+// of barline repeats. If no navigation markers are found, it falls back to
+// plain unrollMeasures.
+func unrollWithNavigation(measures []*musicxml.Measure) []playedMeasure {
+	nav := scanNavigation(measures)
+
+	if nav.jumpIdx < 0 {
+		return unrollMeasures(measures)
+	}
+
+	last := len(measures) - 1
+
+	// Determine where the jump goes back to.
+	jumpBackTo := 0
+	if nav.jumpType == "dalsegno" {
+		if idx, ok := nav.segnoIdx[nav.jumpTarget]; ok {
+			jumpBackTo = idx
+		}
+	}
+
+	// Phase 1: play from beginning through the jump measure with normal repeats.
+	result := unrollMeasureRange(measures, 0, nav.jumpIdx, false)
+
+	// Determine the end of phase 2.
+	phase2End := last
+	if nav.tocodaIdx >= 0 && nav.tocodaIdx >= jumpBackTo {
+		phase2End = nav.tocodaIdx
+	} else if nav.fineIdx >= 0 && nav.fineIdx >= jumpBackTo {
+		phase2End = nav.fineIdx
+	}
+
+	// Phase 2: jump back, play without repeats (unless after-jump).
+	result = append(result, unrollMeasureRange(measures, jumpBackTo, phase2End, true)...)
+
+	// Phase 3: if there's a coda, jump to coda and play to end with normal repeats.
+	if nav.tocodaIdx >= 0 {
+		codaIdx := -1
+		if idx, ok := nav.codaIdx[nav.tocodaTarget]; ok {
+			codaIdx = idx
+		}
+		if codaIdx >= 0 {
+			result = append(result, unrollMeasureRange(measures, codaIdx, last, false)...)
+		}
+	}
+
+	return result
+}
+
 type measureInfo struct {
 	startBlicks int64
 	divisions   int
@@ -232,7 +409,7 @@ type measureInfo struct {
 // buildStructure unrolls repeats and computes measure start positions, meters, and tempos
 // from the first part.
 func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, []MeterChange, []TempoChange) {
-	unrolled := unrollMeasures(firstPart.Measure)
+	unrolled := unrollWithNavigation(firstPart.Measure)
 
 	var meters []MeterChange
 	var tempos []TempoChange

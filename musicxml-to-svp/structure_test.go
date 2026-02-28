@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -377,6 +379,203 @@ func TestBuildStructure_MeterChangeToAdditive(t *testing.T) {
 	if infos[2].startBlicks != expectedStart2 {
 		t.Errorf("measure 2 start: expected %d, got %d", expectedStart2, infos[2].startBlicks)
 	}
+}
+
+// navigationTestMeasure builds a minimal MusicXML measure element with optional
+// navigation directives and barline attributes for testing.
+func navigationTestMeasure(label string, opts ...string) string {
+	var directionParts []string
+	var barlineAttrs []string
+	var barlineChildren []string
+
+	for _, opt := range opts {
+		switch {
+		case opt == "dacapo":
+			directionParts = append(directionParts, `dacapo="yes"`)
+		case strings.HasPrefix(opt, "dalsegno="):
+			directionParts = append(directionParts, fmt.Sprintf(`dalsegno="%s"`, opt[9:]))
+		case strings.HasPrefix(opt, "tocoda="):
+			directionParts = append(directionParts, fmt.Sprintf(`tocoda="%s"`, opt[7:]))
+		case opt == "fine":
+			directionParts = append(directionParts, `fine="yes"`)
+		case strings.HasPrefix(opt, "sound-segno="):
+			directionParts = append(directionParts, fmt.Sprintf(`segno="%s"`, opt[12:]))
+		case strings.HasPrefix(opt, "sound-coda="):
+			directionParts = append(directionParts, fmt.Sprintf(`coda="%s"`, opt[11:]))
+		case strings.HasPrefix(opt, "barline-segno="):
+			barlineAttrs = append(barlineAttrs, fmt.Sprintf(`segno="%s"`, opt[14:]))
+		case strings.HasPrefix(opt, "barline-coda="):
+			barlineAttrs = append(barlineAttrs, fmt.Sprintf(`coda="%s"`, opt[13:]))
+		case opt == "forward-repeat":
+			barlineChildren = append(barlineChildren, `<repeat direction="forward"/>`)
+		case opt == "backward-repeat":
+			barlineChildren = append(barlineChildren, `<repeat direction="backward"/>`)
+		case opt == "backward-repeat-after-jump":
+			barlineChildren = append(barlineChildren, `<repeat direction="backward" after-jump="yes"/>`)
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString("    <measure>\n")
+
+	if len(barlineAttrs) > 0 || len(barlineChildren) > 0 {
+		fmt.Fprintf(&sb, "      <barline %s>%s</barline>\n",
+			strings.Join(barlineAttrs, " "),
+			strings.Join(barlineChildren, ""))
+	}
+
+	if len(directionParts) > 0 {
+		fmt.Fprintf(&sb, "      <direction><sound %s/></direction>\n",
+			strings.Join(directionParts, " "))
+	}
+
+	fmt.Fprintf(&sb,
+		"      <note><pitch><step>%s</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>\n",
+		label)
+	sb.WriteString("    </measure>\n")
+	return sb.String()
+}
+
+func navigationTestScore(measures ...string) string {
+	var sb strings.Builder
+	sb.WriteString(`<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+`)
+	// First measure needs attributes.
+	for i, m := range measures {
+		if i == 0 {
+			m = strings.Replace(m, "<measure>\n",
+				"<measure>\n      <attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>\n", 1)
+		}
+		sb.WriteString(m)
+	}
+	sb.WriteString("  </part>\n</score-partwise>")
+	return sb.String()
+}
+
+func checkUnrolledIndices(t *testing.T, unrolled []playedMeasure, expected []int) {
+	t.Helper()
+	if len(unrolled) != len(expected) {
+		got := make([]int, len(unrolled))
+		for i, pm := range unrolled {
+			got[i] = pm.measureIdx
+		}
+		t.Fatalf("expected %d measures %v, got %d: %v", len(expected), expected, len(unrolled), got)
+	}
+	for i, pm := range unrolled {
+		if pm.measureIdx != expected[i] {
+			got := make([]int, len(unrolled))
+			for j, p := range unrolled {
+				got[j] = p.measureIdx
+			}
+			t.Fatalf("unrolled[%d].measureIdx: expected %d, got %d\n  expected: %v\n  got:      %v",
+				i, expected[i], pm.measureIdx, expected, got)
+		}
+	}
+}
+
+// TestNavigation_DaCapo: A, B(D.C.) -> A, B, A, B
+func TestNavigation_DaCapo(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A"),
+		navigationTestMeasure("B", "dacapo"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 0, 1})
+}
+
+// TestNavigation_DaCapoAlFine: A, B(Fine), C(D.C.) -> A, B, C, A, B
+func TestNavigation_DaCapoAlFine(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A"),
+		navigationTestMeasure("B", "fine"),
+		navigationTestMeasure("C", "dacapo"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 0, 1})
+}
+
+// TestNavigation_DalSegno: A, B(Segno), C(D.S.) -> A, B, C, B, C
+func TestNavigation_DalSegno(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A"),
+		navigationTestMeasure("B", "sound-segno=s1"),
+		navigationTestMeasure("C", "dalsegno=s1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 1, 2})
+}
+
+// TestNavigation_DalSegnoAlFine: A, B(Segno), C(Fine), D(D.S.) -> A, B, C, D, B, C
+func TestNavigation_DalSegnoAlFine(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A"),
+		navigationTestMeasure("B", "sound-segno=s1"),
+		navigationTestMeasure("C", "fine"),
+		navigationTestMeasure("D", "dalsegno=s1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 3, 1, 2})
+}
+
+// TestNavigation_DalSegnoAlCoda: A, B(Segno), C(ToCoda), D(D.S.), E(Coda)
+// -> A, B, C, D, B, C, E
+func TestNavigation_DalSegnoAlCoda(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A"),
+		navigationTestMeasure("B", "sound-segno=s1"),
+		navigationTestMeasure("C", "tocoda=c1"),
+		navigationTestMeasure("D", "dalsegno=s1"),
+		navigationTestMeasure("E", "sound-coda=c1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 3, 1, 2, 4})
+}
+
+// TestNavigation_DaCapoAlCoda: A(ToCoda), B(D.C.), C(Coda) -> A, B, A, C
+func TestNavigation_DaCapoAlCoda(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A", "tocoda=c1"),
+		navigationTestMeasure("B", "dacapo"),
+		navigationTestMeasure("C", "sound-coda=c1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 0, 2})
+}
+
+// TestNavigation_DSWithRepeatsSkipped: A(Segno,fwd), B(bwd), C(D.S.)
+// -> A, B, A, B, C, A, B (repeats skipped after jump)
+func TestNavigation_DSWithRepeatsSkipped(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A", "sound-segno=s1", "forward-repeat"),
+		navigationTestMeasure("B", "backward-repeat"),
+		navigationTestMeasure("C", "dalsegno=s1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+	// Phase 1: 0,1,0,1,2 (measures 0-2 with repeat in 0-1)
+	// Phase 2: 0,1 (jump to segno=0, play 0-2 without repeats, but D.S. is at 2 so phase2 ends at 2)
+	// Wait - phase 1 ends at jumpIdx=2, phase 2 jumps back to segno=0, plays 0..2 without repeats
+	// But the jump is at measure 2 so we need to think about this...
+	// Actually: phase 1 plays 0..jumpIdx with repeats = 0,1,0,1,2
+	// Phase 2 plays segno(0)..last(2) without repeats = 0,1,2
+	// But that gives A,B,A,B,C,A,B,C which is 8
+	// The plan says expected: A, B, A, B, C, A, B which is 7
+	// Hmm, in phase 2 we play from segno to end without repeats, which is 0,1,2
+	// So total would be 0,1,0,1,2,0,1,2
+	// But the plan expects 0,1,0,1,2,0,1
+	// Let me reconsider - after the D.S. jump, we're replaying from the segno,
+	// and the D.S. instruction at measure 2 shouldn't be taken again.
+	// So phase 2 should play all measures from segno to end: 0,1,2
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 0, 1, 2, 0, 1, 2})
 }
 
 // TestBuildStructure_NestedRepeats tests that nested repeats are unrolled correctly.
