@@ -251,7 +251,7 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 	return points
 }
 
-type dynLevel2 struct {
+type dynamicLevel struct {
 	loudness float64
 	tension  float64
 }
@@ -261,7 +261,7 @@ type dynLevel2 struct {
 // Loudness is kept within -12 to 12 dB. For extreme dynamics (pp and softer,
 // ff and louder), loudness stays close to p/f range while tension is adjusted
 // to convey the additional intensity difference.
-var dynamicLevels = map[string]dynLevel2{
+var dynamicLevels = map[string]dynamicLevel{
 	// Fortissimo variants: loudness near f, tension increases.
 	"ffffff": {12, 0.8},
 	"fffff":  {11, 0.7},
@@ -301,27 +301,51 @@ var dynamicLevels = map[string]dynLevel2{
 }
 
 // dynamicsToLevel maps a MusicXML dynamics element to loudness (dB) and tension values.
-func dynamicsToLevel(d *musicxml.Dynamics) (dynLevel2, bool) {
+func dynamicsToLevel(d *musicxml.Dynamics) (dynamicLevel, bool) {
 	name := firstXMLElementName(d.InnerXML)
 	if lvl, ok := dynamicLevels[name]; ok {
 		return lvl, true
 	}
-	return dynLevel2{}, false
+	return dynamicLevel{}, false
 }
 
 // firstXMLElementName extracts the tag name of the first XML element in s.
 // For example, "<ff/>" returns "ff", "<p default-x=\"10\"/>" returns "p".
+// Skips XML comments (<!-- ... -->) and processing instructions (<? ... ?>).
 func firstXMLElementName(s string) string {
-	start := strings.Index(s, "<")
-	if start < 0 {
-		return ""
+	for {
+		start := strings.Index(s, "<")
+		if start < 0 {
+			return ""
+		}
+		start++ // skip '<'
+		if start >= len(s) {
+			return ""
+		}
+		// Skip comments.
+		if strings.HasPrefix(s[start:], "!--") {
+			end := strings.Index(s[start:], "-->")
+			if end < 0 {
+				return ""
+			}
+			s = s[start+end+3:]
+			continue
+		}
+		// Skip processing instructions.
+		if s[start] == '?' {
+			end := strings.Index(s[start:], "?>")
+			if end < 0 {
+				return ""
+			}
+			s = s[start+end+2:]
+			continue
+		}
+		end := start
+		for end < len(s) && s[end] != ' ' && s[end] != '>' && s[end] != '/' {
+			end++
+		}
+		return s[start:end]
 	}
-	start++ // skip '<'
-	end := start
-	for end < len(s) && s[end] != ' ' && s[end] != '>' && s[end] != '/' {
-		end++
-	}
-	return s[start:end]
 }
 
 type accentEvent struct {
@@ -341,10 +365,10 @@ func applyAccents(points []float64, accents []accentEvent, normalBump, strongBum
 			bump = strongBump
 		}
 
-		// Spike decays over 1/4 of the note duration (min 1/16 quarter note).
-		spikeWidth := acc.duration / 4
-		if min := int64(blicksPerQuarter / 16); spikeWidth < min {
-			spikeWidth = min
+		// Spike decays over a fraction of the note duration.
+		spikeWidth := acc.duration / accentSpikeWidthFraction
+		if spikeWidth < minAccentSpikeWidth {
+			spikeWidth = minAccentSpikeWidth
 		}
 
 		// Find the current curve value at the accent position.

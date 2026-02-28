@@ -12,11 +12,15 @@ import (
 
 const blicksPerQuarter = 705600000
 
+var stepToSemitone = map[musicxml.Step]int{
+	"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11,
+}
+
 func pitchToMIDI(p *musicxml.Pitch) (midi int, detune int) {
-	stepMap := map[musicxml.Step]int{
-		"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11,
+	semitone, ok := stepToSemitone[p.Step]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "warning: unknown pitch step %q, defaulting to C\n", p.Step)
 	}
-	semitone := stepMap[p.Step]
 	midi = (p.Octave+1)*12 + semitone
 
 	if p.Alter != "" {
@@ -65,7 +69,11 @@ func beatUnitToQuarters(beatUnit musicxml.NoteTypeValue, hasDot bool) float64 {
 func parseBeats(s string) int {
 	total := 0
 	for _, part := range strings.Split(s, "+") {
-		v, _ := strconv.Atoi(strings.TrimSpace(part))
+		v, err := strconv.Atoi(strings.TrimSpace(part))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: invalid beats value %q: %v\n", part, err)
+			continue
+		}
 		total += v
 	}
 	return total
@@ -75,7 +83,11 @@ func parseDuration(s string) int {
 	if s == "" {
 		return 0
 	}
-	v, _ := strconv.Atoi(s)
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: invalid duration %q: %v\n", s, err)
+		return 0
+	}
 	return v
 }
 

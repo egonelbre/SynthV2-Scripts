@@ -166,6 +166,26 @@ type SVPProjectMixer struct {
 	LinkRoomSettings bool    `json:"linkRoomSettings"`
 }
 
+// Accent loudness and tension bumps (dB and tension units).
+const (
+	accentLoudnessBump       = 1.5
+	strongAccentLoudnessBump = 3.0
+	accentTensionBump        = 0.15
+	strongAccentTensionBump  = 0.3
+)
+
+// Default crescendo/diminuendo deltas when no target level exists.
+const (
+	defaultLoudnessDelta = 6.0
+	defaultTensionDelta  = 0.15
+)
+
+// Accent spike width as a fraction of note duration.
+const (
+	accentSpikeWidthFraction = 4 // spike width = duration / accentSpikeWidthFraction
+	minAccentSpikeWidth      = int64(blicksPerQuarter / 16)
+)
+
 func newUUID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
@@ -331,12 +351,12 @@ func scoreToSVP(score *Score) *SVPProject {
 		// Build curves from dynamics and accents.
 		params := newEmptyParameters()
 		if len(part.Dynamics) > 0 {
-			params.Loudness.Points = buildCurve(part.Dynamics, func(e dynEvent) float64 { return e.loudness }, 6)
-			params.Tension.Points = buildCurve(part.Dynamics, func(e dynEvent) float64 { return e.tension }, 0.15)
+			params.Loudness.Points = buildCurve(part.Dynamics, func(e dynEvent) float64 { return e.loudness }, defaultLoudnessDelta)
+			params.Tension.Points = buildCurve(part.Dynamics, func(e dynEvent) float64 { return e.tension }, defaultTensionDelta)
 		}
 		if len(accents) > 0 {
-			params.Loudness.Points = applyAccents(params.Loudness.Points, accents, 1.5, 3)
-			params.Tension.Points = applyAccents(params.Tension.Points, accents, 0.15, 0.3)
+			params.Loudness.Points = applyAccents(params.Loudness.Points, accents, accentLoudnessBump, strongAccentLoudnessBump)
+			params.Tension.Points = applyAccents(params.Tension.Points, accents, accentTensionBump, strongAccentTensionBump)
 		}
 
 		group := &SVPGroup{

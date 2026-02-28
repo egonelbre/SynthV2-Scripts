@@ -22,7 +22,6 @@ type Part struct {
 	Name     string
 	Notes    []Note
 	Dynamics []dynEvent
-	Accents  []accentEvent
 }
 
 type Articulation int

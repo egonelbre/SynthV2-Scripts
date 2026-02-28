@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -67,15 +68,6 @@ func parseEndingNumbers(s string) []int {
 		}
 	}
 	return nums
-}
-
-func intSliceContains(s []int, v int) bool {
-	for _, n := range s {
-		if n == v {
-			return true
-		}
-	}
-	return false
 }
 
 func unrollMeasures(measures []*musicxml.Measure) []playedMeasure {
@@ -178,7 +170,7 @@ func unrollMeasures(measures []*musicxml.Measure) []playedMeasure {
 		j := r.start
 		for j <= r.end {
 			ei := r.endingInfos[j-r.start]
-			if ei.inEnding && !intSliceContains(ei.numbers, pass) {
+			if ei.inEnding && !slices.Contains(ei.numbers, pass) {
 				j++
 				continue
 			}
