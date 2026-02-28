@@ -6,6 +6,108 @@ import (
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
 )
 
+// buildDynamics collects dynamic events from directions in a part.
+func buildDynamics(part *musicxml.Part, unrolled []playedMeasure, infos []measureInfo) []dynEvent {
+	var events []dynEvent
+	cursor := int64(0)
+
+	for unrolledIdx, pm := range unrolled {
+		measure := part.Measure[pm.measureIdx]
+
+		if unrolledIdx < len(infos) {
+			cursor = infos[unrolledIdx].startBlicks
+		}
+
+		divisions := 4
+		if unrolledIdx < len(infos) {
+			divisions = infos[unrolledIdx].divisions
+		}
+
+		for _, el := range measure.Element {
+			switch value := el.Value.(type) {
+			case *musicxml.Attributes:
+				if value.Divisions != 0 {
+					divisions = value.Divisions
+				}
+			case *musicxml.Direction:
+				for _, dt := range value.DirectionType {
+					for _, dyn := range dt.Dynamics {
+						if lvl, ok := dynamicsToLevel(dyn); ok {
+							events = append(events, dynEvent{
+								position: cursor,
+								kind:     dynLevel,
+								loudness: lvl.loudness,
+								tension:  lvl.tension,
+							})
+						}
+					}
+					if dt.Wedge != nil {
+						num := dt.Wedge.Number
+						if num == 0 {
+							num = 1
+						}
+						switch dt.Wedge.Type {
+						case "crescendo":
+							events = append(events, dynEvent{
+								position: cursor,
+								kind:     dynCrescStart,
+								number:   num,
+							})
+						case "diminuendo":
+							events = append(events, dynEvent{
+								position: cursor,
+								kind:     dynDimStart,
+								number:   num,
+							})
+						case "stop":
+							events = append(events, dynEvent{
+								position: cursor,
+								kind:     dynWedgeStop,
+								number:   num,
+							})
+						}
+					}
+					for _, w := range dt.Words {
+						if isTextCresc(w.EnclosedText) {
+							events = append(events, dynEvent{
+								position: cursor,
+								kind:     dynCrescStart,
+								number:   -1,
+							})
+						} else if isTextDim(w.EnclosedText) {
+							events = append(events, dynEvent{
+								position: cursor,
+								kind:     dynDimStart,
+								number:   -1,
+							})
+						}
+					}
+				}
+			case *musicxml.Note:
+				if value.Grace != nil {
+					continue
+				}
+				dur := parseDuration(value.Duration)
+				if dur > 0 && value.Chord == "" {
+					cursor += durationToBlicks(dur, divisions)
+				}
+			case *musicxml.Backup:
+				dur := parseDuration(value.Duration)
+				if dur > 0 {
+					cursor -= durationToBlicks(dur, divisions)
+				}
+			case *musicxml.Forward:
+				dur := parseDuration(value.Duration)
+				if dur > 0 {
+					cursor += durationToBlicks(dur, divisions)
+				}
+			}
+		}
+	}
+
+	return events
+}
+
 // Dynamic event types for building loudness curves.
 type dynEventKind int
 
