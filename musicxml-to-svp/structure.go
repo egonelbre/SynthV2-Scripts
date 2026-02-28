@@ -480,6 +480,9 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []MeterChange, [
 				dur := parseDuration(value.Duration)
 				if dur > 0 {
 					measureCursor -= durationToBlicks(dur, divisions)
+					if measureCursor < 0 {
+						measureCursor = 0
+					}
 				}
 			case *musicxml.Forward:
 				dur := parseDuration(value.Duration)

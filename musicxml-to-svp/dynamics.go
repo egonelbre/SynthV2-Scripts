@@ -161,6 +161,8 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 		points = append(points, float64(pos), val)
 	}
 
+	usedRanges := make([]bool, len(ranges))
+
 	for i, ev := range events {
 		evVal := getValue(ev)
 
@@ -207,7 +209,10 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 			var targetLevel float64
 			found := false
 
-			for _, wr := range ranges {
+			for ri, wr := range ranges {
+				if usedRanges[ri] {
+					continue
+				}
 				if wr.startPos == ev.position && wr.kind == ev.kind {
 					stopPos = wr.stopPos
 					// Look for a dynLevel right after the stop.
@@ -221,18 +226,31 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 							targetLevel = currentLevel - defaultDelta
 						}
 					}
+					usedRanges[ri] = true
 					found = true
 					break
 				}
 			}
 
 			if !found {
-				// Unpaired cresc/dim text — estimate over 2 measures.
-				stopPos = ev.position + 2*4*blicksPerQuarter
-				if ev.kind == dynCrescStart {
-					targetLevel = currentLevel + defaultDelta
+				// Unpaired cresc/dim text — use next dynLevel as endpoint
+				// if available, otherwise estimate over 2 measures.
+				if lvl, ok := findNextLevel(i + 1); ok {
+					targetLevel = lvl
+					// Find the position of the next dynLevel.
+					for j := i + 1; j < len(events); j++ {
+						if events[j].kind == dynLevel {
+							stopPos = events[j].position
+							break
+						}
+					}
 				} else {
-					targetLevel = currentLevel - defaultDelta
+					stopPos = ev.position + 2*4*blicksPerQuarter
+					if ev.kind == dynCrescStart {
+						targetLevel = currentLevel + defaultDelta
+					} else {
+						targetLevel = currentLevel - defaultDelta
+					}
 				}
 			}
 

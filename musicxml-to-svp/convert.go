@@ -112,11 +112,9 @@ func extractLyric(note *musicxml.Note, verse int) string {
 				bestText = lyric.Text[0].EnclosedText
 			}
 		}
-		if bestText != "" {
-			return bestText
-		}
+		return bestText
 	}
-	// Fallback: first non-empty lyric.
+	// No verse filtering: return first non-empty lyric.
 	for _, lyric := range note.Lyric {
 		if len(lyric.Text) > 0 && lyric.Text[0].EnclosedText != "" {
 			return lyric.Text[0].EnclosedText
