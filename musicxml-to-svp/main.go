@@ -135,6 +135,85 @@ func noteHasArticulation(note *musicxml.Note, name string) bool {
 	return false
 }
 
+func graceNoteDuration(note *musicxml.Note) int64 {
+	dur := int64(blicksPerQuarter / 4) // default: sixteenth
+	if note.Type != nil {
+		switch note.Type.EnclosedText {
+		case "whole":
+			dur = blicksPerQuarter * 4
+		case "half":
+			dur = blicksPerQuarter * 2
+		case "quarter":
+			dur = blicksPerQuarter
+		case "eighth":
+			dur = blicksPerQuarter / 2
+		case "16th":
+			dur = blicksPerQuarter / 4
+		case "32nd":
+			dur = blicksPerQuarter / 8
+		}
+	}
+	// Acciaccatura: halve duration for quicker execution.
+	if note.Grace.Slash == "yes" {
+		dur /= 2
+	}
+	return dur
+}
+
+func emitGraceNotes(graces []*musicxml.Note, graceDurs []int64, graceLyrics []string, onset int64, transpose, verse int) []*SVPNote {
+	var out []*SVPNote
+	for i, g := range graces {
+		if g.Pitch == nil {
+			continue
+		}
+		gMidi, gDetune := pitchToMIDI(g.Pitch)
+		gMidi += transpose
+		lyric := ""
+		if i < len(graceLyrics) {
+			lyric = graceLyrics[i]
+		}
+		if lyric == "" {
+			lyric = extractLyric(g, verse)
+		}
+		out = append(out, &SVPNote{
+			Onset:    onset,
+			Duration: graceDurs[i],
+			Lyrics:   lyric,
+			Phonemes: "",
+			Pitch:    gMidi,
+			Detune:   gDetune,
+			Takes: SVPTakes{
+				EvenSyllableDuration: true,
+				SystemPitchDelta:     SVPParamMode{Mode: "cubic"},
+				Takes: []SVPTake{{
+					ID:    0,
+					Liked: false,
+					Seeds: SVPSeeds{},
+				}},
+			},
+		})
+		onset += graceDurs[i]
+	}
+	return out
+}
+
+func capGraceDurations(graces []*musicxml.Note, maxTotal int64) (graceDurs []int64, totalGrace int64) {
+	graceDurs = make([]int64, len(graces))
+	for i, g := range graces {
+		graceDurs[i] = graceNoteDuration(g)
+		totalGrace += graceDurs[i]
+	}
+	if totalGrace > maxTotal {
+		scale := float64(maxTotal) / float64(totalGrace)
+		totalGrace = 0
+		for i := range graceDurs {
+			graceDurs[i] = int64(float64(graceDurs[i]) * scale)
+			totalGrace += graceDurs[i]
+		}
+	}
+	return
+}
+
 func parseDuration(s string) int {
 	if s == "" {
 		return 0
@@ -492,8 +571,13 @@ func main() {
 		var accents []accentEvent
 		pendingTies := map[int]*SVPNote{} // keyed by MIDI pitch
 		var prevOnset int64
+		var pendingGraces []*musicxml.Note
+		var graceIsTail bool
+		var lastEmittedNote *SVPNote
+		var lastVerse int
 
 		for unrolledIdx, pm := range unrolled {
+			lastVerse = pm.verse
 			measure := part.Measure[pm.measureIdx]
 
 			// Reset cursor to measure start if we have timing info
@@ -570,6 +654,10 @@ func main() {
 					}
 				case *musicxml.Note:
 					if value.Grace != nil {
+						if len(pendingGraces) == 0 {
+							graceIsTail = lastEmittedNote != nil
+						}
+						pendingGraces = append(pendingGraces, value)
 						continue
 					}
 
@@ -586,7 +674,15 @@ func main() {
 					}
 
 					if value.Rest != nil {
-						// Rest: advance cursor only
+						// Flush tail graces to previous note, discard leading graces.
+						if graceIsTail && len(pendingGraces) > 0 && lastEmittedNote != nil {
+							graceDurs, totalGrace := capGraceDurations(pendingGraces, lastEmittedNote.Duration/2)
+							graceOnset := lastEmittedNote.Onset + lastEmittedNote.Duration - totalGrace
+							lastEmittedNote.Duration -= totalGrace
+							notes = append(notes, emitGraceNotes(pendingGraces, graceDurs, nil, graceOnset, transpose, pm.verse)...)
+						}
+						pendingGraces = nil
+						lastEmittedNote = nil
 						if value.Chord == "" {
 							prevOnset = cursor
 							cursor += blicks
@@ -595,12 +691,53 @@ func main() {
 					}
 
 					if value.Pitch == nil {
-						// No pitch, no rest — skip (e.g. unpitched)
+						// No pitch, no rest — skip (e.g. unpitched).
+						if graceIsTail && len(pendingGraces) > 0 && lastEmittedNote != nil {
+							graceDurs, totalGrace := capGraceDurations(pendingGraces, lastEmittedNote.Duration/2)
+							graceOnset := lastEmittedNote.Onset + lastEmittedNote.Duration - totalGrace
+							lastEmittedNote.Duration -= totalGrace
+							notes = append(notes, emitGraceNotes(pendingGraces, graceDurs, nil, graceOnset, transpose, pm.verse)...)
+						}
+						pendingGraces = nil
+						lastEmittedNote = nil
 						if value.Chord == "" {
 							prevOnset = cursor
 							cursor += blicks
 						}
 						continue
+					}
+
+					// Process pending grace notes.
+					if len(pendingGraces) > 0 {
+						if graceIsTail && lastEmittedNote != nil {
+							// Tail graces: steal time from the previous note.
+							graceDurs, totalGrace := capGraceDurations(pendingGraces, lastEmittedNote.Duration/2)
+							graceOnset := lastEmittedNote.Onset + lastEmittedNote.Duration - totalGrace
+							lastEmittedNote.Duration -= totalGrace
+							notes = append(notes, emitGraceNotes(pendingGraces, graceDurs, nil, graceOnset, transpose, pm.verse)...)
+						} else {
+							// Leading graces: steal time from the following note.
+							graceDurs, totalGrace := capGraceDurations(pendingGraces, blicks/2)
+							// If no grace note has lyrics, move the main note's lyric to the first grace.
+							graceLyrics := make([]string, len(pendingGraces))
+							anyGraceLyric := false
+							for i, g := range pendingGraces {
+								graceLyrics[i] = extractLyric(g, pm.verse)
+								if graceLyrics[i] != "" {
+									anyGraceLyric = true
+								}
+							}
+							if !anyGraceLyric {
+								mainLyric := extractLyric(value, pm.verse)
+								if mainLyric != "" {
+									graceLyrics[0] = mainLyric
+								}
+							}
+							notes = append(notes, emitGraceNotes(pendingGraces, graceDurs, graceLyrics, onset, transpose, pm.verse)...)
+							onset += totalGrace
+							blicks -= totalGrace
+						}
+						pendingGraces = nil
 					}
 
 					midi, detune := pitchToMIDI(value.Pitch)
@@ -664,6 +801,7 @@ func main() {
 					}
 
 					notes = append(notes, note)
+					lastEmittedNote = note
 
 					if tieStart {
 						pendingTies[midi] = note
@@ -686,6 +824,14 @@ func main() {
 					}
 				}
 			}
+		}
+
+		// Flush any remaining tail graces.
+		if graceIsTail && len(pendingGraces) > 0 && lastEmittedNote != nil {
+			graceDurs, totalGrace := capGraceDurations(pendingGraces, lastEmittedNote.Duration/2)
+			graceOnset := lastEmittedNote.Onset + lastEmittedNote.Duration - totalGrace
+			lastEmittedNote.Duration -= totalGrace
+			notes = append(notes, emitGraceNotes(pendingGraces, graceDurs, nil, graceOnset, transpose, lastVerse)...)
 		}
 
 		// Mark melismatic continuation notes with "-".
