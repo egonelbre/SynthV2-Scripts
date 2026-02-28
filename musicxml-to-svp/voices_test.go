@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egonelbre/synthv2-scripts/internal/voice"
+	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/voice"
 )
 
 // TestComputePanning_Center tests that center scheme sets all known parts to 0.

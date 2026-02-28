@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/egonelbre/synthv2-scripts/internal/phonemes"
+	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/phonemes"
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
 )
 

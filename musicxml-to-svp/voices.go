@@ -5,8 +5,8 @@ import (
 	"os"
 	"sort"
 
-	"github.com/egonelbre/synthv2-scripts/internal/phonemes"
-	"github.com/egonelbre/synthv2-scripts/internal/voice"
+	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/phonemes"
+	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/voice"
 )
 
 func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool, panScheme string) {
