@@ -645,9 +645,9 @@ func main() {
 					hasTenuto := noteHasArticulation(value, "tenuto")
 					if !hasTenuto {
 						if noteHasArticulation(value, "staccatissimo") {
-							note.Duration = note.Duration / 4
+							note.Duration = note.Duration / 3
 						} else if noteHasArticulation(value, "staccato") {
-							note.Duration = note.Duration / 2
+							note.Duration = note.Duration * 2 / 3
 						}
 					}
 					if noteHasArticulation(value, "strong-accent") {

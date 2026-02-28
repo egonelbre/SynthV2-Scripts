@@ -1,1 +1,718 @@
-{"version": 196, "uuid": "a823e7d6-9f5b-4632-8c28-1cdb4b69d519", "time": {"meter": [{"index": 0, "numerator": 4, "denominator": 4}], "tempo": [{"position": 0, "bpm": 120.0}], "startTimeSeconds": 0.0}, "library": [{"name": "Soprano", "uuid": "a2c3b24e-c6bc-4b86-a9b5-bfa9bdd69eef", "parameters": {"pitchDelta": {"mode": "cubic", "points": []}, "vibratoEnv": {"mode": "cubic", "points": []}, "loudness": {"mode": "cubic", "points": [121146688, 0.0, 132171688, 0.178906247019768, 192726119, 0.178906247019768, 276570715, 0.580468773841858, 451746032, 1.728906273841858, 636611721, 3.537499904632568, 784629041, 4.499218940734863, 1209549794, 4.876562595367432, 1398532851, 4.05078125, 1636258898, 2.46484375, 1979580893, -0.352343738079071, 2192186832, -1.850781202316284, 2406872251, -2.84375, 2602010567, -3.057812452316284, 2751400343, -3.016406297683716, 2863068369, -2.372656345367432, 3045979348, -0.498437494039536, 3208844148, 0.819531261920929, 3405188562, 2.264062404632568, 3554328801, 2.839062452316284, 3667993126, 2.842187404632568, 3917239488, 1.944531202316284, 4035603436, 1.290624976158142, 4217599444, 0.025000000372529, 4408121316, -1.01171875, 4499493626, -1.17578125, 4510518626, 0.0, 5169830808, 0.0, 5180855808, -0.079687498509884, 5414755543, -0.079687498509884, 5517980884, 0.1484375, 5562273788, 0.31640625, 5764066437, 1.64453125, 5858890682, 2.389062404632568, 6173058380, 4.493750095367432, 6283187591, 5.030468940734863, 6589411679, 5.919531345367432, 7124461643, 5.996874809265137, 7217455947, 5.930468559265137, 7389137738, 5.415625095367432, 7460297512, 5.053906440734863, 7689747232, 3.62109375, 7916368861, 1.934375047683716, 8146192888, -0.087499998509884, 8358341342, -1.663281202316284, 8539505559, -2.71484375, 8741381386, -3.521093845367432, 8921796990, -4.0546875, 9010091671, -4.048437595367432, 9063867000, -1.788281202316284, 9074892000, 0.0]}, "tension": {"mode": "cubic", "points": [-254407230, 0.0, -243382230, 0.481387853622437, -35060017, 0.277458637952805, 51238364, 0.202320769429207, 127388887, 0.158432900905609, 310882120, 0.038947612047195, 482938218, -0.066750921308994, 615775341, -0.122012868523598, 926907008, -0.122012868523598, 937932008, -0.093419343233109, 965668489, -0.021484375, 1024975232, 0.030675550922751, 1251929577, 0.092026650905609, 1546799709, 0.219439342617989, 1807150488, 0.337431073188782, 2051239741, 0.438993573188782, 2344363111, 0.632238030433655, 2518373919, 0.751838207244873, 2748031587, 0.742417275905609, 2983137490, 0.582261025905609, 3220239694, 0.345703125, 3455470366, 0.171760112047195, 3697064244, 0.058708637952805, 3837304312, -0.030445771291852, 3968061956, -0.116153493523598, 4087008159, -0.174172788858414, 4877667690, -0.181181073188782, 4986549214, -0.155790448188782, 5056378121, -0.134765625, 5259709584, -0.100413605570793, 5407352598, -0.069163605570793, 5577953060, -0.016314338892698, 5666289331, 0.02332261018455, 5812060814, 0.065831802785397, 5917240865, 0.077780328691006, 5984241681, 0.080997243523598, 6133257150, 0.113740809261799, 6185493665, 0.132697612047195, 6575645527, 0.131318926811218, 6708815367, 0.117991730570793, 6867521209, 0.079503677785397, 6983680910, 0.01769301481545, 7079586484, -0.076516546308994, 7256342205, -0.248851105570793, 7554872220, -0.458524823188782, 7775089053, -0.611098349094391, 8142366646, -0.798943042755127, 8653336243, -0.803538620471954, 8873927382, -0.702205896377563, 9128206083, -0.534926474094391, 9187429376, -0.547449469566345, 9198454376, 0.0]}, "breathiness": {"mode": "cubic", "points": []}, "voicing": {"mode": "cubic", "points": []}, "gender": {"mode": "cubic", "points": []}, "toneShift": {"mode": "cubic", "points": []}, "mouthOpening": {"mode": "cubic", "points": []}}, "vocalModes": {}, "pitchControls": [], "notes": [{"uuid": "0de17353342f47d2", "musicalType": "singing", "onset": 0, "duration": 705600000, "lyrics": "aa", "phonemes": "", "accent": "", "pitch": 72, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "3a16ce60c1d84045", "musicalType": "singing", "onset": 705600000, "duration": 705600000, "lyrics": "-", "phonemes": "", "accent": "", "pitch": 74, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "f32d30434d1c44aa", "musicalType": "singing", "onset": 1411200000, "duration": 705600000, "lyrics": "aa", "phonemes": "", "accent": "", "pitch": 72, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "a5f2997f408f4d46", "musicalType": "singing", "onset": 2116800000, "duration": 705600000, "lyrics": "-", "phonemes": "", "accent": "", "pitch": 69, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "1340c9b83c244a40", "musicalType": "singing", "onset": 2822400000, "duration": 705600000, "lyrics": "-", "phonemes": "", "accent": "", "pitch": 67, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "4123dc7779934ca3", "musicalType": "singing", "onset": 5644800000, "duration": 705600000, "lyrics": "a", "phonemes": "", "accent": "", "pitch": 72, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false, "languageOverride": "spanish", "phonesetOverride": "xsampa"}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "1c388e8cbf3b4ab9", "musicalType": "singing", "onset": 6350400000, "duration": 705600000, "lyrics": "-", "phonemes": "", "accent": "", "pitch": 74, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "954d0f3ad1b84a79", "musicalType": "singing", "onset": 7056000000, "duration": 705600000, "lyrics": "e", "phonemes": "", "accent": "", "pitch": 72, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "60005bd85d584de5", "musicalType": "singing", "onset": 7761600000, "duration": 705600000, "lyrics": "-", "phonemes": "", "accent": "", "pitch": 69, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}, {"uuid": "258fe06c48084129", "musicalType": "singing", "onset": 8467200000, "duration": 705600000, "lyrics": "a", "phonemes": "", "accent": "", "pitch": 67, "detune": 0, "attributes": {"evenSyllableDuration": true, "muted": false}, "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}}], "musicalScale": {"type": "Major", "root": "C"}}], "tracks": [{"name": "Soprano", "dispColor": "ff6699cc", "dispOrder": 0, "renderEnabled": false, "mixer": {"gainDecibel": 0.0, "pan": 0.0, "mute": false, "solo": false, "display": true, "fxPresetName": "", "fxParams": {"room": {"enabled": false, "positionX": 0.0, "positionY": 0.0, "size": 15.0, "reflectionGain": 0.0}, "postRoomEq": {"enabled": false, "filters": [{"freq": 117.699996948242188, "gain": 0.0, "q": 0.709999978542328}, {"freq": 692.79998779296875, "gain": 0.0, "q": 0.709999978542328}, {"freq": 4077.699951171875, "gain": 0.0, "q": 0.709999978542328}], "lowShelf": {"freq": 25.0, "gain": 0.0}}, "compressor": {"enabled": false, "attack": 0.0, "ratio": 4.0, "threshold": -10.0}, "reverb": {"enabled": false, "type": "clean", "preDelay": 0.050000000745058, "decay": 1.0, "dryWetRatio": 0.5}}}, "mainGroup": {"name": "main", "uuid": "166a2887-b1b9-4ba0-a610-0986006f66ee", "parameters": {"pitchDelta": {"mode": "cubic", "points": []}, "vibratoEnv": {"mode": "cubic", "points": []}, "loudness": {"mode": "cubic", "points": []}, "tension": {"mode": "cubic", "points": []}, "breathiness": {"mode": "cubic", "points": []}, "voicing": {"mode": "cubic", "points": []}, "gender": {"mode": "cubic", "points": []}, "toneShift": {"mode": "cubic", "points": []}, "mouthOpening": {"mode": "cubic", "points": []}}, "vocalModes": {}, "pitchControls": [], "notes": [], "musicalScale": {"type": "Major", "root": "C"}}, "mainRef": {"uuid": "8a26375c-695a-4072-a86e-278099a226d1", "groupID": "b1fdcfb4-5b64-4d22-b4b0-d0b9887cfe81", "blickAbsoluteBegin": 0, "blickAbsoluteEnd": -1, "blickOffset": 0, "pitchOffset": 0, "mute": false, "isInstrumental": false, "database": {"name": "Choir Voices #1", "language": "english", "phoneset": "arpabet", "languageOverride": "", "phonesetOverride": "", "backendType": "SVR3", "version": "202"}, "dictionary": "", "voice": {"vocalModeInherited": true, "vocalModePreset": "", "vocalModeParams": {}, "choirSeatingSeparation": 0.699999988079071}, "voicePresetName": "", "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}, "timestampLMR": 0, "timestampLRSR": 1772140916399}, "groups": [{"uuid": "18486b49-5418-4600-af93-96b0a9ba5d0b", "groupID": "a2c3b24e-c6bc-4b86-a9b5-bfa9bdd69eef", "blickAbsoluteBegin": 0, "blickAbsoluteEnd": -1, "blickOffset": 0, "pitchOffset": 0, "mute": false, "isInstrumental": false, "database": {"name": "", "language": "", "phoneset": "", "languageOverride": "", "phonesetOverride": "", "backendType": "", "version": "-2"}, "dictionary": "", "voice": {"relaxedPronunciation": "false", "vocalModeInherited": true, "vocalModePreset": "", "vocalModeParams": {}, "choirNumStems": 4, "choirSeatingSeparation": 0.699999988079071}, "voicePresetName": "", "takes": {"activeTakeId": 0, "takes": [{"id": 0, "seedDuration": 0, "seedPitch": 0, "seedTimbre": 0, "liked": false}]}, "timestampLMR": 1772140917561, "timestampLRSR": 1772140917705}]}], "renderConfig": {"destination": "", "filename": "", "numChannels": 1, "aspirationFormat": "noAspiration", "bitDepth": 16, "sampleRate": 44100, "exportMixDown": true, "exportPitch": false, "bypassPan": false, "bypassGain": false, "bypassEffects": false}, "projectMixer": {"linkRoomSettings": true}}
+{
+  "version": 196,
+  "time": {
+    "meter": [
+      {
+        "index": 0,
+        "numerator": 4,
+        "denominator": 4
+      }
+    ],
+    "tempo": [
+      {
+        "position": 0,
+        "bpm": 120
+      }
+    ]
+  },
+  "library": [
+    {
+      "name": "Soprano",
+      "uuid": "46f68167-5653-4d2d-8804-4e698e1da12a",
+      "notes": [
+        {
+          "onset": 0,
+          "duration": 705600000,
+          "lyrics": "aa",
+          "phonemes": "a a",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 705600000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 74,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 1411200000,
+          "duration": 705600000,
+          "lyrics": "aa",
+          "phonemes": "a a",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 2116800000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 69,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 2822400000,
+          "duration": 705600000,
+          "lyrics": "u",
+          "phonemes": "u",
+          "pitch": 67,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 5644800000,
+          "duration": 705600000,
+          "lyrics": "a",
+          "phonemes": "a",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 6350400000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 74,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 7056000000,
+          "duration": 705600000,
+          "lyrics": "e",
+          "phonemes": "e",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 7761600000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 69,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 8467200000,
+          "duration": 705600000,
+          "lyrics": "u",
+          "phonemes": "u",
+          "pitch": 67,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 11289600000,
+          "duration": 705600000,
+          "lyrics": "e",
+          "phonemes": "e",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 11995200000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 74,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 12700800000,
+          "duration": 705600000,
+          "lyrics": "e",
+          "phonemes": "e",
+          "pitch": 72,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 13406400000,
+          "duration": 705600000,
+          "lyrics": "-",
+          "phonemes": "",
+          "pitch": 69,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 14112000000,
+          "duration": 705600000,
+          "lyrics": "m",
+          "phonemes": "m",
+          "pitch": 67,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "onset": 16934400000,
+          "duration": 705600000,
+          "lyrics": "a",
+          "phonemes": "a",
+          "pitch": 67,
+          "detune": 0,
+          "attributes": {
+            "evenSyllableDuration": true,
+            "muted": false,
+            "tF0Offset": 0,
+            "systemPitchDelta": {
+              "mode": "cubic"
+            },
+            "cPhraseTailDispersion": 0.2,
+            "cPitchDispersion": 0.1,
+            "cTimeDispersion": 0.2,
+            "dF0VbrMod": 0.05,
+            "expValueX": -0.9,
+            "expValueY": -0.9,
+            "languageOverride": "japanese",
+            "phonesetOverride": "romaji",
+            "dur": [
+              {
+                "id": 0,
+                "liked": false,
+                "seeds": {
+                  "singingSeed": 0,
+                  "backingSeed": 0
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "parameters": {
+        "pitchDelta": {
+          "mode": "cubic",
+          "points": []
+        },
+        "vibratoEnv": {
+          "mode": "cubic",
+          "points": []
+        },
+        "loudness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "tension": {
+          "mode": "cubic",
+          "points": []
+        },
+        "breathiness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "voicing": {
+          "mode": "cubic",
+          "points": []
+        },
+        "gender": {
+          "mode": "cubic",
+          "points": []
+        },
+        "toneShift": {
+          "mode": "cubic",
+          "points": []
+        },
+        "mouthOpening": {
+          "mode": "cubic",
+          "points": []
+        }
+      }
+    },
+    {
+      "name": "main",
+      "uuid": "f1c01271-e97c-4aa1-9702-2c97dee4ecb0",
+      "notes": [],
+      "parameters": {
+        "pitchDelta": {
+          "mode": "cubic",
+          "points": []
+        },
+        "vibratoEnv": {
+          "mode": "cubic",
+          "points": []
+        },
+        "loudness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "tension": {
+          "mode": "cubic",
+          "points": []
+        },
+        "breathiness": {
+          "mode": "cubic",
+          "points": []
+        },
+        "voicing": {
+          "mode": "cubic",
+          "points": []
+        },
+        "gender": {
+          "mode": "cubic",
+          "points": []
+        },
+        "toneShift": {
+          "mode": "cubic",
+          "points": []
+        },
+        "mouthOpening": {
+          "mode": "cubic",
+          "points": []
+        }
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "name": "Soprano",
+      "dispColor": "#6699cc",
+      "dispOrder": 0,
+      "mixer": {
+        "gainDecibel": 0,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "display": true
+      },
+      "mainGroup": {
+        "groupID": "f1c01271-e97c-4aa1-9702-2c97dee4ecb0",
+        "blickOffset": 0,
+        "pitchOffset": 0,
+        "isInstrumental": false,
+        "uuid": "c2abad13-bb82-4b40-a306-492e8997e720"
+      },
+      "mainRef": {
+        "groupID": "f1c01271-e97c-4aa1-9702-2c97dee4ecb0",
+        "blickOffset": 0,
+        "pitchOffset": 0,
+        "isInstrumental": false,
+        "database": {
+          "name": "Choir Voices #1",
+          "language": "english",
+          "phoneset": "arpabet",
+          "languageOverride": "",
+          "phonesetOverride": "",
+          "backendType": "SVR3",
+          "version": "202"
+        },
+        "voice": {
+          "relaxedPronunciation": "false",
+          "vocalModeInherited": true,
+          "vocalModePreset": "",
+          "vocalModeParams": {},
+          "choirSeatingSeparation": 0.7
+        },
+        "uuid": "330d81b6-6014-4910-872d-0926e2f18136"
+      },
+      "groups": [
+        {
+          "groupID": "46f68167-5653-4d2d-8804-4e698e1da12a",
+          "blickOffset": 0,
+          "pitchOffset": 0,
+          "isInstrumental": false,
+          "voice": {
+            "relaxedPronunciation": "false",
+            "vocalModeInherited": true,
+            "vocalModePreset": "",
+            "vocalModeParams": {},
+            "choirSeatingSeparation": 0.7,
+            "choirNumStems": 4
+          },
+          "uuid": "c76d2e69-0217-4f79-a25f-75f90b544a31"
+        }
+      ],
+      "uuid": "0caa631a-6204-497f-9b99-a49fdd1a5570"
+    }
+  ],
+  "renderConfig": {
+    "destination": "",
+    "filename": "",
+    "numChannels": 1,
+    "aspirationFormat": "noAspiration",
+    "bitDepth": 16,
+    "sampleRate": 44100,
+    "exportMixDown": true
+  },
+  "projectMixer": {
+    "gainDecibel": 0,
+    "pan": 0,
+    "mute": false,
+    "solo": false,
+    "linkRoomSettings": true
+  },
+  "uuid": "9e2bf043-0ded-4b3d-81b7-a11f8c8f23ff"
+}
