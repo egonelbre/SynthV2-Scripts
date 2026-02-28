@@ -22,16 +22,17 @@ func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool, panScheme s
 			Name:    t.Name,
 			Part:    voice.ParseVoicePart(t.Name),
 			PartNum: voice.ParsePartNum(t.Name),
+			IsSolo:  voice.ParseIsSolo(t.Name),
 		}
 	}
 
 	switch voiceArg {
 	case "choir1", "1":
-		applyChoirToTracks(tracks, infos, voice.Choirs[0], relaxedStr)
+		applyChoirWithSoloists(tracks, infos, voice.Choirs[0], relaxedStr)
 	case "choir2", "2":
-		applyChoirToTracks(tracks, infos, voice.Choirs[1], relaxedStr)
+		applyChoirWithSoloists(tracks, infos, voice.Choirs[1], relaxedStr)
 	case "choir3", "3":
-		applyChoirToTracks(tracks, infos, voice.Choirs[2], relaxedStr)
+		applyChoirWithSoloists(tracks, infos, voice.Choirs[2], relaxedStr)
 	case "soloists", "solo", "4":
 		applySoloistsToTracks(tracks, infos, relaxedStr)
 	default:
@@ -127,6 +128,32 @@ func computePanning(infos []voice.TrackInfo, scheme string) map[int]float64 {
 	}
 
 	return result
+}
+
+// applyChoirWithSoloists splits tracks into solo and non-solo groups,
+// applying soloist voices to solo tracks and choir voices to the rest.
+func applyChoirWithSoloists(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice.ChoirInfo, relaxed string) {
+	var soloTracks []*SVPTrack
+	var soloInfos []voice.TrackInfo
+	var choirTracks []*SVPTrack
+	var choirInfos []voice.TrackInfo
+
+	for i, info := range infos {
+		if info.IsSolo {
+			soloTracks = append(soloTracks, tracks[i])
+			soloInfos = append(soloInfos, info)
+		} else {
+			choirTracks = append(choirTracks, tracks[i])
+			choirInfos = append(choirInfos, info)
+		}
+	}
+
+	if len(choirTracks) > 0 {
+		applyChoirToTracks(choirTracks, choirInfos, choir, relaxed)
+	}
+	if len(soloTracks) > 0 {
+		applySoloistsToTracks(soloTracks, soloInfos, relaxed)
+	}
 }
 
 func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice.ChoirInfo, relaxed string) {
