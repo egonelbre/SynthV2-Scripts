@@ -171,3 +171,47 @@ func TestBuildStructure_MetronomeWithSoundElement(t *testing.T) {
 		t.Errorf("second tempo: expected 90 BPM, got %f", tempos[1].BPM)
 	}
 }
+
+// TestBuildStructure_NestedRepeats tests that nested repeats are unrolled correctly.
+func TestBuildStructure_NestedRepeats(t *testing.T) {
+	// Outer repeat: measures 0-3 (2x)
+	// Inner repeat: measures 1-2 (2x)
+	// Expected: A, B, C, B, C, D, A, B, C, B, C, D
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <barline><repeat direction="forward"/></barline>
+      <note><pitch><step>A</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <barline><repeat direction="forward"/></barline>
+      <note><pitch><step>B</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+      <barline><repeat direction="backward"/></barline>
+    </measure>
+    <measure>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+      <barline><repeat direction="backward"/></barline>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _, _ := buildStructure(score.Part[0])
+
+	// Expected: A(0), B(1), C(2), B(1), C(2), D(3), A(0), B(1), C(2), B(1), C(2), D(3)
+	expectedIdxs := []int{0, 1, 2, 1, 2, 3, 0, 1, 2, 1, 2, 3}
+	if len(unrolled) != len(expectedIdxs) {
+		t.Fatalf("expected %d unrolled measures, got %d", len(expectedIdxs), len(unrolled))
+	}
+	for i, pm := range unrolled {
+		if pm.measureIdx != expectedIdxs[i] {
+			t.Errorf("unrolled[%d].measureIdx: expected %d, got %d", i, expectedIdxs[i], pm.measureIdx)
+		}
+	}
+}

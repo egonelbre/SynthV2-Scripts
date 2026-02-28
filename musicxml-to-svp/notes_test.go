@@ -390,3 +390,63 @@ func TestFillLyrics_GracesWithOwnLyrics(t *testing.T) {
 		t.Errorf("grace lyric: expected %q, got %q", "grace1", notes[0].LeadingGraces[0].Lyric)
 	}
 }
+
+// TestBuildNotes_TieStopWithGraceUsesFullDuration tests that a tie-stop note
+// with leading grace notes adds the full notated duration, not the grace-reduced one.
+func TestBuildNotes_TieStopWithGraceUsesFullDuration(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>8</duration><type>half</type>
+        <tie type="start"/>
+        <lyric number="1"><text>la</text></lyric>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>8</duration><type>half</type>
+      </note>
+    </measure>
+    <measure>
+      <note>
+        <grace slash="yes"/>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <type>eighth</type>
+      </note>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>16</duration><type>whole</type>
+        <tie type="stop"/>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled, infos)
+
+	// Should have 2 notes: the tied C4 and the D4.
+	// The grace note before the tie-stop should not reduce the tied duration.
+	var tiedNote *Note
+	for i := range notes {
+		if notes[i].Pitch == 60 { // C4
+			tiedNote = &notes[i]
+			break
+		}
+	}
+	if tiedNote == nil {
+		t.Fatal("expected tied C4 note")
+	}
+
+	// Half note (8 divs) + whole note (16 divs) = 6 quarter notes
+	expectedDur := int64(blicksPerQuarter * 6)
+	if tiedNote.Duration != expectedDur {
+		t.Errorf("tied note duration: expected %d (6Q), got %d (diff = %d)",
+			expectedDur, tiedNote.Duration, tiedNote.Duration-expectedDur)
+	}
+}

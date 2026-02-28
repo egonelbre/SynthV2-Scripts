@@ -10,17 +10,13 @@ import (
 func buildDynamics(part *musicxml.Part, unrolled []playedMeasure, infos []measureInfo) []dynEvent {
 	var events []dynEvent
 	cursor := int64(0)
+	divisions := 4
 
 	for unrolledIdx, pm := range unrolled {
 		measure := part.Measure[pm.measureIdx]
 
 		if unrolledIdx < len(infos) {
 			cursor = infos[unrolledIdx].startBlicks
-		}
-
-		divisions := 4
-		if unrolledIdx < len(infos) {
-			divisions = infos[unrolledIdx].divisions
 		}
 
 		for _, el := range measure.Element {
@@ -205,9 +201,14 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 			// If so, the ramp already brought us here; just update currentLevel.
 			isWedgeTarget := false
 			for _, wr := range ranges {
-				if wr.stopPos == ev.position || (ev.position-wr.stopPos >= 0 && ev.position-wr.stopPos < stepTransitionBlicks*2) {
-					if wr.stopIdx == i-1 || (i > 0 && events[i-1].kind == dynWedgeStop) {
-						isWedgeTarget = true
+				if ev.position-wr.stopPos >= 0 && ev.position-wr.stopPos < stepTransitionBlicks*2 {
+					// Scan backwards to find if a wedge stop is among
+					// the recent events at or near the same position.
+					for k := i - 1; k >= 0 && events[k].position >= wr.stopPos; k-- {
+						if events[k].kind == dynWedgeStop {
+							isWedgeTarget = true
+							break
+						}
 					}
 				}
 			}
@@ -357,7 +358,7 @@ func dynamicsToLevel(d *musicxml.Dynamics) (dynLevel2, bool) {
 	case strings.Contains(xml, "<p"):
 		return dynLevel2{-6, 0}, true
 
-	case strings.Contains(xml, "<n"):
+	case strings.Contains(xml, "<n/") || strings.Contains(xml, "<n>"):
 		return dynLevel2{-12, -0.8}, true
 	}
 	return dynLevel2{}, false
@@ -396,7 +397,7 @@ func applyAccents(points []float64, accents []accentEvent, normalBump, strongBum
 }
 
 // curveValueAt returns the interpolated value of a curve at a given position.
-// Uses simple linear interpolation between surrounding points.
+// Uses Catmull-Rom cubic interpolation to match SVP's "cubic" curve mode.
 func curveValueAt(points []float64, pos int64) float64 {
 	if len(points) < 2 {
 		return 0
@@ -412,23 +413,56 @@ func curveValueAt(points []float64, pos int64) float64 {
 		return points[len(points)-1]
 	}
 
-	// Find surrounding segment.
+	// Find the segment index (i) where points[i] <= fpos <= points[i+2].
+	segIdx := 0
 	for i := 0; i < len(points)-2; i += 2 {
-		p0, v0 := points[i], points[i+1]
-		p1, v1 := points[i+2], points[i+3]
-		if fpos >= p0 && fpos <= p1 {
-			if p1 == p0 {
-				return v1
-			}
-			t := (fpos - p0) / (p1 - p0)
-			return v0 + t*(v1-v0)
+		if fpos >= points[i] && fpos <= points[i+2] {
+			segIdx = i
+			break
 		}
 	}
-	return points[len(points)-1]
+
+	p1, v1 := points[segIdx], points[segIdx+1]
+	p2, v2 := points[segIdx+2], points[segIdx+3]
+
+	if p2 == p1 {
+		return v2
+	}
+
+	// Catmull-Rom: get the neighboring points for tangent computation.
+	// Clamp to endpoints if at the boundary.
+	var p0, v0, p3, v3 float64
+	if segIdx >= 2 {
+		p0, v0 = points[segIdx-2], points[segIdx-1]
+	} else {
+		p0, v0 = p1, v1
+	}
+	if segIdx+4 < len(points) {
+		p3, v3 = points[segIdx+4], points[segIdx+5]
+	} else {
+		p3, v3 = p2, v2
+	}
+
+	// Compute tangents at p1 and p2 using finite differences.
+	dt := p2 - p1
+	var m1, m2 float64
+	if p2-p0 != 0 {
+		m1 = (v2 - v0) / (p2 - p0) * dt
+	}
+	if p3-p1 != 0 {
+		m2 = (v3 - v1) / (p3 - p1) * dt
+	}
+
+	// Hermite interpolation.
+	t := (fpos - p1) / dt
+	t2 := t * t
+	t3 := t2 * t
+	return (2*t3-3*t2+1)*v1 + (t3-2*t2+t)*m1 + (-2*t3+3*t2)*v2 + (t3-t2)*m2
 }
 
 // insertCurvePoints inserts two points (pos1,val1) and (pos2,val2) into a
-// sorted curve point array, maintaining position order.
+// sorted curve point array, maintaining position order. Existing points at
+// the same positions are replaced to avoid duplicates.
 func insertCurvePoints(points []float64, pos1 int64, val1 float64, pos2 int64, val2 float64) []float64 {
 	newPts := []float64{float64(pos1), val1, float64(pos2), val2}
 
@@ -436,19 +470,28 @@ func insertCurvePoints(points []float64, pos1 int64, val1 float64, pos2 int64, v
 		return newPts
 	}
 
+	fpos1 := float64(pos1)
+	fpos2 := float64(pos2)
+
 	// Find insertion index (before the first point >= pos1).
 	idx := len(points)
 	for i := 0; i < len(points); i += 2 {
-		if points[i] >= float64(pos1) {
+		if points[i] >= fpos1 {
 			idx = i
 			break
 		}
 	}
 
+	// Find end index: skip existing points within [pos1, pos2] to replace them.
+	end := idx
+	for end < len(points) && points[end] <= fpos2 {
+		end += 2
+	}
+
 	result := make([]float64, 0, len(points)+4)
 	result = append(result, points[:idx]...)
 	result = append(result, newPts...)
-	result = append(result, points[idx:]...)
+	result = append(result, points[end:]...)
 	return result
 }
 

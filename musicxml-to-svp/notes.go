@@ -195,7 +195,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureIn
 
 				if tieStop {
 					if idx, ok := pendingTies.find(midi); ok {
-						notes[idx].Duration += blicks
+						notes[idx].Duration += cursorBlicks
 						if !tieStart {
 							pendingTies.remove(midi)
 						}

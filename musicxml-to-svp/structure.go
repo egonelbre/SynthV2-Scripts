@@ -77,86 +77,137 @@ func intSliceContains(s []int, v int) bool {
 }
 
 func unrollMeasures(measures []*musicxml.Measure) []playedMeasure {
-	// Pre-scan to find repeat regions.
-	type repeatRegion struct {
-		start, end int
-		times      int
+	type endingInfo struct {
+		inEnding bool
+		numbers  []int
 	}
+	type repeatRegion struct {
+		start, end   int
+		times        int
+		hasEndings   bool
+		maxEndingNum int
+		endingInfos  []endingInfo
+	}
+
+	// Pre-scan using a stack to properly handle nested repeats.
 	var regions []repeatRegion
-	repeatStart := 0
+	var stack []int
+
 	for i, m := range measures {
 		if measureHasForwardRepeat(m) {
-			repeatStart = i
+			stack = append(stack, i)
 		}
 		if br := measureBackwardRepeat(m); br != nil {
 			times := br.Times
 			if times == 0 {
 				times = 2
 			}
-			regions = append(regions, repeatRegion{start: repeatStart, end: i, times: times})
-			repeatStart = i + 1
-		}
-	}
-
-	// Emit the unrolled sequence.
-	var result []playedMeasure
-	i := 0
-	regionIdx := 0
-
-	for i < len(measures) {
-		if regionIdx < len(regions) && i == regions[regionIdx].start {
-			r := regions[regionIdx]
-			regionIdx++
-
-			// Find endings and track which measures are inside which ending.
-			type endingInfo struct {
-				inEnding bool
-				numbers  []int
+			start := 0
+			if len(stack) > 0 {
+				start = stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
 			}
-			endingInfos := make([]endingInfo, r.end-r.start+1)
+
+			r := repeatRegion{
+				start:       start,
+				end:         i,
+				times:       times,
+				endingInfos: make([]endingInfo, i-start+1),
+			}
+
 			var currentEndingNums []int
 			inEnding := false
-			maxEndingNum := 0
-			hasEndings := false
-
-			for j := r.start; j <= r.end; j++ {
-				if startEnding := measureEndingStart(measures[j]); startEnding != nil {
+			for j := start; j <= i; j++ {
+				if se := measureEndingStart(measures[j]); se != nil {
 					inEnding = true
-					currentEndingNums = parseEndingNumbers(startEnding.Number)
-					hasEndings = true
+					currentEndingNums = parseEndingNumbers(se.Number)
+					r.hasEndings = true
 					for _, n := range currentEndingNums {
-						if n > maxEndingNum {
-							maxEndingNum = n
+						if n > r.maxEndingNum {
+							r.maxEndingNum = n
 						}
 					}
 				}
 				if inEnding {
-					endingInfos[j-r.start] = endingInfo{inEnding: true, numbers: currentEndingNums}
+					r.endingInfos[j-start] = endingInfo{inEnding: true, numbers: currentEndingNums}
 				}
 				if measureHasEndingStop(measures[j]) {
 					inEnding = false
 				}
 			}
 
-			// Emit passes.
-			for pass := 1; pass <= r.times; pass++ {
-				for j := r.start; j <= r.end; j++ {
-					ei := endingInfos[j-r.start]
-					if ei.inEnding && !intSliceContains(ei.numbers, pass) {
-						continue
-					}
-					result = append(result, playedMeasure{measureIdx: j, verse: pass})
+			regions = append(regions, r)
+		}
+	}
+
+	// findOuterAt returns the outermost (largest span) region starting at pos.
+	findOuterAt := func(pos int) *repeatRegion {
+		var best *repeatRegion
+		for i := range regions {
+			if regions[i].start == pos {
+				if best == nil || regions[i].end > best.end {
+					best = &regions[i]
 				}
 			}
+		}
+		return best
+	}
 
+	// findNestedAt returns the outermost nested region starting at pos
+	// that fits strictly within parent.
+	findNestedAt := func(pos int, parent *repeatRegion) *repeatRegion {
+		var best *repeatRegion
+		for i := range regions {
+			r := &regions[i]
+			if r.start == pos && r.end <= parent.end &&
+				!(r.start == parent.start && r.end == parent.end) {
+				if best == nil || r.end > best.end {
+					best = r
+				}
+			}
+		}
+		return best
+	}
+
+	// emitPass recursively emits measures for one pass of a region,
+	// handling nested repeats.
+	var emitPass func(r *repeatRegion, pass int, result *[]playedMeasure)
+	emitPass = func(r *repeatRegion, pass int, result *[]playedMeasure) {
+		j := r.start
+		for j <= r.end {
+			ei := r.endingInfos[j-r.start]
+			if ei.inEnding && !intSliceContains(ei.numbers, pass) {
+				j++
+				continue
+			}
+			if nested := findNestedAt(j, r); nested != nil {
+				for p := 1; p <= nested.times; p++ {
+					emitPass(nested, p, result)
+				}
+				j = nested.end + 1
+				continue
+			}
+			*result = append(*result, playedMeasure{measureIdx: j, verse: pass})
+			j++
+		}
+	}
+
+	// Top-level emit.
+	var result []playedMeasure
+	i := 0
+	for i < len(measures) {
+		if r := findOuterAt(i); r != nil {
+			for pass := 1; pass <= r.times; pass++ {
+				emitPass(r, pass, &result)
+			}
 			i = r.end + 1
 
 			// If there are endings and the final pass exceeds all ending numbers,
 			// consume continuation measures (implicit final volta) with the final verse.
-			if hasEndings && r.times > maxEndingNum {
+			if r.hasEndings && r.times > r.maxEndingNum {
 				finalVerse := r.times
 				for i < len(measures) {
-					if regionIdx < len(regions) && i == regions[regionIdx].start {
+					if findOuterAt(i) != nil {
 						break
 					}
 					result = append(result, playedMeasure{measureIdx: i, verse: finalVerse})
