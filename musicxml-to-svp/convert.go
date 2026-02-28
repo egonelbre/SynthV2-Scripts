@@ -34,20 +34,28 @@ func durationToBlicks(duration, divisions int) int64 {
 	return int64(duration) * blicksPerQuarter / int64(divisions)
 }
 
-func beatUnitToQuarters(beatUnit musicxml.NoteTypeValue, hasDot bool) float64 {
-	q := 1.0
-	switch beatUnit {
+// noteTypeToQuarters returns the duration in quarter notes for a note type name.
+func noteTypeToQuarters(noteType string) float64 {
+	switch noteType {
 	case "whole":
-		q = 4.0
+		return 4.0
 	case "half":
-		q = 2.0
+		return 2.0
 	case "quarter":
-		q = 1.0
+		return 1.0
 	case "eighth":
-		q = 0.5
+		return 0.5
 	case "16th":
-		q = 0.25
+		return 0.25
+	case "32nd":
+		return 0.125
+	default:
+		return 1.0
 	}
+}
+
+func beatUnitToQuarters(beatUnit musicxml.NoteTypeValue, hasDot bool) float64 {
+	q := noteTypeToQuarters(string(beatUnit))
 	if hasDot {
 		q *= 1.5
 	}
@@ -147,32 +155,57 @@ func validateTimeModification(note *musicxml.Note, divisions int) {
 	}
 }
 
-func noteHasArticulation(note *musicxml.Note, name string) bool {
-	for _, n := range note.Notations {
-		for _, a := range n.Articulations {
-			switch name {
-			case "staccato":
-				if len(a.Staccato) > 0 {
-					return true
+// walkPartElements iterates through unrolled measures of a part, tracking
+// cursor position and divisions. It calls fn for each element with the current
+// cursor position and divisions. Cursor advancement for Note, Backup, and
+// Forward elements is handled automatically after the callback.
+func walkPartElements(
+	part *musicxml.Part,
+	unrolled []playedMeasure,
+	infos []measureInfo,
+	fn func(cursor int64, divisions int, pm playedMeasure, value any),
+) {
+	divisions := 4
+	cursor := int64(0)
+
+	for unrolledIdx, pm := range unrolled {
+		measure := part.Measure[pm.measureIdx]
+
+		if unrolledIdx < len(infos) {
+			cursor = infos[unrolledIdx].startBlicks
+		}
+
+		for _, el := range measure.Element {
+			switch value := el.Value.(type) {
+			case *musicxml.Attributes:
+				if value.Divisions != 0 {
+					divisions = value.Divisions
 				}
-			case "staccatissimo":
-				if len(a.Staccatissimo) > 0 {
-					return true
+				fn(cursor, divisions, pm, value)
+			case *musicxml.Direction:
+				fn(cursor, divisions, pm, value)
+			case *musicxml.Note:
+				fn(cursor, divisions, pm, value)
+				if value.Grace == nil {
+					dur := parseDuration(value.Duration)
+					if dur > 0 && value.Chord == "" {
+						cursor += durationToBlicks(dur, divisions)
+					}
 				}
-			case "tenuto":
-				if len(a.Tenuto) > 0 {
-					return true
+			case *musicxml.Backup:
+				fn(cursor, divisions, pm, value)
+				dur := parseDuration(value.Duration)
+				if dur > 0 {
+					cursor -= durationToBlicks(dur, divisions)
 				}
-			case "accent":
-				if len(a.Accent) > 0 {
-					return true
-				}
-			case "strong-accent":
-				if len(a.StrongAccent) > 0 {
-					return true
+			case *musicxml.Forward:
+				fn(cursor, divisions, pm, value)
+				dur := parseDuration(value.Duration)
+				if dur > 0 {
+					cursor += durationToBlicks(dur, divisions)
 				}
 			}
 		}
 	}
-	return false
 }
+

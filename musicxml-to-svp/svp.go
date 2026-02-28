@@ -212,21 +212,11 @@ func newSVPNote(onset, duration int64, pitch, detune int, lyric string) *SVPNote
 
 // graceNoteDurationFromType computes the duration of a grace note from its notated type.
 func graceNoteDurationFromType(notatedType string, acciaccatura bool) int64 {
-	dur := int64(blicksPerQuarter / 4) // default: sixteenth
-	switch notatedType {
-	case "whole":
-		dur = blicksPerQuarter * 4
-	case "half":
-		dur = blicksPerQuarter * 2
-	case "quarter":
-		dur = blicksPerQuarter
-	case "eighth":
-		dur = blicksPerQuarter / 2
-	case "16th":
-		dur = blicksPerQuarter / 4
-	case "32nd":
-		dur = blicksPerQuarter / 8
+	if notatedType == "" {
+		notatedType = "16th" // default for grace notes without explicit type
 	}
+	q := noteTypeToQuarters(notatedType)
+	dur := int64(q * blicksPerQuarter)
 	if acciaccatura {
 		dur /= 2
 	}

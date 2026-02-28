@@ -8,20 +8,24 @@ import (
 
 func noteArticulations(note *musicxml.Note) Articulation {
 	var a Articulation
-	if noteHasArticulation(note, "staccato") {
-		a |= ArticulationStaccato
-	}
-	if noteHasArticulation(note, "staccatissimo") {
-		a |= ArticulationStaccatissimo
-	}
-	if noteHasArticulation(note, "tenuto") {
-		a |= ArticulationTenuto
-	}
-	if noteHasArticulation(note, "accent") {
-		a |= ArticulationAccent
-	}
-	if noteHasArticulation(note, "strong-accent") {
-		a |= ArticulationStrongAccent
+	for _, n := range note.Notations {
+		for _, art := range n.Articulations {
+			if len(art.Staccato) > 0 {
+				a |= ArticulationStaccato
+			}
+			if len(art.Staccatissimo) > 0 {
+				a |= ArticulationStaccatissimo
+			}
+			if len(art.Tenuto) > 0 {
+				a |= ArticulationTenuto
+			}
+			if len(art.Accent) > 0 {
+				a |= ArticulationAccent
+			}
+			if len(art.StrongAccent) > 0 {
+				a |= ArticulationStrongAccent
+			}
+		}
 	}
 	return a
 }
@@ -97,9 +101,7 @@ func (m pendingTieMap) remove(pitch int) {
 
 // buildNotes extracts notes from a part, resolving ties and attaching grace notes.
 func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureInfo) []Note {
-	divisions := 4
 	transpose := 0
-	cursor := int64(0)
 	var notes []Note
 	pendingTies := pendingTieMap{}
 	var prevOnset int64
@@ -108,144 +110,116 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureIn
 	var lastNoteIdx int = -1
 	var lastVerse int
 
-	for unrolledIdx, pm := range unrolled {
+	walkPartElements(part, unrolled, infos, func(cursor int64, divisions int, pm playedMeasure, value any) {
 		lastVerse = pm.verse
-		measure := part.Measure[pm.measureIdx]
 
-		if unrolledIdx < len(infos) {
-			cursor = infos[unrolledIdx].startBlicks
-		}
+		switch value := value.(type) {
+		case *musicxml.Attributes:
+			for _, tr := range value.Transpose {
+				chromatic, _ := strconv.Atoi(tr.Chromatic)
+				transpose = chromatic + tr.OctaveChange*12
+			}
 
-		for _, el := range measure.Element {
-			switch value := el.Value.(type) {
-			case *musicxml.Attributes:
-				if value.Divisions != 0 {
-					divisions = value.Divisions
+		case *musicxml.Note:
+			if value.Grace != nil {
+				if len(pendingGraces) == 0 {
+					graceIsTail = lastNoteIdx >= 0
 				}
-				for _, tr := range value.Transpose {
-					chromatic, _ := strconv.Atoi(tr.Chromatic)
-					transpose = chromatic + tr.OctaveChange*12
+				pendingGraces = append(pendingGraces, value)
+				return
+			}
+
+			validateTimeModification(value, divisions)
+
+			dur := parseDuration(value.Duration)
+			if dur <= 0 {
+				return
+			}
+			blicks := durationToBlicks(dur, divisions)
+
+			onset := cursor
+			if value.Chord != "" {
+				onset = prevOnset
+			}
+
+			if value.Rest != nil || value.Pitch == nil {
+				if graceIsTail && len(pendingGraces) > 0 && lastNoteIdx >= 0 {
+					notes = flushTailGraces(notes, pendingGraces, transpose, pm.verse)
 				}
-			case *musicxml.Direction:
-				// Skip directions in buildNotes; handled by buildDynamics.
-			case *musicxml.Note:
-				if value.Grace != nil {
-					if len(pendingGraces) == 0 {
-						graceIsTail = lastNoteIdx >= 0
-					}
-					pendingGraces = append(pendingGraces, value)
-					continue
-				}
-
-				validateTimeModification(value, divisions)
-
-				dur := parseDuration(value.Duration)
-				if dur <= 0 {
-					continue
-				}
-				blicks := durationToBlicks(dur, divisions)
-
-				onset := cursor
-				if value.Chord != "" {
-					onset = prevOnset
-				}
-
-				if value.Rest != nil || value.Pitch == nil {
-					if graceIsTail && len(pendingGraces) > 0 && lastNoteIdx >= 0 {
-						notes = flushTailGraces(notes, pendingGraces, transpose, pm.verse)
-					}
-					pendingGraces = nil
-					lastNoteIdx = -1
-					if value.Chord == "" {
-						prevOnset = cursor
-						cursor += blicks
-					}
-					continue
-				}
-
-				// Save original blicks for cursor advancement (before grace adjustment).
-				cursorBlicks := blicks
-
-				// Process pending grace notes.
-				var leadingGraces []GraceNote
-				if len(pendingGraces) > 0 {
-					if graceIsTail && lastNoteIdx >= 0 {
-						notes = flushTailGraces(notes, pendingGraces, transpose, pm.verse)
-					} else {
-						for _, g := range pendingGraces {
-							if g.Pitch == nil {
-								continue
-							}
-							leadingGraces = append(leadingGraces, makeGraceNote(g, transpose, pm.verse))
-						}
-						// Compute durations and steal time from following note.
-						if len(leadingGraces) > 0 {
-							graceDurs, totalGrace := capGraceDurs(leadingGraces, blicks/2)
-							for i := range leadingGraces {
-								leadingGraces[i].Duration = graceDurs[i]
-							}
-							onset += totalGrace
-							blicks -= totalGrace
-						}
-					}
-					pendingGraces = nil
-				}
-
-				midi, detune := pitchToMIDI(value.Pitch)
-				midi += transpose
-				tieStart, tieStop := noteTieTypes(value)
-
-				if tieStop {
-					if idx, ok := pendingTies.find(midi); ok {
-						notes[idx].Duration += cursorBlicks
-						if !tieStart {
-							pendingTies.remove(midi)
-						}
-					}
-					if value.Chord == "" {
-						prevOnset = cursor
-						cursor += cursorBlicks
-					}
-					continue
-				}
-
-				lyric := extractLyric(value, pm.verse)
-
-				note := Note{
-					Onset:         onset,
-					Duration:      blicks,
-					Pitch:         midi,
-					Detune:        detune,
-					Lyric:         lyric,
-					Articulations: noteArticulations(value),
-					LeadingGraces: leadingGraces,
-				}
-
-				notes = append(notes, note)
-				lastNoteIdx = len(notes) - 1
-
-				if tieStart {
-					pendingTies.add(midi, lastNoteIdx)
-				}
-
+				pendingGraces = nil
+				lastNoteIdx = -1
 				if value.Chord == "" {
 					prevOnset = cursor
-					cursor += cursorBlicks
 				}
+				return
+			}
 
-			case *musicxml.Backup:
-				dur := parseDuration(value.Duration)
-				if dur > 0 {
-					cursor -= durationToBlicks(dur, divisions)
+			// Process pending grace notes.
+			var leadingGraces []GraceNote
+			if len(pendingGraces) > 0 {
+				if graceIsTail && lastNoteIdx >= 0 {
+					notes = flushTailGraces(notes, pendingGraces, transpose, pm.verse)
+				} else {
+					for _, g := range pendingGraces {
+						if g.Pitch == nil {
+							continue
+						}
+						leadingGraces = append(leadingGraces, makeGraceNote(g, transpose, pm.verse))
+					}
+					// Compute durations and steal time from following note.
+					if len(leadingGraces) > 0 {
+						graceDurs, totalGrace := capGraceDurs(leadingGraces, blicks/2)
+						for i := range leadingGraces {
+							leadingGraces[i].Duration = graceDurs[i]
+						}
+						onset += totalGrace
+						blicks -= totalGrace
+					}
 				}
-			case *musicxml.Forward:
-				dur := parseDuration(value.Duration)
-				if dur > 0 {
-					cursor += durationToBlicks(dur, divisions)
+				pendingGraces = nil
+			}
+
+			midi, detune := pitchToMIDI(value.Pitch)
+			midi += transpose
+			tieStart, tieStop := noteTieTypes(value)
+
+			if tieStop {
+				if idx, ok := pendingTies.find(midi); ok {
+					notes[idx].Duration += durationToBlicks(dur, divisions)
+					if !tieStart {
+						pendingTies.remove(midi)
+					}
 				}
+				if value.Chord == "" {
+					prevOnset = cursor
+				}
+				return
+			}
+
+			lyric := extractLyric(value, pm.verse)
+
+			note := Note{
+				Onset:         onset,
+				Duration:      blicks,
+				Pitch:         midi,
+				Detune:        detune,
+				Lyric:         lyric,
+				Articulations: noteArticulations(value),
+				LeadingGraces: leadingGraces,
+			}
+
+			notes = append(notes, note)
+			lastNoteIdx = len(notes) - 1
+
+			if tieStart {
+				pendingTies.add(midi, lastNoteIdx)
+			}
+
+			if value.Chord == "" {
+				prevOnset = cursor
 			}
 		}
-	}
+	})
 
 	// Flush any remaining tail graces.
 	if graceIsTail && len(pendingGraces) > 0 && lastNoteIdx >= 0 {

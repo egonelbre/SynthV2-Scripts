@@ -417,6 +417,8 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 
 	divisions := 4
 	cursor := int64(0)
+	meterNum := 4
+	meterDen := 4
 
 	for measureIdx, pm := range unrolled {
 		measure := firstPart.Measure[pm.measureIdx]
@@ -438,10 +440,12 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 					infos[len(infos)-1].divisions = divisions
 				}
 				for _, t := range value.Time {
+					meterNum = parseBeats(t.Beats)
+					meterDen = t.BeatType
 					meters = append(meters, MeterChange{
 						MeasureIndex: measureIdx,
-						Numerator:    parseBeats(t.Beats),
-						Denominator:  t.BeatType,
+						Numerator:    meterNum,
+						Denominator:  meterDen,
 					})
 				}
 			case *musicxml.Direction:
@@ -501,14 +505,6 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 			}
 		}
 
-		meterNum := 4
-		meterDen := 4
-		for _, m := range meters {
-			if m.MeasureIndex <= measureIdx {
-				meterNum = m.Numerator
-				meterDen = m.Denominator
-			}
-		}
 		expectedDuration := int64(meterNum) * blicksPerQuarter * 4 / int64(meterDen)
 
 		// Use actual measure duration when available (handles pickup measures,

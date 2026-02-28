@@ -9,97 +9,66 @@ import (
 // buildDynamics collects dynamic events from directions in a part.
 func buildDynamics(part *musicxml.Part, unrolled []playedMeasure, infos []measureInfo) []dynEvent {
 	var events []dynEvent
-	cursor := int64(0)
-	divisions := 4
 
-	for unrolledIdx, pm := range unrolled {
-		measure := part.Measure[pm.measureIdx]
-
-		if unrolledIdx < len(infos) {
-			cursor = infos[unrolledIdx].startBlicks
+	walkPartElements(part, unrolled, infos, func(cursor int64, divisions int, pm playedMeasure, value any) {
+		dir, ok := value.(*musicxml.Direction)
+		if !ok {
+			return
 		}
-
-		for _, el := range measure.Element {
-			switch value := el.Value.(type) {
-			case *musicxml.Attributes:
-				if value.Divisions != 0 {
-					divisions = value.Divisions
+		for _, dt := range dir.DirectionType {
+			for _, dyn := range dt.Dynamics {
+				if lvl, ok := dynamicsToLevel(dyn); ok {
+					events = append(events, dynEvent{
+						position: cursor,
+						kind:     dynLevel,
+						loudness: lvl.loudness,
+						tension:  lvl.tension,
+					})
 				}
-			case *musicxml.Direction:
-				for _, dt := range value.DirectionType {
-					for _, dyn := range dt.Dynamics {
-						if lvl, ok := dynamicsToLevel(dyn); ok {
-							events = append(events, dynEvent{
-								position: cursor,
-								kind:     dynLevel,
-								loudness: lvl.loudness,
-								tension:  lvl.tension,
-							})
-						}
-					}
-					if dt.Wedge != nil {
-						num := dt.Wedge.Number
-						if num == 0 {
-							num = 1
-						}
-						switch dt.Wedge.Type {
-						case "crescendo":
-							events = append(events, dynEvent{
-								position: cursor,
-								kind:     dynCrescStart,
-								number:   num,
-							})
-						case "diminuendo":
-							events = append(events, dynEvent{
-								position: cursor,
-								kind:     dynDimStart,
-								number:   num,
-							})
-						case "stop":
-							events = append(events, dynEvent{
-								position: cursor,
-								kind:     dynWedgeStop,
-								number:   num,
-							})
-						}
-					}
-					for _, w := range dt.Words {
-						if isTextCresc(w.EnclosedText) {
-							events = append(events, dynEvent{
-								position: cursor,
-								kind:     dynCrescStart,
-								number:   -1,
-							})
-						} else if isTextDim(w.EnclosedText) {
-							events = append(events, dynEvent{
-								position: cursor,
-								kind:     dynDimStart,
-								number:   -1,
-							})
-						}
-					}
+			}
+			if dt.Wedge != nil {
+				num := dt.Wedge.Number
+				if num == 0 {
+					num = 1
 				}
-			case *musicxml.Note:
-				if value.Grace != nil {
-					continue
+				switch dt.Wedge.Type {
+				case "crescendo":
+					events = append(events, dynEvent{
+						position: cursor,
+						kind:     dynCrescStart,
+						number:   num,
+					})
+				case "diminuendo":
+					events = append(events, dynEvent{
+						position: cursor,
+						kind:     dynDimStart,
+						number:   num,
+					})
+				case "stop":
+					events = append(events, dynEvent{
+						position: cursor,
+						kind:     dynWedgeStop,
+						number:   num,
+					})
 				}
-				dur := parseDuration(value.Duration)
-				if dur > 0 && value.Chord == "" {
-					cursor += durationToBlicks(dur, divisions)
-				}
-			case *musicxml.Backup:
-				dur := parseDuration(value.Duration)
-				if dur > 0 {
-					cursor -= durationToBlicks(dur, divisions)
-				}
-			case *musicxml.Forward:
-				dur := parseDuration(value.Duration)
-				if dur > 0 {
-					cursor += durationToBlicks(dur, divisions)
+			}
+			for _, w := range dt.Words {
+				if isTextCresc(w.EnclosedText) {
+					events = append(events, dynEvent{
+						position: cursor,
+						kind:     dynCrescStart,
+						number:   -1,
+					})
+				} else if isTextDim(w.EnclosedText) {
+					events = append(events, dynEvent{
+						position: cursor,
+						kind:     dynDimStart,
+						number:   -1,
+					})
 				}
 			}
 		}
-	}
+	})
 
 	return events
 }
@@ -287,81 +256,72 @@ type dynLevel2 struct {
 	tension  float64
 }
 
-// dynamicsToLevel maps a MusicXML dynamics element to loudness (dB) and tension values.
+// dynamicLevels maps MusicXML dynamics element names to loudness (dB) and tension values.
 //
 // Loudness is kept within -12 to 12 dB. For extreme dynamics (pp and softer,
 // ff and louder), loudness stays close to p/f range while tension is adjusted
 // to convey the additional intensity difference.
-func dynamicsToLevel(d *musicxml.Dynamics) (dynLevel2, bool) {
-	xml := d.InnerXML
-
-	// Check from most specific to least specific to avoid prefix matching issues.
-	switch {
+var dynamicLevels = map[string]dynLevel2{
 	// Fortissimo variants: loudness near f, tension increases.
-	case strings.Contains(xml, "<ffffff"):
-		return dynLevel2{12, 0.8}, true
-	case strings.Contains(xml, "<fffff"):
-		return dynLevel2{11, 0.7}, true
-	case strings.Contains(xml, "<ffff"):
-		return dynLevel2{10, 0.5}, true
-	case strings.Contains(xml, "<fff"):
-		return dynLevel2{9, 0.4}, true
-	case strings.Contains(xml, "<ff"):
-		return dynLevel2{8, 0.2}, true
+	"ffffff": {12, 0.8},
+	"fffff":  {11, 0.7},
+	"ffff":   {10, 0.5},
+	"fff":    {9, 0.4},
+	"ff":     {8, 0.2},
 
 	// Pianissimo variants: loudness near p, tension decreases.
-	case strings.Contains(xml, "<pppppp"):
-		return dynLevel2{-12, -0.8}, true
-	case strings.Contains(xml, "<ppppp"):
-		return dynLevel2{-11, -0.7}, true
-	case strings.Contains(xml, "<pppp"):
-		return dynLevel2{-10, -0.5}, true
-	case strings.Contains(xml, "<ppp"):
-		return dynLevel2{-9, -0.4}, true
-	case strings.Contains(xml, "<pp"):
-		return dynLevel2{-8, -0.2}, true
+	"pppppp": {-12, -0.8},
+	"ppppp":  {-11, -0.7},
+	"pppp":   {-10, -0.5},
+	"ppp":    {-9, -0.4},
+	"pp":     {-8, -0.2},
 
 	// Sforzando variants.
-	case strings.Contains(xml, "<sffz"):
-		return dynLevel2{6, 0.3}, true
-	case strings.Contains(xml, "<sfzp"):
-		return dynLevel2{3, 0}, true
-	case strings.Contains(xml, "<sfpp"):
-		return dynLevel2{3, 0}, true
-	case strings.Contains(xml, "<sfz"):
-		return dynLevel2{6, 0.3}, true
-	case strings.Contains(xml, "<sfp"):
-		return dynLevel2{3, 0}, true
-	case strings.Contains(xml, "<sf"):
-		return dynLevel2{6, 0.3}, true
+	"sffz": {6, 0.3},
+	"sfzp": {3, 0},
+	"sfpp": {3, 0},
+	"sfz":  {6, 0.3},
+	"sfp":  {3, 0},
+	"sf":   {6, 0.3},
 
 	// Core dynamics.
-	case strings.Contains(xml, "<mp"):
-		return dynLevel2{-3, 0}, true
-	case strings.Contains(xml, "<mf"):
-		return dynLevel2{3, 0}, true
+	"mp": {-3, 0},
+	"mf": {3, 0},
+	"fp": {0, 0},
+	"fz": {6, 0.3},
+	"f":  {6, 0},
 
-	case strings.Contains(xml, "<fp"):
-		return dynLevel2{0, 0}, true
-	case strings.Contains(xml, "<fz"):
-		return dynLevel2{6, 0.3}, true
-	case strings.Contains(xml, "<f"):
-		return dynLevel2{6, 0}, true
+	"rfz": {3, 0.2},
+	"rf":  {3, 0.2},
 
-	case strings.Contains(xml, "<rfz"):
-		return dynLevel2{3, 0.2}, true
-	case strings.Contains(xml, "<rf"):
-		return dynLevel2{3, 0.2}, true
+	"pf": {0, 0},
+	"p":  {-6, 0},
 
-	case strings.Contains(xml, "<pf"):
-		return dynLevel2{0, 0}, true
-	case strings.Contains(xml, "<p"):
-		return dynLevel2{-6, 0}, true
+	"n": {-12, -0.8},
+}
 
-	case strings.Contains(xml, "<n/") || strings.Contains(xml, "<n>"):
-		return dynLevel2{-12, -0.8}, true
+// dynamicsToLevel maps a MusicXML dynamics element to loudness (dB) and tension values.
+func dynamicsToLevel(d *musicxml.Dynamics) (dynLevel2, bool) {
+	name := firstXMLElementName(d.InnerXML)
+	if lvl, ok := dynamicLevels[name]; ok {
+		return lvl, true
 	}
 	return dynLevel2{}, false
+}
+
+// firstXMLElementName extracts the tag name of the first XML element in s.
+// For example, "<ff/>" returns "ff", "<p default-x=\"10\"/>" returns "p".
+func firstXMLElementName(s string) string {
+	start := strings.Index(s, "<")
+	if start < 0 {
+		return ""
+	}
+	start++ // skip '<'
+	end := start
+	for end < len(s) && s[end] != ' ' && s[end] != '>' && s[end] != '/' {
+		end++
+	}
+	return s[start:end]
 }
 
 type accentEvent struct {
