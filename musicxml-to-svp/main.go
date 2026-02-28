@@ -59,11 +59,20 @@ func main() {
 		partNames[sp.Id] = name
 	}
 
-	// Pass 1: structure
+	// Pass 1: structure (derived from first part)
 	irScore := &Score{}
 	var unrolled []playedMeasure
 	if len(score.Part) > 0 {
 		unrolled, irScore.Meters, irScore.Tempos = buildStructure(score.Part[0])
+
+		// Warn if other parts have more measures than the first part.
+		firstMeasures := len(score.Part[0].Measure)
+		for _, part := range score.Part[1:] {
+			if len(part.Measure) > firstMeasures {
+				fmt.Fprintf(os.Stderr, "warning: part %q has %d measures but structure is derived from first part with %d measures; extra measures will be ignored\n",
+					partNames[part.Id], len(part.Measure), firstMeasures)
+			}
+		}
 	}
 
 	// Pass 2+3+4: per part

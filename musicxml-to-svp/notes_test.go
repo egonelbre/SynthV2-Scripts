@@ -769,6 +769,28 @@ func TestFillLyrics_GracesWithOwnLyrics(t *testing.T) {
 	}
 }
 
+// TestFillLyrics_TrailingGracesWithOwnLyrics tests that trailing grace notes
+// with existing lyrics are preserved and not overwritten with "-".
+func TestFillLyrics_TrailingGracesWithOwnLyrics(t *testing.T) {
+	notes := []Note{
+		{
+			Lyric: "main",
+			TrailingGraces: []GraceNote{
+				{Lyric: "trail1", Pitch: 62},
+				{Lyric: "", Pitch: 64},
+			},
+		},
+	}
+	fillLyrics(notes)
+
+	if notes[0].TrailingGraces[0].Lyric != "trail1" {
+		t.Errorf("trailing grace 0 lyric: expected %q, got %q", "trail1", notes[0].TrailingGraces[0].Lyric)
+	}
+	if notes[0].TrailingGraces[1].Lyric != "-" {
+		t.Errorf("trailing grace 1 lyric: expected %q, got %q", "-", notes[0].TrailingGraces[1].Lyric)
+	}
+}
+
 // TestBuildNotes_TieStopWithGraceUsesFullDuration tests that a tie-stop note
 // with leading grace notes adds the full notated duration, not the grace-reduced one.
 func TestBuildNotes_TieStopWithGraceUsesFullDuration(t *testing.T) {

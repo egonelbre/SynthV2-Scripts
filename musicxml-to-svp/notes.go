@@ -184,6 +184,11 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 			tieStart, tieStop := noteTieTypes(value)
 
 			if tieStop {
+				// Extend the tied note's duration. Any grace notes before
+				// this tie-stop were already flushed as trailing graces to
+				// the previous note (or discarded if no previous note exists).
+				// The leading graces built above are intentionally unused
+				// since they don't attach to a tie continuation.
 				if idx, ok := pendingTies.find(midi); ok {
 					notes[idx].Duration += durationToBlicks(dur, divisions)
 					if !tieStart {

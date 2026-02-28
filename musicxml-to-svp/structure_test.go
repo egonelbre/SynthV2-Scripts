@@ -618,3 +618,56 @@ func TestBuildStructure_NestedRepeats(t *testing.T) {
 		}
 	}
 }
+
+// TestNavigation_DSAlCodaWithAfterJumpRepeat: measures with a repeat that has
+// after-jump="yes" should still be repeated during the D.S. return.
+// A(Segno,fwd), B(bwd after-jump), C(ToCoda), D(D.S.), E(Coda)
+// Phase 1: A,B,A,B,C,D (measures 0-3 with repeat in 0-1)
+// Phase 2 (after jump, back to segno=0): A,B,A,B,C (repeat honored due to after-jump)
+// Phase 3 (coda): E
+func TestNavigation_DSAlCodaWithAfterJumpRepeat(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A", "sound-segno=s1", "forward-repeat"),
+		navigationTestMeasure("B", "backward-repeat-after-jump"),
+		navigationTestMeasure("C", "tocoda=c1"),
+		navigationTestMeasure("D", "dalsegno=s1"),
+		navigationTestMeasure("E", "sound-coda=c1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	// Phase 1: 0,1,0,1,2,3 (with repeat)
+	// Phase 2: 0,1,0,1,2 (after-jump repeat honored, stop at tocoda=2)
+	// Phase 3: 4 (coda)
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 0, 1, 2, 3, 0, 1, 0, 1, 2, 4})
+}
+
+// TestNavigation_DaCapoAlCodaWithBarlineMarkers tests D.C. al Coda where
+// segno and coda markers are on barline elements instead of sound elements.
+func TestNavigation_DaCapoAlCodaWithBarlineMarkers(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A", "tocoda=c1"),
+		navigationTestMeasure("B", "dacapo"),
+		navigationTestMeasure("C", "barline-coda=c1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	// Phase 1: A, B
+	// Phase 2 (da capo): A (stop at tocoda)
+	// Phase 3 (coda): C
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 0, 2})
+}
+
+// TestNavigation_DSWithBarlineSegno tests D.S. where the segno marker is on
+// a barline element.
+func TestNavigation_DSWithBarlineSegno(t *testing.T) {
+	xml := navigationTestScore(
+		navigationTestMeasure("A"),
+		navigationTestMeasure("B", "barline-segno=s1"),
+		navigationTestMeasure("C", "dalsegno=s1"),
+	)
+	score := parseTestScore(t, xml)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	// Phase 1: A, B, C
+	// Phase 2 (dal segno): B, C
+	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 1, 2})
+}

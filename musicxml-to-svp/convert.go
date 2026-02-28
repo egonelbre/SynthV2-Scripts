@@ -183,6 +183,18 @@ func walkPartElements(
 		cursor = pm.startBlicks
 		divisions = pm.divisions
 
+		// Check this part's own Attributes for divisions before processing
+		// elements, in case this part uses different divisions than the
+		// first part (from which pm.divisions was derived).
+		for _, el := range measure.Element {
+			if attr, ok := el.Value.(*musicxml.Attributes); ok {
+				if attr.Divisions != 0 {
+					divisions = attr.Divisions
+				}
+				break
+			}
+		}
+
 		for _, el := range measure.Element {
 			switch value := el.Value.(type) {
 			case *musicxml.Attributes:
