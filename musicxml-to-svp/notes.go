@@ -71,13 +71,37 @@ func flushTailGraces(notes []Note, pendingGraces []*musicxml.Note, transpose, ve
 	return notes
 }
 
+// pendingTieMap tracks pending ties per MIDI pitch using FIFO ordering.
+// Multiple voices may have ties at the same pitch; FIFO ensures each
+// tie-stop matches the earliest unresolved tie-start at that pitch.
+type pendingTieMap map[int][]int // MIDI pitch -> FIFO list of note indices
+
+func (m pendingTieMap) add(pitch, noteIdx int) {
+	m[pitch] = append(m[pitch], noteIdx)
+}
+
+func (m pendingTieMap) find(pitch int) (int, bool) {
+	if idxs := m[pitch]; len(idxs) > 0 {
+		return idxs[0], true
+	}
+	return 0, false
+}
+
+func (m pendingTieMap) remove(pitch int) {
+	if idxs := m[pitch]; len(idxs) > 1 {
+		m[pitch] = idxs[1:]
+	} else {
+		delete(m, pitch)
+	}
+}
+
 // buildNotes extracts notes from a part, resolving ties and attaching grace notes.
 func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureInfo) []Note {
 	divisions := 4
 	transpose := 0
 	cursor := int64(0)
 	var notes []Note
-	pendingTies := map[int]int{} // MIDI pitch -> index in notes
+	pendingTies := pendingTieMap{}
 	var prevOnset int64
 	var pendingGraces []*musicxml.Note
 	var graceIsTail bool
@@ -137,6 +161,9 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureIn
 					continue
 				}
 
+				// Save original blicks for cursor advancement (before grace adjustment).
+				cursorBlicks := blicks
+
 				// Process pending grace notes.
 				var leadingGraces []GraceNote
 				if len(pendingGraces) > 0 {
@@ -167,15 +194,15 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureIn
 				tieStart, tieStop := noteTieTypes(value)
 
 				if tieStop {
-					if idx, ok := pendingTies[midi]; ok {
+					if idx, ok := pendingTies.find(midi); ok {
 						notes[idx].Duration += blicks
 						if !tieStart {
-							delete(pendingTies, midi)
+							pendingTies.remove(midi)
 						}
 					}
 					if value.Chord == "" {
 						prevOnset = cursor
-						cursor += blicks
+						cursor += cursorBlicks
 					}
 					continue
 				}
@@ -196,12 +223,12 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureIn
 				lastNoteIdx = len(notes) - 1
 
 				if tieStart {
-					pendingTies[midi] = lastNoteIdx
+					pendingTies.add(midi, lastNoteIdx)
 				}
 
 				if value.Chord == "" {
 					prevOnset = cursor
-					cursor += blicks
+					cursor += cursorBlicks
 				}
 
 			case *musicxml.Backup:

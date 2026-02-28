@@ -161,6 +161,50 @@ func TestScoreToSVP_TrailingGraceEmission(t *testing.T) {
 	}
 }
 
+// TestScoreToSVP_TrailingGraceWithStaccato tests that trailing grace notes
+// are placed at the pre-staccato endpoint, not the shortened one (bug #4).
+func TestScoreToSVP_TrailingGraceWithStaccato(t *testing.T) {
+	graceDur := int64(blicksPerQuarter / 4)
+	mainDur := int64(blicksPerQuarter) - graceDur // pre-staccato duration
+
+	s := &Score{
+		Parts: []Part{{
+			Name: "Test",
+			Notes: []Note{
+				{
+					Onset:         0,
+					Duration:      mainDur,
+					Pitch:         60,
+					Lyric:         "la",
+					Articulations: ArticulationStaccato,
+					TrailingGraces: []GraceNote{
+						{Pitch: 62, Lyric: "-", Duration: graceDur},
+					},
+				},
+			},
+		}},
+	}
+
+	proj := scoreToSVP(s)
+	notes := proj.Library[0].Notes
+
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 SVP notes (main + trailing grace), got %d", len(notes))
+	}
+
+	// Main note should have staccato-shortened duration
+	expectedMainDur := mainDur * 2 / 3
+	if notes[0].Duration != expectedMainDur {
+		t.Errorf("main duration: expected %d (staccato-shortened), got %d", expectedMainDur, notes[0].Duration)
+	}
+
+	// Trailing grace should start at the original (pre-staccato) endpoint
+	expectedTrailOnset := mainDur
+	if notes[1].Onset != expectedTrailOnset {
+		t.Errorf("trailing grace onset: expected %d (pre-staccato end), got %d", expectedTrailOnset, notes[1].Onset)
+	}
+}
+
 // TestScoreToSVP_AccentSpikes tests that accents generate accent events.
 func TestScoreToSVP_AccentSpikes(t *testing.T) {
 	s := &Score{
@@ -182,5 +226,34 @@ func TestScoreToSVP_AccentSpikes(t *testing.T) {
 	// Loudness curve should have accent spike points
 	if len(params.Loudness.Points) < 4 {
 		t.Errorf("expected loudness curve with accent spike, got %d points", len(params.Loudness.Points))
+	}
+}
+
+// TestCapGraceDurs_RoundingRemainder tests that grace note duration scaling
+// doesn't lose blicks to float64→int64 truncation (bug #6).
+func TestCapGraceDurs_RoundingRemainder(t *testing.T) {
+	// 3 equal grace notes capped to 100 blicks.
+	// Without fix: 33+33+33=99. With fix: 33+33+34=100.
+	graces := []GraceNote{
+		{NotatedType: "quarter"},
+		{NotatedType: "quarter"},
+		{NotatedType: "quarter"},
+	}
+	maxTotal := int64(100)
+
+	graceDurs, totalGrace := capGraceDurs(graces, maxTotal)
+
+	if totalGrace != maxTotal {
+		t.Errorf("totalGrace: expected %d, got %d (lost %d blicks)",
+			maxTotal, totalGrace, maxTotal-totalGrace)
+	}
+
+	// Verify individual durations sum to total
+	var sum int64
+	for _, d := range graceDurs {
+		sum += d
+	}
+	if sum != maxTotal {
+		t.Errorf("sum of graceDurs: expected %d, got %d", maxTotal, sum)
 	}
 }

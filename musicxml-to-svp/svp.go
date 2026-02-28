@@ -9,13 +9,13 @@ import (
 // SVP output structs
 
 type SVPProject struct {
-	Version      int              `json:"version"`
-	Time         SVPTime          `json:"time"`
-	Library      []*SVPGroup      `json:"library"`
-	Tracks       []*SVPTrack      `json:"tracks"`
-	RenderConfig SVPRenderConfig  `json:"renderConfig"`
-	ProjectMixer SVPProjectMixer  `json:"projectMixer"`
-	UUID         string           `json:"uuid"`
+	Version      int             `json:"version"`
+	Time         SVPTime         `json:"time"`
+	Library      []*SVPGroup     `json:"library"`
+	Tracks       []*SVPTrack     `json:"tracks"`
+	RenderConfig SVPRenderConfig `json:"renderConfig"`
+	ProjectMixer SVPProjectMixer `json:"projectMixer"`
+	UUID         string          `json:"uuid"`
 }
 
 type SVPTime struct {
@@ -42,29 +42,29 @@ type SVPGroup struct {
 }
 
 type SVPNote struct {
-	Onset            int64    `json:"onset"`
-	Duration         int64    `json:"duration"`
-	Lyrics           string   `json:"lyrics"`
-	Phonemes         string   `json:"phonemes"`
-	Pitch            int      `json:"pitch"`
-	Detune           int      `json:"detune"`
-	Takes            SVPTakes `json:"attributes"`
+	Onset    int64    `json:"onset"`
+	Duration int64    `json:"duration"`
+	Lyrics   string   `json:"lyrics"`
+	Phonemes string   `json:"phonemes"`
+	Pitch    int      `json:"pitch"`
+	Detune   int      `json:"detune"`
+	Takes    SVPTakes `json:"attributes"`
 }
 
 type SVPTakes struct {
-	EvenSyllableDuration    bool         `json:"evenSyllableDuration"`
-	Muted                   bool         `json:"muted"`
-	TF0Offset               float64      `json:"tF0Offset"`
-	SystemPitchDelta        SVPParamMode `json:"systemPitchDelta"`
-	CPhraseTailDispersion   float64      `json:"cPhraseTailDispersion,omitempty"`
-	CPitchDispersion        float64      `json:"cPitchDispersion,omitempty"`
-	CTimeDispersion         float64      `json:"cTimeDispersion,omitempty"`
-	DF0VbrMod               float64      `json:"dF0VbrMod,omitempty"`
-	ExpValueX               float64      `json:"expValueX,omitempty"`
-	ExpValueY               float64      `json:"expValueY,omitempty"`
-	LanguageOverride        string       `json:"languageOverride,omitempty"`
-	PhonesetOverride        string       `json:"phonesetOverride,omitempty"`
-	Takes                   []SVPTake    `json:"dur,omitempty"`
+	EvenSyllableDuration  bool         `json:"evenSyllableDuration"`
+	Muted                 bool         `json:"muted"`
+	TF0Offset             float64      `json:"tF0Offset"`
+	SystemPitchDelta      SVPParamMode `json:"systemPitchDelta"`
+	CPhraseTailDispersion float64      `json:"cPhraseTailDispersion,omitempty"`
+	CPitchDispersion      float64      `json:"cPitchDispersion,omitempty"`
+	CTimeDispersion       float64      `json:"cTimeDispersion,omitempty"`
+	DF0VbrMod             float64      `json:"dF0VbrMod,omitempty"`
+	ExpValueX             float64      `json:"expValueX,omitempty"`
+	ExpValueY             float64      `json:"expValueY,omitempty"`
+	LanguageOverride      string       `json:"languageOverride,omitempty"`
+	PhonesetOverride      string       `json:"phonesetOverride,omitempty"`
+	Takes                 []SVPTake    `json:"dur,omitempty"`
 }
 
 type SVPParamMode struct {
@@ -72,14 +72,14 @@ type SVPParamMode struct {
 }
 
 type SVPTake struct {
-	ID    int       `json:"id"`
-	Liked bool      `json:"liked"`
-	Seeds SVPSeeds  `json:"seeds"`
+	ID    int      `json:"id"`
+	Liked bool     `json:"liked"`
+	Seeds SVPSeeds `json:"seeds"`
 }
 
 type SVPSeeds struct {
-	SingingSeed  int `json:"singingSeed"`
-	BackingSeed  int `json:"backingSeed"`
+	SingingSeed int `json:"singingSeed"`
+	BackingSeed int `json:"backingSeed"`
 }
 
 type SVPParameters struct {
@@ -100,14 +100,14 @@ type SVPParamCurve struct {
 }
 
 type SVPTrack struct {
-	Name      string       `json:"name"`
-	DispColor string       `json:"dispColor"`
-	DispOrder int          `json:"dispOrder"`
-	Mixer     SVPMixer     `json:"mixer"`
-	MainGroup SVPGroupRef  `json:"mainGroup"`
-	MainRef   SVPGroupRef  `json:"mainRef"`
+	Name      string        `json:"name"`
+	DispColor string        `json:"dispColor"`
+	DispOrder int           `json:"dispOrder"`
+	Mixer     SVPMixer      `json:"mixer"`
+	MainGroup SVPGroupRef   `json:"mainGroup"`
+	MainRef   SVPGroupRef   `json:"mainRef"`
 	Groups    []SVPGroupRef `json:"groups"`
-	UUID      string       `json:"uuid"`
+	UUID      string        `json:"uuid"`
 }
 
 type SVPGroupRef struct {
@@ -131,21 +131,21 @@ type SVPDatabase struct {
 }
 
 type SVPVoice struct {
-	RelaxedPronunciation   string            `json:"relaxedPronunciation,omitempty"`
-	VocalModeInherited     bool              `json:"vocalModeInherited"`
-	VocalModePreset        string            `json:"vocalModePreset"`
+	RelaxedPronunciation   string             `json:"relaxedPronunciation,omitempty"`
+	VocalModeInherited     bool               `json:"vocalModeInherited"`
+	VocalModePreset        string             `json:"vocalModePreset"`
 	VocalModeParams        map[string]float64 `json:"vocalModeParams"`
-	ChoirSeatingSeparation float64           `json:"choirSeatingSeparation,omitempty"`
-	ChoirNumStems          int               `json:"choirNumStems,omitempty"`
-	ChoirPartName          string            `json:"choirPartName,omitempty"`
+	ChoirSeatingSeparation float64            `json:"choirSeatingSeparation,omitempty"`
+	ChoirNumStems          int                `json:"choirNumStems,omitempty"`
+	ChoirPartName          string             `json:"choirPartName,omitempty"`
 }
 
 type SVPMixer struct {
-	GainDecibel    float64 `json:"gainDecibel"`
-	Pan            float64 `json:"pan"`
-	Mute           bool    `json:"mute"`
-	Solo           bool    `json:"solo"`
-	Display        bool    `json:"display"`
+	GainDecibel float64 `json:"gainDecibel"`
+	Pan         float64 `json:"pan"`
+	Mute        bool    `json:"mute"`
+	Solo        bool    `json:"solo"`
+	Display     bool    `json:"display"`
 }
 
 type SVPRenderConfig struct {
@@ -247,6 +247,11 @@ func capGraceDurs(graces []GraceNote, maxTotal int64) (graceDurs []int64, totalG
 			graceDurs[i] = int64(float64(graceDurs[i]) * scale)
 			totalGrace += graceDurs[i]
 		}
+		// Distribute rounding remainder to the last grace note.
+		if remainder := maxTotal - totalGrace; remainder > 0 {
+			graceDurs[len(graceDurs)-1] += remainder
+			totalGrace = maxTotal
+		}
 	}
 	return
 }
@@ -325,9 +330,10 @@ func scoreToSVP(score *Score) *SVPProject {
 
 			svpNotes = append(svpNotes, newSVPNote(onset, duration, n.Pitch, n.Detune, n.Lyric))
 
-			// Emit trailing grace notes (durations already computed in buildNotes).
+			// Emit trailing grace notes at the pre-staccato endpoint
+			// (durations already computed in buildNotes).
 			if len(n.TrailingGraces) > 0 {
-				trailOnset := onset + duration
+				trailOnset := onset + n.Duration
 				svpNotes = append(svpNotes, emitGraces(n.TrailingGraces, trailOnset)...)
 			}
 		}
@@ -413,12 +419,12 @@ func scoreToSVP(score *Score) *SVPProject {
 
 func newEmptyParameters() SVPParameters {
 	return SVPParameters{
-		PitchDelta:  newEmptyParamCurve(),
-		VibratoEnv:  newEmptyParamCurve(),
-		Loudness:    newEmptyParamCurve(),
-		Tension:     newEmptyParamCurve(),
-		Breathiness: newEmptyParamCurve(),
-		Voicing:     newEmptyParamCurve(),
+		PitchDelta:   newEmptyParamCurve(),
+		VibratoEnv:   newEmptyParamCurve(),
+		Loudness:     newEmptyParamCurve(),
+		Tension:      newEmptyParamCurve(),
+		Breathiness:  newEmptyParamCurve(),
+		Voicing:      newEmptyParamCurve(),
 		Gender:       newEmptyParamCurve(),
 		ToneShift:    newEmptyParamCurve(),
 		MouthOpening: newEmptyParamCurve(),

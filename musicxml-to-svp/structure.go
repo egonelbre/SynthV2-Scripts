@@ -198,7 +198,10 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 			divisions:   divisions,
 		})
 
-		measureDuration := int64(0)
+		// Track the maximum cursor extent within this measure to correctly
+		// handle pickup measures, incomplete final measures, and multi-voice parts.
+		measureCursor := int64(0)
+		maxCursor := int64(0)
 		for _, el := range measure.Element {
 			switch value := el.Value.(type) {
 			case *musicxml.Attributes:
@@ -214,16 +217,18 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 					})
 				}
 			case *musicxml.Direction:
+				addedTempo := false
 				if value.Sound != nil && value.Sound.Tempo != "" {
 					bpm, err := strconv.ParseFloat(value.Sound.Tempo, 64)
 					if err == nil {
 						tempos = append(tempos, TempoChange{
-							Position: cursor + measureDuration,
+							Position: cursor + measureCursor,
 							BPM:      bpm,
 						})
+						addedTempo = true
 					}
 				}
-				if len(tempos) == 0 || value.Sound == nil {
+				if !addedTempo {
 					for _, dt := range value.DirectionType {
 						if dt.Metronome != nil && dt.Metronome.PerMinute != nil {
 							bpm, err := strconv.ParseFloat(dt.Metronome.PerMinute.EnclosedText, 64)
@@ -231,7 +236,7 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 								q := beatUnitToQuarters(dt.Metronome.BeatUnit, dt.Metronome.BeatUnitDot != "")
 								bpm = bpm * q
 								tempos = append(tempos, TempoChange{
-									Position: cursor + measureDuration,
+									Position: cursor + measureCursor,
 									BPM:      bpm,
 								})
 							}
@@ -246,18 +251,24 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 				if dur > 0 {
 					if value.Chord == "" {
 						blicks := durationToBlicks(dur, divisions)
-						measureDuration += blicks
+						measureCursor += blicks
+						if measureCursor > maxCursor {
+							maxCursor = measureCursor
+						}
 					}
 				}
 			case *musicxml.Backup:
 				dur := parseDuration(value.Duration)
 				if dur > 0 {
-					measureDuration -= durationToBlicks(dur, divisions)
+					measureCursor -= durationToBlicks(dur, divisions)
 				}
 			case *musicxml.Forward:
 				dur := parseDuration(value.Duration)
 				if dur > 0 {
-					measureDuration += durationToBlicks(dur, divisions)
+					measureCursor += durationToBlicks(dur, divisions)
+					if measureCursor > maxCursor {
+						maxCursor = measureCursor
+					}
 				}
 			}
 		}
@@ -271,7 +282,15 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 			}
 		}
 		expectedDuration := int64(meterNum) * blicksPerQuarter * 4 / int64(meterDen)
-		cursor += expectedDuration
+
+		// Use actual measure duration when available (handles pickup measures,
+		// incomplete final measures, and cadenzas). Fall back to expected
+		// duration for empty measures.
+		if maxCursor > 0 && maxCursor != expectedDuration {
+			cursor += maxCursor
+		} else {
+			cursor += expectedDuration
+		}
 	}
 
 	return unrolled, infos, meters, tempos

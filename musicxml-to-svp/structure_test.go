@@ -86,3 +86,88 @@ func TestBuildStructure_RepeatUnrolling(t *testing.T) {
 		}
 	}
 }
+
+// TestBuildStructure_PickupMeasure tests that an anacrusis (pickup measure)
+// doesn't cause timing drift for subsequent measures (bug #3).
+func TestBuildStructure_PickupMeasure(t *testing.T) {
+	// First measure is a pickup with just 1 quarter note in 4/4 time.
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>4</duration><type>quarter</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>16</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>16</duration><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	_, infos, _, _ := buildStructure(score.Part[0])
+
+	if len(infos) != 3 {
+		t.Fatalf("expected 3 measure infos, got %d", len(infos))
+	}
+
+	// Measure 0 (pickup): starts at 0
+	if infos[0].startBlicks != 0 {
+		t.Errorf("pickup measure start: expected 0, got %d", infos[0].startBlicks)
+	}
+
+	// Measure 1: should start at 1 quarter note (pickup duration), not 4 quarter notes
+	expectedStart := int64(blicksPerQuarter) // 1 quarter note
+	if infos[1].startBlicks != expectedStart {
+		t.Errorf("measure 1 start: expected %d (1Q), got %d (diff = %d)",
+			expectedStart, infos[1].startBlicks, infos[1].startBlicks-expectedStart)
+	}
+
+	// Measure 2: should start at 1Q + 4Q = 5Q
+	expectedStart = int64(5 * blicksPerQuarter)
+	if infos[2].startBlicks != expectedStart {
+		t.Errorf("measure 2 start: expected %d (5Q), got %d (diff = %d)",
+			expectedStart, infos[2].startBlicks, infos[2].startBlicks-expectedStart)
+	}
+}
+
+// TestBuildStructure_MetronomeWithSoundElement tests that a Metronome mark
+// is not skipped when the Direction has a Sound element for dynamics (bug #5).
+func TestBuildStructure_MetronomeWithSoundElement(t *testing.T) {
+	// First measure has tempo via Sound. Second measure has a Direction with
+	// Sound (for dynamics, no tempo) AND a Metronome mark.
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <direction><sound tempo="120"/></direction>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>16</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <direction>
+        <direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>90</per-minute></metronome></direction-type>
+        <sound dynamics="80"/>
+      </direction>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>16</duration><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	_, _, _, tempos := buildStructure(score.Part[0])
+
+	if len(tempos) < 2 {
+		t.Fatalf("expected at least 2 tempo changes, got %d: %+v", len(tempos), tempos)
+	}
+
+	// Second tempo should be 90 BPM from the Metronome mark
+	if tempos[1].BPM != 90 {
+		t.Errorf("second tempo: expected 90 BPM, got %f", tempos[1].BPM)
+	}
+}
