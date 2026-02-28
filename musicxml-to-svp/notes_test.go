@@ -28,8 +28,8 @@ func TestBuildNotes_TieResolution(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 1 {
 		t.Fatalf("expected 1 merged note, got %d", len(notes))
@@ -76,8 +76,8 @@ func TestBuildNotes_Articulations(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 4 {
 		t.Fatalf("expected 4 notes, got %d", len(notes))
@@ -119,8 +119,8 @@ func TestBuildNotes_GraceNoteAttachment(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 1 {
 		t.Fatalf("expected 1 note (with leading grace), got %d", len(notes))
@@ -165,8 +165,8 @@ func TestBuildNotes_Transposition(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 1 {
 		t.Fatalf("expected 1 note, got %d", len(notes))
@@ -218,8 +218,8 @@ func TestBuildNotes_LeadingGraceNoCursorDrift(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 4 {
 		t.Fatalf("expected 4 notes, got %d", len(notes))
@@ -306,8 +306,8 @@ func TestBuildNotes_TiedNotesSamePitchTwoVoices(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	// Should have 6 notes: voice1-C4(tied), voice1-D4, voice2-C4(tied), voice2-E4, voice1-D4, voice2-E4
 	// The two C4 tied notes should each be half+half = whole note duration
@@ -365,8 +365,8 @@ func TestBuildNotes_SimpleTriplets(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 4 {
 		t.Fatalf("expected 4 notes, got %d", len(notes))
@@ -434,8 +434,8 @@ func TestBuildNotes_Quintuplets(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 5 {
 		t.Fatalf("expected 5 notes, got %d", len(notes))
@@ -497,8 +497,8 @@ func TestBuildNotes_NestedTuplets(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 5 {
 		t.Fatalf("expected 5 notes, got %d", len(notes))
@@ -575,8 +575,8 @@ func TestBuildNotes_TupletWithTie(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	// Find the tied E4 note
 	var tiedNote *Note
@@ -633,8 +633,8 @@ func TestBuildNotes_TupletWithRest(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	// Should have 3 pitched notes (rest is skipped): C4, E4, F4
 	if len(notes) != 3 {
@@ -686,8 +686,8 @@ func TestBuildNotes_CompoundMeter68(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	if len(notes) != 2 {
 		t.Fatalf("expected 2 notes, got %d", len(notes))
@@ -805,8 +805,8 @@ func TestBuildNotes_TieStopWithGraceUsesFullDuration(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	notes := buildNotes(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
 
 	// Should have 2 notes: the tied C4 and the D4.
 	// The grace note before the tie-stop should not reduce the tied duration.

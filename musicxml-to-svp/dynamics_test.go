@@ -28,8 +28,8 @@ func TestBuildDynamics_LevelsAndWedges(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
-	events := buildDynamics(score.Part[0], unrolled, infos)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	events := buildDynamics(score.Part[0], unrolled)
 
 	if len(events) < 3 {
 		t.Fatalf("expected at least 3 dynamic events, got %d", len(events))
@@ -165,10 +165,10 @@ func TestBuildDynamics_DifferentDivisions(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 
 	// Build dynamics for part 2 (which has divisions=8)
-	events := buildDynamics(score.Part[1], unrolled, infos)
+	events := buildDynamics(score.Part[1], unrolled)
 
 	if len(events) != 1 {
 		t.Fatalf("expected 1 dynamic event, got %d", len(events))

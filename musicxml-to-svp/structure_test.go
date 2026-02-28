@@ -24,21 +24,18 @@ func TestBuildStructure_SimpleMetersTempos(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, infos, meters, tempos := buildStructure(score.Part[0])
+	unrolled, meters, tempos := buildStructure(score.Part[0])
 
 	if len(unrolled) != 2 {
 		t.Fatalf("expected 2 unrolled measures, got %d", len(unrolled))
 	}
-	if len(infos) != 2 {
-		t.Fatalf("expected 2 measure infos, got %d", len(infos))
-	}
-	if infos[0].startBlicks != 0 {
-		t.Errorf("measure 0 start: expected 0, got %d", infos[0].startBlicks)
+	if unrolled[0].startBlicks != 0 {
+		t.Errorf("measure 0 start: expected 0, got %d", unrolled[0].startBlicks)
 	}
 	// 4/4 measure = 4 quarter notes
 	expectedMeasureDuration := int64(4 * blicksPerQuarter)
-	if infos[1].startBlicks != expectedMeasureDuration {
-		t.Errorf("measure 1 start: expected %d, got %d", expectedMeasureDuration, infos[1].startBlicks)
+	if unrolled[1].startBlicks != expectedMeasureDuration {
+		t.Errorf("measure 1 start: expected %d, got %d", expectedMeasureDuration, unrolled[1].startBlicks)
 	}
 
 	if len(meters) != 1 || meters[0].Numerator != 4 || meters[0].Denominator != 4 {
@@ -71,7 +68,7 @@ func TestBuildStructure_RepeatUnrolling(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 
 	// Should be: m0, m1 (pass 1), m0, m1 (pass 2), m2
 	if len(unrolled) != 5 {
@@ -111,29 +108,29 @@ func TestBuildStructure_PickupMeasure(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	_, infos, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 
-	if len(infos) != 3 {
-		t.Fatalf("expected 3 measure infos, got %d", len(infos))
+	if len(unrolled) != 3 {
+		t.Fatalf("expected 3 unrolled measures, got %d", len(unrolled))
 	}
 
 	// Measure 0 (pickup): starts at 0
-	if infos[0].startBlicks != 0 {
-		t.Errorf("pickup measure start: expected 0, got %d", infos[0].startBlicks)
+	if unrolled[0].startBlicks != 0 {
+		t.Errorf("pickup measure start: expected 0, got %d", unrolled[0].startBlicks)
 	}
 
 	// Measure 1: should start at 1 quarter note (pickup duration), not 4 quarter notes
 	expectedStart := int64(blicksPerQuarter) // 1 quarter note
-	if infos[1].startBlicks != expectedStart {
+	if unrolled[1].startBlicks != expectedStart {
 		t.Errorf("measure 1 start: expected %d (1Q), got %d (diff = %d)",
-			expectedStart, infos[1].startBlicks, infos[1].startBlicks-expectedStart)
+			expectedStart, unrolled[1].startBlicks, unrolled[1].startBlicks-expectedStart)
 	}
 
 	// Measure 2: should start at 1Q + 4Q = 5Q
 	expectedStart = int64(5 * blicksPerQuarter)
-	if infos[2].startBlicks != expectedStart {
+	if unrolled[2].startBlicks != expectedStart {
 		t.Errorf("measure 2 start: expected %d (5Q), got %d (diff = %d)",
-			expectedStart, infos[2].startBlicks, infos[2].startBlicks-expectedStart)
+			expectedStart, unrolled[2].startBlicks, unrolled[2].startBlicks-expectedStart)
 	}
 }
 
@@ -162,7 +159,7 @@ func TestBuildStructure_MetronomeWithSoundElement(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	_, _, _, tempos := buildStructure(score.Part[0])
+	_, _, tempos := buildStructure(score.Part[0])
 
 	if len(tempos) < 2 {
 		t.Fatalf("expected at least 2 tempo changes, got %d: %+v", len(tempos), tempos)
@@ -223,22 +220,22 @@ func TestBuildStructure_TupletMeasureTiming(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	_, infos, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 
-	if len(infos) != 2 {
-		t.Fatalf("expected 2 measure infos, got %d", len(infos))
+	if len(unrolled) != 2 {
+		t.Fatalf("expected 2 unrolled measures, got %d", len(unrolled))
 	}
 
 	// Measure 0 starts at 0
-	if infos[0].startBlicks != 0 {
-		t.Errorf("measure 0 start: expected 0, got %d", infos[0].startBlicks)
+	if unrolled[0].startBlicks != 0 {
+		t.Errorf("measure 0 start: expected 0, got %d", unrolled[0].startBlicks)
 	}
 
 	// Measure 1 should start at 4 quarter notes (full 4/4 measure)
 	expectedStart := int64(4 * blicksPerQuarter)
-	if infos[1].startBlicks != expectedStart {
+	if unrolled[1].startBlicks != expectedStart {
 		t.Errorf("measure 1 start: expected %d (4Q), got %d (diff = %d)",
-			expectedStart, infos[1].startBlicks, infos[1].startBlicks-expectedStart)
+			expectedStart, unrolled[1].startBlicks, unrolled[1].startBlicks-expectedStart)
 	}
 }
 
@@ -261,7 +258,7 @@ func TestBuildStructure_CompoundMeter(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	_, infos, meters, _ := buildStructure(score.Part[0])
+	unrolled, meters, _ := buildStructure(score.Part[0])
 
 	if len(meters) != 1 || meters[0].Numerator != 6 || meters[0].Denominator != 8 {
 		t.Errorf("expected 6/8 meter, got %+v", meters)
@@ -269,8 +266,8 @@ func TestBuildStructure_CompoundMeter(t *testing.T) {
 
 	// 6/8 = 6 eighth notes = 3 quarter notes
 	expectedDuration := int64(3 * blicksPerQuarter)
-	if infos[1].startBlicks != expectedDuration {
-		t.Errorf("measure 1 start: expected %d (3Q), got %d", expectedDuration, infos[1].startBlicks)
+	if unrolled[1].startBlicks != expectedDuration {
+		t.Errorf("measure 1 start: expected %d (3Q), got %d", expectedDuration, unrolled[1].startBlicks)
 	}
 }
 
@@ -293,7 +290,7 @@ func TestBuildStructure_AdditiveBeats(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	_, infos, meters, _ := buildStructure(score.Part[0])
+	unrolled, meters, _ := buildStructure(score.Part[0])
 
 	if len(meters) != 1 || meters[0].Numerator != 5 || meters[0].Denominator != 8 {
 		t.Errorf("expected 5/8 meter (from 2+3), got %+v", meters)
@@ -301,8 +298,8 @@ func TestBuildStructure_AdditiveBeats(t *testing.T) {
 
 	// 5/8 = 5 eighth notes = 2.5 quarter notes
 	expectedDuration := int64(blicksPerQuarter) * 5 * 4 / 8
-	if infos[1].startBlicks != expectedDuration {
-		t.Errorf("measure 1 start: expected %d (2.5Q), got %d", expectedDuration, infos[1].startBlicks)
+	if unrolled[1].startBlicks != expectedDuration {
+		t.Errorf("measure 1 start: expected %d (2.5Q), got %d", expectedDuration, unrolled[1].startBlicks)
 	}
 }
 
@@ -323,7 +320,7 @@ func TestBuildStructure_LongAdditiveBeats(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	_, infos, meters, _ := buildStructure(score.Part[0])
+	unrolled, meters, _ := buildStructure(score.Part[0])
 
 	if len(meters) != 1 || meters[0].Numerator != 5 || meters[0].Denominator != 4 {
 		t.Errorf("expected 5/4 meter (from 1+1+1+1+1), got %+v", meters)
@@ -331,8 +328,8 @@ func TestBuildStructure_LongAdditiveBeats(t *testing.T) {
 
 	// 5/4 = 5 quarter notes
 	expectedDuration := int64(5 * blicksPerQuarter)
-	if infos[1].startBlicks != expectedDuration {
-		t.Errorf("measure 1 start: expected %d (5Q), got %d", expectedDuration, infos[1].startBlicks)
+	if unrolled[1].startBlicks != expectedDuration {
+		t.Errorf("measure 1 start: expected %d (5Q), got %d", expectedDuration, unrolled[1].startBlicks)
 	}
 }
 
@@ -359,7 +356,7 @@ func TestBuildStructure_MeterChangeToAdditive(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	_, infos, meters, _ := buildStructure(score.Part[0])
+	unrolled, meters, _ := buildStructure(score.Part[0])
 
 	if len(meters) != 2 {
 		t.Fatalf("expected 2 meter changes, got %d", len(meters))
@@ -370,14 +367,14 @@ func TestBuildStructure_MeterChangeToAdditive(t *testing.T) {
 
 	// Measure 0: 4/4 = 4Q
 	expectedStart1 := int64(4 * blicksPerQuarter)
-	if infos[1].startBlicks != expectedStart1 {
-		t.Errorf("measure 1 start: expected %d (4Q), got %d", expectedStart1, infos[1].startBlicks)
+	if unrolled[1].startBlicks != expectedStart1 {
+		t.Errorf("measure 1 start: expected %d (4Q), got %d", expectedStart1, unrolled[1].startBlicks)
 	}
 
 	// Measure 1: 5/8 = 2.5Q
 	expectedStart2 := expectedStart1 + int64(blicksPerQuarter)*5*4/8
-	if infos[2].startBlicks != expectedStart2 {
-		t.Errorf("measure 2 start: expected %d, got %d", expectedStart2, infos[2].startBlicks)
+	if unrolled[2].startBlicks != expectedStart2 {
+		t.Errorf("measure 2 start: expected %d, got %d", expectedStart2, unrolled[2].startBlicks)
 	}
 }
 
@@ -483,7 +480,7 @@ func TestNavigation_DaCapo(t *testing.T) {
 		navigationTestMeasure("B", "dacapo"),
 	)
 	score := parseTestScore(t, xml)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 	checkUnrolledIndices(t, unrolled, []int{0, 1, 0, 1})
 }
 
@@ -495,7 +492,7 @@ func TestNavigation_DaCapoAlFine(t *testing.T) {
 		navigationTestMeasure("C", "dacapo"),
 	)
 	score := parseTestScore(t, xml)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 0, 1})
 }
 
@@ -507,7 +504,7 @@ func TestNavigation_DalSegno(t *testing.T) {
 		navigationTestMeasure("C", "dalsegno=s1"),
 	)
 	score := parseTestScore(t, xml)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 1, 2})
 }
 
@@ -520,7 +517,7 @@ func TestNavigation_DalSegnoAlFine(t *testing.T) {
 		navigationTestMeasure("D", "dalsegno=s1"),
 	)
 	score := parseTestScore(t, xml)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 3, 1, 2})
 }
 
@@ -535,7 +532,7 @@ func TestNavigation_DalSegnoAlCoda(t *testing.T) {
 		navigationTestMeasure("E", "sound-coda=c1"),
 	)
 	score := parseTestScore(t, xml)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 3, 1, 2, 4})
 }
 
@@ -547,7 +544,7 @@ func TestNavigation_DaCapoAlCoda(t *testing.T) {
 		navigationTestMeasure("C", "sound-coda=c1"),
 	)
 	score := parseTestScore(t, xml)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 	checkUnrolledIndices(t, unrolled, []int{0, 1, 0, 2})
 }
 
@@ -560,7 +557,7 @@ func TestNavigation_DSWithRepeatsSkipped(t *testing.T) {
 		navigationTestMeasure("C", "dalsegno=s1"),
 	)
 	score := parseTestScore(t, xml)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 	// Phase 1: 0,1,0,1,2 (measures 0-2 with repeat in 0-1)
 	// Phase 2: 0,1 (jump to segno=0, play 0-2 without repeats, but D.S. is at 2 so phase2 ends at 2)
 	// Wait - phase 1 ends at jumpIdx=2, phase 2 jumps back to segno=0, plays 0..2 without repeats
@@ -608,7 +605,7 @@ func TestBuildStructure_NestedRepeats(t *testing.T) {
 </score-partwise>`
 
 	score := parseTestScore(t, xmlData)
-	unrolled, _, _, _ := buildStructure(score.Part[0])
+	unrolled, _, _ := buildStructure(score.Part[0])
 
 	// Expected: A(0), B(1), C(2), B(1), C(2), D(3), A(0), B(1), C(2), B(1), C(2), D(3)
 	expectedIdxs := []int{0, 1, 2, 1, 2, 3, 0, 1, 2, 1, 2, 3}

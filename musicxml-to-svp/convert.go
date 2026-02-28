@@ -162,18 +162,16 @@ func validateTimeModification(note *musicxml.Note, divisions int) {
 func walkPartElements(
 	part *musicxml.Part,
 	unrolled []playedMeasure,
-	infos []measureInfo,
 	fn func(cursor int64, divisions int, pm playedMeasure, value any),
 ) {
 	divisions := 4
 	cursor := int64(0)
 
-	for unrolledIdx, pm := range unrolled {
+	for _, pm := range unrolled {
 		measure := part.Measure[pm.measureIdx]
 
-		if unrolledIdx < len(infos) {
-			cursor = infos[unrolledIdx].startBlicks
-		}
+		cursor = pm.startBlicks
+		divisions = pm.divisions
 
 		for _, el := range measure.Element {
 			switch value := el.Value.(type) {

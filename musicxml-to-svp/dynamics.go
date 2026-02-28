@@ -7,10 +7,10 @@ import (
 )
 
 // buildDynamics collects dynamic events from directions in a part.
-func buildDynamics(part *musicxml.Part, unrolled []playedMeasure, infos []measureInfo) []dynEvent {
+func buildDynamics(part *musicxml.Part, unrolled []playedMeasure) []dynEvent {
 	var events []dynEvent
 
-	walkPartElements(part, unrolled, infos, func(cursor int64, divisions int, pm playedMeasure, value any) {
+	walkPartElements(part, unrolled, func(cursor int64, divisions int, pm playedMeasure, value any) {
 		dir, ok := value.(*musicxml.Direction)
 		if !ok {
 			return

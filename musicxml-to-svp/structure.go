@@ -8,8 +8,10 @@ import (
 )
 
 type playedMeasure struct {
-	measureIdx int // index into part.Measure
-	verse      int // 1-based lyric number for this pass
+	measureIdx  int   // index into part.Measure
+	verse       int   // 1-based lyric number for this pass
+	startBlicks int64 // absolute position in blicks
+	divisions   int   // time units per quarter note
 }
 
 func measureHasForwardRepeat(m *musicxml.Measure) bool {
@@ -401,32 +403,25 @@ func unrollWithNavigation(measures []*musicxml.Measure) []playedMeasure {
 	return result
 }
 
-type measureInfo struct {
-	startBlicks int64
-	divisions   int
-}
-
 // buildStructure unrolls repeats and computes measure start positions, meters, and tempos
 // from the first part.
-func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, []MeterChange, []TempoChange) {
+func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []MeterChange, []TempoChange) {
 	unrolled := unrollWithNavigation(firstPart.Measure)
 
 	var meters []MeterChange
 	var tempos []TempoChange
-	var infos []measureInfo
 
 	divisions := 4
 	cursor := int64(0)
 	meterNum := 4
 	meterDen := 4
 
-	for measureIdx, pm := range unrolled {
+	for measureIdx := range unrolled {
+		pm := &unrolled[measureIdx]
 		measure := firstPart.Measure[pm.measureIdx]
 
-		infos = append(infos, measureInfo{
-			startBlicks: cursor,
-			divisions:   divisions,
-		})
+		pm.startBlicks = cursor
+		pm.divisions = divisions
 
 		// Track the maximum cursor extent within this measure to correctly
 		// handle pickup measures, incomplete final measures, and multi-voice parts.
@@ -437,7 +432,7 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 			case *musicxml.Attributes:
 				if value.Divisions != 0 {
 					divisions = value.Divisions
-					infos[len(infos)-1].divisions = divisions
+					pm.divisions = divisions
 				}
 				for _, t := range value.Time {
 					meterNum = parseBeats(t.Beats)
@@ -517,5 +512,5 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 		}
 	}
 
-	return unrolled, infos, meters, tempos
+	return unrolled, meters, tempos
 }

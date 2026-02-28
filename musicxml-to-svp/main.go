@@ -62,9 +62,8 @@ func main() {
 	// Pass 1: structure
 	irScore := &Score{}
 	var unrolled []playedMeasure
-	var infos []measureInfo
 	if len(score.Part) > 0 {
-		unrolled, infos, irScore.Meters, irScore.Tempos = buildStructure(score.Part[0])
+		unrolled, irScore.Meters, irScore.Tempos = buildStructure(score.Part[0])
 	}
 
 	// Pass 2+3+4: per part
@@ -74,9 +73,9 @@ func main() {
 			partName = fmt.Sprintf("Part %d", partIdx+1)
 		}
 		p := Part{Name: partName}
-		p.Notes = buildNotes(part, unrolled, infos)
+		p.Notes = buildNotes(part, unrolled)
 		fillLyrics(p.Notes)
-		p.Dynamics = buildDynamics(part, unrolled, infos)
+		p.Dynamics = buildDynamics(part, unrolled)
 		irScore.Parts = append(irScore.Parts, p)
 	}
 

@@ -100,7 +100,7 @@ func (m pendingTieMap) remove(pitch int) {
 }
 
 // buildNotes extracts notes from a part, resolving ties and attaching grace notes.
-func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureInfo) []Note {
+func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 	transpose := 0
 	var notes []Note
 	pendingTies := pendingTieMap{}
@@ -110,7 +110,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureIn
 	var lastNoteIdx int = -1
 	var lastVerse int
 
-	walkPartElements(part, unrolled, infos, func(cursor int64, divisions int, pm playedMeasure, value any) {
+	walkPartElements(part, unrolled, func(cursor int64, divisions int, pm playedMeasure, value any) {
 		lastVerse = pm.verse
 
 		switch value := value.(type) {
