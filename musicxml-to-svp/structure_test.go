@@ -172,6 +172,74 @@ func TestBuildStructure_MetronomeWithSoundElement(t *testing.T) {
 	}
 }
 
+// TestBuildStructure_TupletMeasureTiming tests that a measure containing tuplets
+// computes the correct duration (cursor advances properly).
+func TestBuildStructure_TupletMeasureTiming(t *testing.T) {
+	// Measure 1: triplet eighths filling one quarter + 3 regular quarters = 4/4
+	// Measure 2: regular whole note
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>12</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+      </note>
+      <note>
+        <pitch><step>A</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+      </note>
+    </measure>
+    <measure>
+      <note>
+        <pitch><step>C</step><octave>5</octave></pitch>
+        <duration>48</duration><type>whole</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	_, infos, _, _ := buildStructure(score.Part[0])
+
+	if len(infos) != 2 {
+		t.Fatalf("expected 2 measure infos, got %d", len(infos))
+	}
+
+	// Measure 0 starts at 0
+	if infos[0].startBlicks != 0 {
+		t.Errorf("measure 0 start: expected 0, got %d", infos[0].startBlicks)
+	}
+
+	// Measure 1 should start at 4 quarter notes (full 4/4 measure)
+	expectedStart := int64(4 * blicksPerQuarter)
+	if infos[1].startBlicks != expectedStart {
+		t.Errorf("measure 1 start: expected %d (4Q), got %d (diff = %d)",
+			expectedStart, infos[1].startBlicks, infos[1].startBlicks-expectedStart)
+	}
+}
+
 // TestBuildStructure_NestedRepeats tests that nested repeats are unrolled correctly.
 func TestBuildStructure_NestedRepeats(t *testing.T) {
 	// Outer repeat: measures 0-3 (2x)

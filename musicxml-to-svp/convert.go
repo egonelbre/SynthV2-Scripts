@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"math"
+	"os"
 	"strconv"
 
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
@@ -103,6 +105,36 @@ func noteTieTypes(note *musicxml.Note) (hasStart, hasStop bool) {
 		}
 	}
 	return
+}
+
+// validateTimeModification checks that a note's duration is consistent with its
+// time-modification element. Logs a warning to stderr on mismatch but does not
+// fail, since the duration field takes precedence.
+func validateTimeModification(note *musicxml.Note, divisions int) {
+	if note.TimeModification == nil {
+		return
+	}
+	tm := note.TimeModification
+	if tm.ActualNotes <= 0 || tm.NormalNotes <= 0 {
+		return
+	}
+	if note.Type == nil {
+		return
+	}
+
+	normalQuarters := beatUnitToQuarters(musicxml.NoteTypeValue(note.Type.EnclosedText), len(note.Dot) > 0)
+	expectedDuration := normalQuarters * float64(divisions) * float64(tm.NormalNotes) / float64(tm.ActualNotes)
+
+	dur := parseDuration(note.Duration)
+	if dur <= 0 {
+		return
+	}
+
+	diff := math.Abs(float64(dur) - expectedDuration)
+	if diff > 0.5 {
+		fmt.Fprintf(os.Stderr, "warning: time-modification mismatch: note type %q with %d/%d tuplet expects duration %.0f, got %d (divisions=%d)\n",
+			note.Type.EnclosedText, tm.ActualNotes, tm.NormalNotes, expectedDuration, dur, divisions)
+	}
 }
 
 func noteHasArticulation(note *musicxml.Note, name string) bool {

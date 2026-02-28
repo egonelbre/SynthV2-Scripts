@@ -331,6 +331,339 @@ func TestBuildNotes_TiedNotesSamePitchTwoVoices(t *testing.T) {
 	}
 }
 
+// TestBuildNotes_SimpleTriplets tests 3 eighth-note triplets filling one quarter note beat.
+func TestBuildNotes_SimpleTriplets(t *testing.T) {
+	// divisions=12, each triplet eighth has duration=4 (normal eighth=6, scaled by 2/3)
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>12</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+        <lyric number="1"><text>la</text></lyric>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled, infos)
+
+	if len(notes) != 4 {
+		t.Fatalf("expected 4 notes, got %d", len(notes))
+	}
+
+	// Each triplet eighth = Q/3 blicks
+	tripletDur := int64(blicksPerQuarter / 3)
+	for i := range 3 {
+		expectedOnset := int64(i) * tripletDur
+		if notes[i].Onset != expectedOnset {
+			t.Errorf("triplet note %d onset: expected %d, got %d", i, expectedOnset, notes[i].Onset)
+		}
+		if notes[i].Duration != tripletDur {
+			t.Errorf("triplet note %d duration: expected %d, got %d", i, tripletDur, notes[i].Duration)
+		}
+	}
+
+	// Fourth note (regular quarter) starts at 1 quarter note
+	expectedOnset := int64(blicksPerQuarter)
+	if notes[3].Onset != expectedOnset {
+		t.Errorf("quarter note onset: expected %d, got %d", expectedOnset, notes[3].Onset)
+	}
+	if notes[3].Duration != int64(blicksPerQuarter) {
+		t.Errorf("quarter note duration: expected %d, got %d", int64(blicksPerQuarter), notes[3].Duration)
+	}
+}
+
+// TestBuildNotes_Quintuplets tests 5 notes in the time of 4.
+func TestBuildNotes_Quintuplets(t *testing.T) {
+	// divisions=20, normal sixteenth=5, quintuplet sixteenth = 5*4/5 = 4
+	// 5 quintuplet sixteenths fill one quarter note
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>20</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration><type>16th</type>
+        <time-modification><actual-notes>5</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>4</duration><type>16th</type>
+        <time-modification><actual-notes>5</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>4</duration><type>16th</type>
+        <time-modification><actual-notes>5</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>4</duration><type>16th</type>
+        <time-modification><actual-notes>5</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>4</duration><type>16th</type>
+        <time-modification><actual-notes>5</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled, infos)
+
+	if len(notes) != 5 {
+		t.Fatalf("expected 5 notes, got %d", len(notes))
+	}
+
+	// Each quintuplet = Q/5 blicks
+	quintDur := int64(blicksPerQuarter / 5)
+	for i := range 5 {
+		expectedOnset := int64(i) * quintDur
+		if notes[i].Onset != expectedOnset {
+			t.Errorf("quintuplet note %d onset: expected %d, got %d", i, expectedOnset, notes[i].Onset)
+		}
+		if notes[i].Duration != quintDur {
+			t.Errorf("quintuplet note %d duration: expected %d, got %d", i, quintDur, notes[i].Duration)
+		}
+	}
+}
+
+// TestBuildNotes_NestedTuplets tests a tuplet inside a tuplet (3-in-2 of 3-in-2).
+func TestBuildNotes_NestedTuplets(t *testing.T) {
+	// Outer triplet: 3 in the time of 2 quarter notes (each = 2Q/3)
+	// Inner triplet on first outer note: 3 in the time of 2/3 of a quarter
+	// divisions=18 (quarter = 18)
+	// Outer note duration: 18 * 2/3 = 12
+	// Inner note duration: 12 * 2/3 = 8
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>18</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>8</duration><type>quarter</type>
+        <time-modification><actual-notes>9</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>8</duration><type>quarter</type>
+        <time-modification><actual-notes>9</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>8</duration><type>quarter</type>
+        <time-modification><actual-notes>9</actual-notes><normal-notes>4</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled, infos)
+
+	if len(notes) != 5 {
+		t.Fatalf("expected 5 notes, got %d", len(notes))
+	}
+
+	// Inner nested notes: each duration = 8/18 * Q = 4Q/9
+	innerDur := int64(blicksPerQuarter) * 8 / 18
+	for i := range 3 {
+		expectedOnset := int64(i) * innerDur
+		if notes[i].Onset != expectedOnset {
+			t.Errorf("inner note %d onset: expected %d, got %d", i, expectedOnset, notes[i].Onset)
+		}
+		if notes[i].Duration != innerDur {
+			t.Errorf("inner note %d duration: expected %d, got %d", i, innerDur, notes[i].Duration)
+		}
+	}
+
+	// Outer triplet notes 4,5: each duration = 12/18 * Q = 2Q/3
+	outerDur := int64(blicksPerQuarter) * 12 / 18
+	// Note index 3 onset = 3 * innerDur
+	expectedOnset3 := 3 * innerDur
+	if notes[3].Onset != expectedOnset3 {
+		t.Errorf("outer note 3 onset: expected %d, got %d", expectedOnset3, notes[3].Onset)
+	}
+	if notes[3].Duration != outerDur {
+		t.Errorf("outer note 3 duration: expected %d, got %d", outerDur, notes[3].Duration)
+	}
+}
+
+// TestBuildNotes_TupletWithTie tests triplet notes tied across a barline.
+func TestBuildNotes_TupletWithTie(t *testing.T) {
+	// divisions=12, triplet eighth = duration 4
+	// Last triplet tied to first note of next measure (quarter = 12)
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>12</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+        <lyric number="1"><text>la</text></lyric>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+        <tie type="start"/>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>36</duration><type>dotted-half</type>
+      </note>
+    </measure>
+    <measure>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+        <tie type="stop"/>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>36</duration><type>dotted-half</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled, infos)
+
+	// Find the tied E4 note
+	var tiedNote *Note
+	for i := range notes {
+		if notes[i].Pitch == 64 { // E4
+			tiedNote = &notes[i]
+			break
+		}
+	}
+	if tiedNote == nil {
+		t.Fatal("expected tied E4 note")
+	}
+
+	// Triplet eighth (4/12 Q) + quarter (12/12 Q) = 4/12 + 12/12 = 16/12 Q
+	tripletDur := int64(blicksPerQuarter) * 4 / 12
+	quarterDur := int64(blicksPerQuarter)
+	expectedDur := tripletDur + quarterDur
+	if tiedNote.Duration != expectedDur {
+		t.Errorf("tied tuplet note duration: expected %d, got %d", expectedDur, tiedNote.Duration)
+	}
+}
+
+// TestBuildNotes_TupletWithRest tests a triplet group containing a rest.
+func TestBuildNotes_TupletWithRest(t *testing.T) {
+	// divisions=12, triplet eighth = duration 4
+	// Pattern: note, rest, note (triplet group), then a quarter note
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>12</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <rest/>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>4</duration><type>eighth</type>
+        <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>12</duration><type>quarter</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled, infos)
+
+	// Should have 3 pitched notes (rest is skipped): C4, E4, F4
+	if len(notes) != 3 {
+		t.Fatalf("expected 3 notes, got %d", len(notes))
+	}
+
+	tripletDur := int64(blicksPerQuarter) / 3
+
+	// C4 at onset 0
+	if notes[0].Onset != 0 {
+		t.Errorf("note 0 onset: expected 0, got %d", notes[0].Onset)
+	}
+	if notes[0].Duration != tripletDur {
+		t.Errorf("note 0 duration: expected %d, got %d", tripletDur, notes[0].Duration)
+	}
+
+	// E4 at onset 2*tripletDur (after rest)
+	expectedOnset := 2 * tripletDur
+	if notes[1].Onset != expectedOnset {
+		t.Errorf("note 1 onset: expected %d, got %d", expectedOnset, notes[1].Onset)
+	}
+
+	// F4 at onset blicksPerQuarter
+	expectedOnset = int64(blicksPerQuarter)
+	if notes[2].Onset != expectedOnset {
+		t.Errorf("note 2 onset: expected %d, got %d", expectedOnset, notes[2].Onset)
+	}
+}
+
 // TestFillLyrics_Melismatic tests that empty lyrics become "-".
 func TestFillLyrics_Melismatic(t *testing.T) {
 	notes := []Note{

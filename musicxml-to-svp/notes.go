@@ -137,6 +137,8 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure, infos []measureIn
 					continue
 				}
 
+				validateTimeModification(value, divisions)
+
 				dur := parseDuration(value.Duration)
 				if dur <= 0 {
 					continue
