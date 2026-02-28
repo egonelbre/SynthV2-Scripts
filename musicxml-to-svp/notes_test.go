@@ -664,6 +664,51 @@ func TestBuildNotes_TupletWithRest(t *testing.T) {
 	}
 }
 
+// TestBuildNotes_CompoundMeter68 tests notes in a 6/8 measure.
+func TestBuildNotes_CompoundMeter68(t *testing.T) {
+	// 6/8 measure with dotted-quarter + dotted-quarter grouping
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>2</divisions><time><beats>6</beats><beat-type>8</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>3</duration><type>quarter</type><dot/>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>3</duration><type>quarter</type><dot/>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, infos, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled, infos)
+
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes, got %d", len(notes))
+	}
+
+	// Dotted quarter = 1.5 quarter notes
+	dottedQuarterBlicks := int64(blicksPerQuarter) * 3 / 2
+	if notes[0].Onset != 0 {
+		t.Errorf("note 0 onset: expected 0, got %d", notes[0].Onset)
+	}
+	if notes[0].Duration != dottedQuarterBlicks {
+		t.Errorf("note 0 duration: expected %d, got %d", dottedQuarterBlicks, notes[0].Duration)
+	}
+	if notes[1].Onset != dottedQuarterBlicks {
+		t.Errorf("note 1 onset: expected %d, got %d", dottedQuarterBlicks, notes[1].Onset)
+	}
+	if notes[1].Duration != dottedQuarterBlicks {
+		t.Errorf("note 1 duration: expected %d, got %d", dottedQuarterBlicks, notes[1].Duration)
+	}
+}
+
 // TestFillLyrics_Melismatic tests that empty lyrics become "-".
 func TestFillLyrics_Melismatic(t *testing.T) {
 	notes := []Note{

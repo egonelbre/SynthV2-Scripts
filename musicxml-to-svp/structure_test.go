@@ -240,6 +240,145 @@ func TestBuildStructure_TupletMeasureTiming(t *testing.T) {
 	}
 }
 
+// TestBuildStructure_CompoundMeter tests a simple 6/8 meter.
+func TestBuildStructure_CompoundMeter(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>2</divisions><time><beats>6</beats><beat-type>8</beat-type></time></attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>3</duration><type>quarter</type><dot/></note>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>3</duration><type>quarter</type><dot/></note>
+    </measure>
+    <measure>
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>3</duration><type>quarter</type><dot/></note>
+      <note><pitch><step>F</step><octave>4</octave></pitch><duration>3</duration><type>quarter</type><dot/></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	_, infos, meters, _ := buildStructure(score.Part[0])
+
+	if len(meters) != 1 || meters[0].Numerator != 6 || meters[0].Denominator != 8 {
+		t.Errorf("expected 6/8 meter, got %+v", meters)
+	}
+
+	// 6/8 = 6 eighth notes = 3 quarter notes
+	expectedDuration := int64(3 * blicksPerQuarter)
+	if infos[1].startBlicks != expectedDuration {
+		t.Errorf("measure 1 start: expected %d (3Q), got %d", expectedDuration, infos[1].startBlicks)
+	}
+}
+
+// TestBuildStructure_AdditiveBeats tests an additive meter like 2+3/8.
+func TestBuildStructure_AdditiveBeats(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>2</divisions><time><beats>2+3</beats><beat-type>8</beat-type></time></attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>2</duration><type>quarter</type></note>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>3</duration><type>dotted-quarter</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><type>quarter</type></note>
+      <note><pitch><step>F</step><octave>4</octave></pitch><duration>3</duration><type>dotted-quarter</type></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	_, infos, meters, _ := buildStructure(score.Part[0])
+
+	if len(meters) != 1 || meters[0].Numerator != 5 || meters[0].Denominator != 8 {
+		t.Errorf("expected 5/8 meter (from 2+3), got %+v", meters)
+	}
+
+	// 5/8 = 5 eighth notes = 2.5 quarter notes
+	expectedDuration := int64(blicksPerQuarter) * 5 * 4 / 8
+	if infos[1].startBlicks != expectedDuration {
+		t.Errorf("measure 1 start: expected %d (2.5Q), got %d", expectedDuration, infos[1].startBlicks)
+	}
+}
+
+// TestBuildStructure_LongAdditiveBeats tests "1+1+1+1+1"/4 additive meter.
+func TestBuildStructure_LongAdditiveBeats(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>1</divisions><time><beats>1+1+1+1+1</beats><beat-type>4</beat-type></time></attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>5</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>5</duration><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	_, infos, meters, _ := buildStructure(score.Part[0])
+
+	if len(meters) != 1 || meters[0].Numerator != 5 || meters[0].Denominator != 4 {
+		t.Errorf("expected 5/4 meter (from 1+1+1+1+1), got %+v", meters)
+	}
+
+	// 5/4 = 5 quarter notes
+	expectedDuration := int64(5 * blicksPerQuarter)
+	if infos[1].startBlicks != expectedDuration {
+		t.Errorf("measure 1 start: expected %d (5Q), got %d", expectedDuration, infos[1].startBlicks)
+	}
+}
+
+// TestBuildStructure_MeterChangeToAdditive tests changing from 4/4 to an additive meter.
+func TestBuildStructure_MeterChangeToAdditive(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>2</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>8</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <attributes><time><beats>3+2</beats><beat-type>8</beat-type></time></attributes>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>3</duration><type>dotted-quarter</type></note>
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><type>quarter</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>F</step><octave>4</octave></pitch><duration>3</duration><type>dotted-quarter</type></note>
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>2</duration><type>quarter</type></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	_, infos, meters, _ := buildStructure(score.Part[0])
+
+	if len(meters) != 2 {
+		t.Fatalf("expected 2 meter changes, got %d", len(meters))
+	}
+	if meters[1].Numerator != 5 || meters[1].Denominator != 8 {
+		t.Errorf("expected 5/8 meter (from 3+2), got %+v", meters[1])
+	}
+
+	// Measure 0: 4/4 = 4Q
+	expectedStart1 := int64(4 * blicksPerQuarter)
+	if infos[1].startBlicks != expectedStart1 {
+		t.Errorf("measure 1 start: expected %d (4Q), got %d", expectedStart1, infos[1].startBlicks)
+	}
+
+	// Measure 1: 5/8 = 2.5Q
+	expectedStart2 := expectedStart1 + int64(blicksPerQuarter)*5*4/8
+	if infos[2].startBlicks != expectedStart2 {
+		t.Errorf("measure 2 start: expected %d, got %d", expectedStart2, infos[2].startBlicks)
+	}
+}
+
 // TestBuildStructure_NestedRepeats tests that nested repeats are unrolled correctly.
 func TestBuildStructure_NestedRepeats(t *testing.T) {
 	// Outer repeat: measures 0-3 (2x)

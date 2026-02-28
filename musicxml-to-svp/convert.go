@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
 )
@@ -51,6 +52,15 @@ func beatUnitToQuarters(beatUnit musicxml.NoteTypeValue, hasDot bool) float64 {
 		q *= 1.5
 	}
 	return q
+}
+
+func parseBeats(s string) int {
+	total := 0
+	for _, part := range strings.Split(s, "+") {
+		v, _ := strconv.Atoi(strings.TrimSpace(part))
+		total += v
+	}
+	return total
 }
 
 func parseDuration(s string) int {

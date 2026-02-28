@@ -263,7 +263,7 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []measureInfo, [
 				for _, t := range value.Time {
 					meters = append(meters, MeterChange{
 						MeasureIndex: measureIdx,
-						Numerator:    t.Beats,
+						Numerator:    parseBeats(t.Beats),
 						Denominator:  t.BeatType,
 					})
 				}

@@ -5159,7 +5159,7 @@ type GroupSlash struct {
 
 // GroupTimeSignature UnNamed source named group "time-signature"
 type GroupTimeSignature struct {
-	Beats    int `xml:"beats,omitempty"`
+	Beats    string `xml:"beats,omitempty"`
 	BeatType int `xml:"beat-type,omitempty"`
 }
 
