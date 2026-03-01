@@ -191,21 +191,61 @@ func unrollMeasures(measures []*musicxml.Measure) []playedMeasure {
 	i := 0
 	for i < len(measures) {
 		if r := findOuterAt(i); r != nil {
-			for pass := 1; pass <= r.times; pass++ {
-				emitPass(r, pass, &result)
-			}
-			i = r.end + 1
+			nextI := r.end + 1
 
-			// If there are endings and the final pass exceeds all ending numbers,
-			// consume continuation measures (implicit final volta) with the final verse.
-			if r.hasEndings && r.times > r.maxEndingNum {
-				finalVerse := r.times
-				for i < len(measures) {
-					if findOuterAt(i) != nil {
-						break
+			// Check for explicit continuation volta after the repeat region.
+			// E.g., volta 1,2 inside the repeat, volta 3 outside.
+			var contStart, contEnd int
+			var contNums []int
+			if r.hasEndings && nextI < len(measures) {
+				if se := measureEndingStart(measures[nextI]); se != nil {
+					contNums = parseEndingNumbers(se.Number)
+					contStart = nextI
+					contEnd = nextI
+					for k := nextI; k < len(measures); k++ {
+						contEnd = k
+						if measureHasEndingStop(measures[k]) {
+							break
+						}
 					}
-					result = append(result, playedMeasure{measureIdx: i, verse: finalVerse})
-					i++
+				}
+			}
+
+			// Determine total passes from repeat times, inner endings, and continuation.
+			totalPasses := r.times
+			if r.maxEndingNum > totalPasses {
+				totalPasses = r.maxEndingNum
+			}
+			for _, n := range contNums {
+				if n > totalPasses {
+					totalPasses = n
+				}
+			}
+
+			for pass := 1; pass <= totalPasses; pass++ {
+				emitPass(r, pass, &result)
+				if len(contNums) > 0 && slices.Contains(contNums, pass) {
+					for k := contStart; k <= contEnd; k++ {
+						result = append(result, playedMeasure{measureIdx: k, verse: pass})
+					}
+				}
+			}
+
+			if len(contNums) > 0 {
+				i = contEnd + 1
+			} else {
+				i = nextI
+				// If there are endings and the final pass exceeds all ending numbers,
+				// consume continuation measures (implicit final volta) with the final verse.
+				if r.hasEndings && totalPasses > r.maxEndingNum {
+					finalVerse := totalPasses
+					for i < len(measures) {
+						if findOuterAt(i) != nil {
+							break
+						}
+						result = append(result, playedMeasure{measureIdx: i, verse: finalVerse})
+						i++
+					}
 				}
 			}
 			continue

@@ -671,3 +671,66 @@ func TestNavigation_DSWithBarlineSegno(t *testing.T) {
 	// Phase 2 (dal segno): B, C
 	checkUnrolledIndices(t, unrolled, []int{0, 1, 2, 1, 2})
 }
+
+// TestBuildStructure_ContinuationVolta tests that a volta ending placed after
+// the backward repeat barline is correctly handled. This pattern is common when
+// volta 1,2 are inside the repeat and volta 3 follows as a continuation.
+// Layout: [fwd] A B [volta 1,2] C D [bwd + volta stop] [volta 3] E F [volta 3 end]
+// Expected: A,B,C,D (pass 1), A,B,C,D (pass 2), A,B,E,F (pass 3)
+func TestBuildStructure_ContinuationVolta(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <barline><repeat direction="forward"/></barline>
+      <note><pitch><step>A</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>B</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <barline location="left"><ending number="1,2" type="start"/></barline>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+      <barline><repeat direction="backward"/><ending number="1,2" type="stop"/></barline>
+    </measure>
+    <measure>
+      <barline location="left"><ending number="3" type="start"/></barline>
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure>
+      <note><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note>
+      <barline><ending number="3" type="discontinue"/></barline>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+
+	// Pass 1: A(0), B(1), C(2), D(3) — volta 1,2 matches pass 1
+	// Pass 2: A(0), B(1), C(2), D(3) — volta 1,2 matches pass 2
+	// Pass 3: A(0), B(1), E(4), F(5) — volta 1,2 skipped, continuation volta 3
+	expectedIdxs := []int{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 4, 5}
+	expectedVerses := []int{1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}
+
+	if len(unrolled) != len(expectedIdxs) {
+		var got []string
+		for _, pm := range unrolled {
+			got = append(got, fmt.Sprintf("m%d(v%d)", pm.measureIdx, pm.verse))
+		}
+		t.Fatalf("expected %d unrolled measures, got %d: %s", len(expectedIdxs), len(unrolled), strings.Join(got, ", "))
+	}
+	for i, pm := range unrolled {
+		if pm.measureIdx != expectedIdxs[i] {
+			t.Errorf("unrolled[%d].measureIdx: expected %d, got %d", i, expectedIdxs[i], pm.measureIdx)
+		}
+		if pm.verse != expectedVerses[i] {
+			t.Errorf("unrolled[%d].verse: expected %d, got %d", i, expectedVerses[i], pm.verse)
+		}
+	}
+}
