@@ -6,6 +6,7 @@ func newEstonian() *Converter {
 	return &Converter{
 		selectLang: selectEstonian,
 		normalize:  func(s string) string { return strings.ReplaceAll(s, "ü", "y") },
+		vowels:     "aeiouyõäöü",
 		tables: map[string]*phoneTable{
 			"mandarin":  estonianMandarin,
 			"cantonese": estonianCantonese,

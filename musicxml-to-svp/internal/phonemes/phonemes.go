@@ -17,6 +17,7 @@ type Converter struct {
 	tables     map[string]*phoneTable
 	normalize  func(string) string
 	skip       func(rune) bool
+	vowels     string // source-language vowels; doubled vowels emit a single phoneme
 }
 
 // New creates a Converter for the given source language.
@@ -56,7 +57,7 @@ func (c *Converter) Convert(word string) Result {
 	return Result{
 		Language: lang,
 		Phoneset: phonesetForLanguage(lang),
-		Phonemes: table.convert(w, c.skip),
+		Phonemes: table.convert(w, c.skip, c.vowels),
 	}
 }
 
@@ -69,7 +70,7 @@ type phoneTable struct {
 	singles map[rune]string
 }
 
-func (t *phoneTable) convert(word string, skip func(rune) bool) string {
+func (t *phoneTable) convert(word string, skip func(rune) bool, vowels string) string {
 	runes := []rune(word)
 	var phonemes []string
 
@@ -95,9 +96,14 @@ func (t *phoneTable) convert(word string, skip func(rune) bool) string {
 			continue
 		}
 
-		// Check geminate (doubled character) → double the single phoneme.
+		// Check geminate (doubled character).
 		if i+1 < len(runes) && runes[i+1] == ch {
-			phonemes = append(phonemes, ph, ph)
+			// Doubled vowels emit a single phoneme to avoid rearticulation.
+			if strings.ContainsRune(vowels, ch) {
+				phonemes = append(phonemes, ph)
+			} else {
+				phonemes = append(phonemes, ph, ph)
+			}
 			i++
 			continue
 		}

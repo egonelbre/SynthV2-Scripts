@@ -6,6 +6,7 @@ func newKarelian() *Converter {
 	return &Converter{
 		selectLang: selectKarelian,
 		skip:       isKarelianPalatalization,
+		vowels:     "aeiouyäöü",
 		tables: map[string]*phoneTable{
 			"mandarin":  karelianMandarin,
 			"cantonese": karelianCantonese,
