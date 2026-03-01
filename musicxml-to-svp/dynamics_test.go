@@ -252,3 +252,32 @@ func TestDynamicsToLevel_Niente(t *testing.T) {
 		})
 	}
 }
+
+// TestDynamicsToLevel_OtherDynamicsPrefix tests that dynamics preceded by
+// other-dynamics elements (e.g., "sempre f") are still recognized.
+func TestDynamicsToLevel_OtherDynamicsPrefix(t *testing.T) {
+	tests := []struct {
+		name     string
+		innerXML string
+		wantOK   bool
+		wantLoud float64
+	}{
+		{"sempre f", `<other-dynamics>sempre</other-dynamics><f/>`, true, 6},
+		{"sempre pp", `<other-dynamics>sempre</other-dynamics><pp/>`, true, -8},
+		{"only other-dynamics", `<other-dynamics>sempre</other-dynamics>`, false, 0},
+		{"plain f", `<f/>`, true, 6},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &musicxml.Dynamics{InnerXML: tt.innerXML}
+			lvl, ok := dynamicsToLevel(d)
+			if ok != tt.wantOK {
+				t.Errorf("dynamicsToLevel(%q): ok = %v, want %v", tt.innerXML, ok, tt.wantOK)
+			}
+			if ok && lvl.loudness != tt.wantLoud {
+				t.Errorf("dynamicsToLevel(%q): loudness = %f, want %f", tt.innerXML, lvl.loudness, tt.wantLoud)
+			}
+		})
+	}
+}

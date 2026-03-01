@@ -319,32 +319,41 @@ var dynamicLevels = map[string]dynamicLevel{
 }
 
 // dynamicsToLevel maps a MusicXML dynamics element to loudness (dB) and tension values.
+// It skips non-dynamic elements like other-dynamics (e.g., "sempre") to find the
+// actual dynamic marking.
 func dynamicsToLevel(d *musicxml.Dynamics) (dynamicLevel, bool) {
-	name := firstXMLElementName(d.InnerXML)
-	if lvl, ok := dynamicLevels[name]; ok {
-		return lvl, true
+	s := d.InnerXML
+	for {
+		name, rest := nextXMLElementName(s)
+		if name == "" {
+			return dynamicLevel{}, false
+		}
+		if lvl, ok := dynamicLevels[name]; ok {
+			return lvl, true
+		}
+		s = rest
 	}
-	return dynamicLevel{}, false
 }
 
-// firstXMLElementName extracts the tag name of the first XML element in s.
-// For example, "<ff/>" returns "ff", "<p default-x=\"10\"/>" returns "p".
+// nextXMLElementName extracts the tag name of the next XML element in s,
+// returning the name and the remaining string after the element.
+// For example, "<ff/>" returns ("ff", ""), "<p default-x=\"10\"/>" returns ("p", "").
 // Skips XML comments (<!-- ... -->) and processing instructions (<? ... ?>).
-func firstXMLElementName(s string) string {
+func nextXMLElementName(s string) (string, string) {
 	for {
 		start := strings.Index(s, "<")
 		if start < 0 {
-			return ""
+			return "", ""
 		}
 		start++ // skip '<'
 		if start >= len(s) {
-			return ""
+			return "", ""
 		}
 		// Skip comments.
 		if strings.HasPrefix(s[start:], "!--") {
 			end := strings.Index(s[start:], "-->")
 			if end < 0 {
-				return ""
+				return "", ""
 			}
 			s = s[start+end+3:]
 			continue
@@ -353,16 +362,31 @@ func firstXMLElementName(s string) string {
 		if s[start] == '?' {
 			end := strings.Index(s[start:], "?>")
 			if end < 0 {
-				return ""
+				return "", ""
 			}
 			s = s[start+end+2:]
+			continue
+		}
+		// Skip closing tags.
+		if s[start] == '/' {
+			end := strings.Index(s[start:], ">")
+			if end < 0 {
+				return "", ""
+			}
+			s = s[start+end+1:]
 			continue
 		}
 		end := start
 		for end < len(s) && s[end] != ' ' && s[end] != '>' && s[end] != '/' {
 			end++
 		}
-		return s[start:end]
+		// Find the end of this element (closing '>') to compute the rest.
+		closeIdx := strings.Index(s[end:], ">")
+		rest := ""
+		if closeIdx >= 0 {
+			rest = s[end+closeIdx+1:]
+		}
+		return s[start:end], rest
 	}
 }
 
