@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
 	"flag"
@@ -8,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/phonemes"
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
@@ -42,6 +45,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error reading input: %v\n", err)
 		os.Exit(1)
 	}
+
+	data = ensureUTF8(data)
 
 	var score musicxml.ScorePartwise
 	if err := xml.Unmarshal(data, &score); err != nil {
@@ -126,4 +131,40 @@ func main() {
 			}
 		}
 	}
+}
+
+// ensureUTF8 converts UTF-16 (LE or BE) encoded data to UTF-8.
+// If the data is already UTF-8 (or has no BOM), it is returned as-is.
+func ensureUTF8(data []byte) []byte {
+	if len(data) >= 2 && data[0] == 0xFF && data[1] == 0xFE {
+		// UTF-16 Little Endian BOM
+		return utf16ToUTF8(data[2:], binary.LittleEndian)
+	}
+	if len(data) >= 2 && data[0] == 0xFE && data[1] == 0xFF {
+		// UTF-16 Big Endian BOM
+		return utf16ToUTF8(data[2:], binary.BigEndian)
+	}
+	// Strip UTF-8 BOM if present.
+	return bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF})
+}
+
+func utf16ToUTF8(data []byte, order binary.ByteOrder) []byte {
+	if len(data)%2 != 0 {
+		data = data[:len(data)-1]
+	}
+	u16 := make([]uint16, len(data)/2)
+	for i := range u16 {
+		u16[i] = order.Uint16(data[2*i:])
+	}
+	runes := utf16.Decode(u16)
+	var buf bytes.Buffer
+	buf.Grow(len(data))
+	for _, r := range runes {
+		buf.WriteRune(r)
+	}
+	// Replace the encoding declaration so xml.Unmarshal is happy.
+	result := buf.Bytes()
+	result = bytes.Replace(result, []byte("encoding='UTF-16'"), []byte("encoding='UTF-8'"), 1)
+	result = bytes.Replace(result, []byte(`encoding="UTF-16"`), []byte(`encoding="UTF-8"`), 1)
+	return result
 }
