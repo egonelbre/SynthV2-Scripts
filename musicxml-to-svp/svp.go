@@ -297,7 +297,7 @@ func scoreToSVP(score *Score) *SVPProject {
 	var tracks []*SVPTrack
 
 	for partIdx, part := range score.Parts {
-		var svpNotes []*SVPNote
+		svpNotes := []*SVPNote{}
 		var accents []accentEvent
 
 		for _, n := range part.Notes {
