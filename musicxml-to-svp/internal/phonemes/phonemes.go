@@ -1,5 +1,5 @@
 // Package phonemes converts lyrics to SynthV phonemes using adaptive
-// multi-language selection (Mandarin, Cantonese, Japanese, English, Korean).
+// multi-language selection (Mandarin, Cantonese, Spanish).
 package phonemes
 
 import "strings"
@@ -138,11 +138,3 @@ func phonesetForLanguage(lang string) string {
 	}
 }
 
-func hasOnlyBasicVowels(word string, special string) bool {
-	for _, r := range word {
-		if strings.ContainsRune(special, r) {
-			return false
-		}
-	}
-	return true
-}

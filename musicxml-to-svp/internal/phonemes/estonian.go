@@ -10,9 +10,7 @@ func newEstonian() *Converter {
 		tables: map[string]*phoneTable{
 			"mandarin":  estonianMandarin,
 			"cantonese": estonianCantonese,
-			"japanese":  estonianJapanese,
-			"english":   estonianEnglish,
-			"korean":    estonianKorean,
+			"spanish":   estonianSpanish,
 		},
 		words: map[string]Result{
 			"hmm": Result{
@@ -37,13 +35,7 @@ func selectEstonian(word string) string {
 	if strings.ContainsRune(word, 'ä') {
 		return "cantonese"
 	}
-	if strings.ContainsRune(word, 'r') {
-		return "korean"
-	}
-	if hasOnlyBasicVowels(word, "äöüõy") {
-		return "japanese"
-	}
-	return "english"
+	return "spanish"
 }
 
 var estonianMandarin = &phoneTable{
@@ -76,52 +68,18 @@ var estonianCantonese = &phoneTable{
 	},
 }
 
-var estonianJapanese = &phoneTable{
+var estonianSpanish = &phoneTable{
 	digraphs: map[string][]string{
 		"sh": {"sh"},
-		"ng": {"N", "g"},
-		"ts": {"ts"},
-	},
-	singles: map[rune]string{
-		'h': "h", 'j': "y", 'l': "r", 'm': "m", 'n': "n",
-		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
-		'b': "b", 'd': "d", 'g': "g", 'f': "f", 'v': "v", 'z': "z", 'w': "w",
-		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
-		'õ': "o", 'ä': "a", 'ö': "o", 'y': "u",
-	},
-}
-
-var estonianEnglish = &phoneTable{
-	digraphs: map[string][]string{
-		"sh": {"sh"},
-		"ng": {"ng", "g"},
-		"ts": {"t", "s"},
-	},
-	singles: map[rune]string{
-		'h': "hh", 'j': "y", 'l': "l", 'm': "m", 'n': "n",
-		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
-		'b': "b", 'd': "d", 'g': "g", 'f': "f", 'v': "v", 'z': "z", 'w': "w",
-		'a': "aa", 'e': "eh", 'i': "iy", 'o': "ow", 'u': "uw",
-		'õ': "uh", 'ä': "ae", 'ö': "er", 'y': "iy",
-	},
-}
-
-var estonianKorean = &phoneTable{
-	digraphs: map[string][]string{
-		"sh": {"s"},
 		"ng": {"N"},
-		"ts": {"ts\\_h"},
-		"ss": {"s_t"},
-		"tt": {"tt"},
-		"pp": {"pp"},
-		"kk": {"k_t"},
-		"ll": {"l", "l"},
+		"ts": {"t", "s"},
+		"rr": {"rr"}, // Estonian geminate r is a trill
 	},
 	singles: map[rune]string{
-		'h': "h", 'j': "j", 'l': "4", 'm': "m", 'n': "n",
-		'r': "4", 's': "s", 't': "t", 'p': "p", 'k': "k",
-		'b': "b", 'd': "d", 'g': "g", 'f': "p", 'v': "b", 'z': "s", 'w': "w",
-		'a': "6", 'e': "e_o", 'i': "i", 'o': "o", 'u': "M",
-		'õ': "V", 'ä': "6", 'ö': "V", 'y': "M",
+		'h': "x", 'j': "I", 'l': "l", 'm': "m", 'n': "n",
+		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
+		'b': "b", 'd': "d", 'g': "g", 'f': "f", 'v': "B", 'z': "s", 'w': "U",
+		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
+		'õ': "o", 'ä': "a", 'ö': "e", 'y': "u",
 	},
 }
