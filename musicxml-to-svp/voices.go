@@ -299,8 +299,8 @@ func setNoteAttributes(library []*SVPGroup) {
 			note.Takes.CPitchDispersion = 0.1
 			note.Takes.CTimeDispersion = 0.2
 			note.Takes.DF0VbrMod = 0.05
-			note.Takes.ExpValueX = -0.9
-			note.Takes.ExpValueY = -0.9
+			note.Takes.ExpValueX = -0.5
+			note.Takes.ExpValueY = -0.5
 		}
 	}
 }
