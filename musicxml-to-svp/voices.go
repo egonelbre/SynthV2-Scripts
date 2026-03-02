@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/phonemes"
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/voice"
@@ -240,6 +241,52 @@ func applyPhonemes(library []*SVPGroup, conv *phonemes.Converter) {
 				note.Phonemes = result.Phonemes
 				note.Takes.LanguageOverride = result.Language
 				note.Takes.PhonesetOverride = result.Phoneset
+			}
+		}
+	}
+}
+
+func parseLyricReplacement(v string) lyricReplacement {
+	// Format: "[language] phonemes" or just "phonemes"
+	if after, ok := strings.CutPrefix(v, "["); ok {
+		lang, phoneme, _ := strings.Cut(after, "]")
+		lang = strings.TrimSpace(lang)
+		phoneme = strings.TrimSpace(phoneme)
+		return lyricReplacement{
+			Phonemes: phoneme,
+			Language: lang,
+			Phoneset: phonesetForLanguage(lang),
+		}
+	}
+	return lyricReplacement{Phonemes: v}
+}
+
+func phonesetForLanguage(lang string) string {
+	switch lang {
+	case "japanese":
+		return "romaji"
+	case "english":
+		return "arpabet"
+	default:
+		return "xsampa"
+	}
+}
+
+type lyricReplacement struct {
+	Phonemes string
+	Language string
+	Phoneset string
+}
+
+func applyLyricReplacements(library []*SVPGroup, replacements map[string]lyricReplacement) {
+	for _, group := range library {
+		for _, note := range group.Notes {
+			if r, ok := replacements[note.Lyrics]; ok {
+				note.Phonemes = r.Phonemes
+				if r.Language != "" {
+					note.Takes.LanguageOverride = r.Language
+					note.Takes.PhonesetOverride = r.Phoneset
+				}
 			}
 		}
 	}

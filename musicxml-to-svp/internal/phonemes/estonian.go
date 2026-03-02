@@ -14,6 +14,13 @@ func newEstonian() *Converter {
 			"english":   estonianEnglish,
 			"korean":    estonianKorean,
 		},
+		words: map[string]Result{
+			"hmm": Result{
+				Language: "cantonese",
+				Phoneset: "xsampa",
+				Phonemes: "h m=",
+			},
+		},
 	}
 }
 

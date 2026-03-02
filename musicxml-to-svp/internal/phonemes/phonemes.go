@@ -18,6 +18,7 @@ type Converter struct {
 	normalize  func(string) string
 	skip       func(rune) bool
 	vowels     string // source-language vowels; doubled vowels emit a single phoneme
+	words      map[string]Result // whole-word overrides checked before table conversion
 }
 
 // New creates a Converter for the given source language.
@@ -33,6 +34,14 @@ func New(lang string) *Converter {
 	}
 }
 
+// SetWord adds a whole-word override that bypasses table conversion.
+func (c *Converter) SetWord(word string, r Result) {
+	if c.words == nil {
+		c.words = map[string]Result{}
+	}
+	c.words[strings.ToLower(word)] = r
+}
+
 // Convert converts a lyrics word to phonemes.
 // Returns empty Result for special markers ("-", "+", "sil", "br", etc.).
 func (c *Converter) Convert(word string) Result {
@@ -41,6 +50,10 @@ func (c *Converter) Convert(word string) Result {
 	switch lower {
 	case "-", "+", "sil", "br", "sp", "ap", "":
 		return Result{}
+	}
+
+	if r, ok := c.words[lower]; ok {
+		return r
 	}
 
 	lang := c.selectLang(lower)

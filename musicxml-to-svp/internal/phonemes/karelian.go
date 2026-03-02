@@ -14,6 +14,13 @@ func newKarelian() *Converter {
 			"english":   karelianEnglish,
 			"korean":    karelianKorean,
 		},
+		words: map[string]Result{
+			"hmm": Result{
+				Language: "cantonese",
+				Phoneset: "xsampa",
+				Phonemes: "h m=",
+			},
+		},
 	}
 }
 

@@ -16,12 +16,22 @@ import (
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
 )
 
+type repeatedFlag []string
+
+func (f *repeatedFlag) String() string { return strings.Join(*f, ", ") }
+func (f *repeatedFlag) Set(v string) error {
+	*f = append(*f, v)
+	return nil
+}
+
 func main() {
 	voiceFlag := flag.String("voice", "", "assign voices: choir1, choir2, choir3, or soloists")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian")
 	relaxedFlag := flag.Bool("relaxed", false, "enable relaxed consonant pronunciation")
 	outputFlag := flag.String("o", "", "output file path (default: input with .svp extension)")
+	var phonemeFlags repeatedFlag
+	flag.Var(&phonemeFlags, "p", `lyric replacement as "lyric=phoneme" (repeatable)`)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: musicxml-to-svp [flags] <input.musicxml>\n\nFlags:\n")
 		flag.PrintDefaults()
@@ -102,6 +112,20 @@ func main() {
 		setNoteAttributes(project.Library)
 	}
 
+	// Parse custom lyric replacements.
+	var replacements map[string]lyricReplacement
+	if len(phonemeFlags) > 0 {
+		replacements = map[string]lyricReplacement{}
+		for _, pf := range phonemeFlags {
+			k, v, ok := strings.Cut(pf, "=")
+			if !ok {
+				fmt.Fprintf(os.Stderr, "invalid -p flag %q: expected \"lyric=phoneme\" or \"lyric=[language] phoneme\"\n", pf)
+				os.Exit(1)
+			}
+			replacements[k] = parseLyricReplacement(v)
+		}
+	}
+
 	// Convert lyrics to phonemes if requested.
 	if *langFlag != "" {
 		conv := phonemes.New(*langFlag)
@@ -109,7 +133,16 @@ func main() {
 			fmt.Fprintf(os.Stderr, "unknown language: %q (options: estonian, karelian)\n", *langFlag)
 			os.Exit(1)
 		}
+		for word, r := range replacements {
+			conv.SetWord(word, phonemes.Result{
+				Language: r.Language,
+				Phoneset: r.Phoneset,
+				Phonemes: r.Phonemes,
+			})
+		}
 		applyPhonemes(project.Library, conv)
+	} else if len(replacements) > 0 {
+		applyLyricReplacements(project.Library, replacements)
 	}
 
 	out, err := json.MarshalIndent(project, "", "  ")
