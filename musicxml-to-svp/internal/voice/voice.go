@@ -56,19 +56,19 @@ var Choirs = []ChoirInfo{
 		Name:     "Choir Voices #1",
 		Language: "english",
 		Phoneset: "arpabet",
-		Parts:    []VoicePart{Soprano, Alto, Tenor, Bass},
+		Parts:    []VoicePart{Soprano, Alto, Tenor, Baritone, Bass},
 	},
 	{
 		Name:     "Choir Voices #2",
 		Language: "mandarin",
 		Phoneset: "xsampa",
-		Parts:    []VoicePart{Soprano, MezzoSoprano, Tenor, Baritone},
+		Parts:    []VoicePart{Soprano, MezzoSoprano, Tenor, Baritone, Bass},
 	},
 	{
 		Name:     "Choir Voices #3",
 		Language: "japanese",
 		Phoneset: "romaji",
-		Parts:    []VoicePart{Soprano, Alto, Tenor, Bass},
+		Parts:    []VoicePart{Soprano, Alto, Tenor, Baritone, Bass},
 	},
 }
 
