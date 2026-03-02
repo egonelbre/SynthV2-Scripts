@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"math"
 )
 
 // SVP output structs
@@ -296,6 +297,14 @@ func scoreToSVP(score *Score) *SVPProject {
 	var library []*SVPGroup
 	var tracks []*SVPTrack
 
+	// Reduce track gain based on the number of tracks to prevent clipping
+	// when multiple tracks play simultaneously.
+	numTracks := len(score.Parts)
+	trackGain := 0.0
+	if numTracks > 1 {
+		trackGain = -10 * math.Log10(float64(numTracks))
+	}
+
 	for partIdx, part := range score.Parts {
 		svpNotes := []*SVPNote{}
 		var accents []accentEvent
@@ -382,7 +391,7 @@ func scoreToSVP(score *Score) *SVPProject {
 			DispOrder: partIdx,
 			UUID:      newUUID(),
 			Mixer: SVPMixer{
-				GainDecibel: 0,
+				GainDecibel: trackGain,
 				Pan:         0,
 				Display:     true,
 			},
@@ -417,7 +426,7 @@ func scoreToSVP(score *Score) *SVPProject {
 			Filename:         "",
 			NumChannels:      1,
 			AspirationFormat: "noAspiration",
-			BitDepth:         16,
+			BitDepth:         24,
 			SampleRate:       44100,
 			ExportMixDown:    true,
 		},

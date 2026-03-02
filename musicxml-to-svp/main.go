@@ -106,6 +106,11 @@ func main() {
 	// Convert to SVP
 	project := scoreToSVP(irScore)
 
+	// Set render output directory to the input filename without extension.
+	inputBase := filepath.Base(inputPath)
+	inputBase = inputBase[:len(inputBase)-len(filepath.Ext(inputBase))]
+	project.RenderConfig.Destination = inputBase
+
 	// Assign voices if requested.
 	if *voiceFlag != "" {
 		assignVoices(project.Tracks, strings.ToLower(*voiceFlag), *relaxedFlag, *panFlag)

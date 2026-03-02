@@ -276,46 +276,46 @@ type dynamicLevel struct {
 
 // dynamicLevels maps MusicXML dynamics element names to loudness (dB) and tension values.
 //
-// Loudness is kept within -12 to 12 dB. For extreme dynamics (pp and softer,
+// Loudness is kept within -6 to 6 dB. For extreme dynamics (pp and softer,
 // ff and louder), loudness stays close to p/f range while tension is adjusted
 // to convey the additional intensity difference.
 var dynamicLevels = map[string]dynamicLevel{
 	// Fortissimo variants: loudness near f, tension increases.
-	"ffffff": {12, 0.8},
-	"fffff":  {11, 0.7},
-	"ffff":   {10, 0.5},
-	"fff":    {9, 0.4},
-	"ff":     {8, 0.2},
+	"ffffff": {6, 0.8},
+	"fffff":  {5.5, 0.7},
+	"ffff":   {5, 0.5},
+	"fff":    {4.5, 0.4},
+	"ff":     {4, 0.2},
 
 	// Pianissimo variants: loudness near p, tension decreases.
-	"pppppp": {-12, -0.8},
-	"ppppp":  {-11, -0.7},
-	"pppp":   {-10, -0.5},
-	"ppp":    {-9, -0.4},
-	"pp":     {-8, -0.2},
+	"pppppp": {-6, -0.8},
+	"ppppp":  {-5.5, -0.7},
+	"pppp":   {-5, -0.5},
+	"ppp":    {-4.5, -0.4},
+	"pp":     {-4, -0.2},
 
 	// Sforzando variants.
-	"sffz": {6, 0.3},
-	"sfzp": {3, 0},
-	"sfpp": {3, 0},
-	"sfz":  {6, 0.3},
-	"sfp":  {3, 0},
-	"sf":   {6, 0.3},
+	"sffz": {3, 0.3},
+	"sfzp": {1.5, 0},
+	"sfpp": {1.5, 0},
+	"sfz":  {3, 0.3},
+	"sfp":  {1.5, 0},
+	"sf":   {3, 0.3},
 
 	// Core dynamics.
-	"mp": {-3, 0},
-	"mf": {3, 0},
+	"mp": {-1.5, 0},
+	"mf": {1.5, 0},
 	"fp": {0, 0},
-	"fz": {6, 0.3},
-	"f":  {6, 0},
+	"fz": {3, 0.3},
+	"f":  {3, 0},
 
-	"rfz": {3, 0.2},
-	"rf":  {3, 0.2},
+	"rfz": {1.5, 0.2},
+	"rf":  {1.5, 0.2},
 
 	"pf": {0, 0},
-	"p":  {-6, 0},
+	"p":  {-3, 0},
 
-	"n": {-12, -0.8},
+	"n": {-6, -0.8},
 }
 
 // dynamicsToLevel maps a MusicXML dynamics element to loudness (dB) and tension values.

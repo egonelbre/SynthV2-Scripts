@@ -39,8 +39,8 @@ func TestBuildDynamics_LevelsAndWedges(t *testing.T) {
 	if events[0].kind != dynLevel {
 		t.Errorf("event 0: expected dynLevel, got %d", events[0].kind)
 	}
-	if events[0].loudness != 3 { // mf = 3 dB
-		t.Errorf("event 0 loudness: expected 3, got %f", events[0].loudness)
+	if events[0].loudness != 1.5 { // mf = 1.5 dB
+		t.Errorf("event 0 loudness: expected 1.5, got %f", events[0].loudness)
 	}
 
 	// Second event: crescendo start
@@ -234,8 +234,8 @@ func TestDynamicsToLevel_Niente(t *testing.T) {
 		wantOK   bool
 		wantLoud float64
 	}{
-		{"n self-closing", "<n/>", true, -12},
-		{"n with closing tag", "<n></n>", true, -12},
+		{"n self-closing", "<n/>", true, -6},
+		{"n with closing tag", "<n></n>", true, -6},
 		{"unrelated n-prefix", "<notreal/>", false, 0},
 	}
 
@@ -262,10 +262,10 @@ func TestDynamicsToLevel_OtherDynamicsPrefix(t *testing.T) {
 		wantOK   bool
 		wantLoud float64
 	}{
-		{"sempre f", `<other-dynamics>sempre</other-dynamics><f/>`, true, 6},
-		{"sempre pp", `<other-dynamics>sempre</other-dynamics><pp/>`, true, -8},
+		{"sempre f", `<other-dynamics>sempre</other-dynamics><f/>`, true, 3},
+		{"sempre pp", `<other-dynamics>sempre</other-dynamics><pp/>`, true, -4},
 		{"only other-dynamics", `<other-dynamics>sempre</other-dynamics>`, false, 0},
-		{"plain f", `<f/>`, true, 6},
+		{"plain f", `<f/>`, true, 3},
 	}
 
 	for _, tt := range tests {
