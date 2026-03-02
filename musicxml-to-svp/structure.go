@@ -537,10 +537,11 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []MeterChange, [
 
 		expectedDuration := int64(meterNum) * blicksPerQuarter * 4 / int64(meterDen)
 
-		// Use actual measure duration when available (handles pickup measures,
-		// incomplete final measures, and cadenzas). Fall back to expected
-		// duration for empty measures.
-		if maxCursor > 0 && maxCursor != expectedDuration {
+		// Use actual measure duration when it's shorter than expected
+		// (handles pickup measures, incomplete final measures, and cadenzas).
+		// When maxCursor exceeds expected duration, it's typically due to
+		// multi-voice rests serialized without backup elements.
+		if maxCursor > 0 && maxCursor < expectedDuration {
 			cursor += maxCursor
 		} else {
 			cursor += expectedDuration

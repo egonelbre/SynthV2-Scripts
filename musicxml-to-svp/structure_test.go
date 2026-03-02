@@ -134,6 +134,100 @@ func TestBuildStructure_PickupMeasure(t *testing.T) {
 	}
 }
 
+// TestBuildStructure_MultiVoiceRestsWithoutBackup tests that multi-voice rests
+// serialized without backup elements don't inflate measure duration.
+func TestBuildStructure_MultiVoiceRestsWithoutBackup(t *testing.T) {
+	// Each measure has two whole-measure rests (one per voice) without a
+	// backup element between them. The second rest's duration should not
+	// extend the measure beyond its expected length.
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>3</beats><beat-type>4</beat-type></time></attributes>
+      <note><rest/><duration>12</duration><type>half</type><dot/><voice>1</voice></note>
+      <note><rest/><duration>12</duration><type>half</type><dot/><voice>2</voice></note>
+    </measure>
+    <measure>
+      <attributes><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note><rest/><duration>16</duration><type>whole</type><voice>1</voice></note>
+      <note><rest/><duration>16</duration><type>whole</type><voice>2</voice></note>
+    </measure>
+    <measure>
+      <attributes><time><beats>3</beats><beat-type>4</beat-type></time></attributes>
+      <note><rest/><duration>12</duration><type>half</type><dot/><voice>1</voice></note>
+      <note><rest/><duration>12</duration><type>half</type><dot/><voice>2</voice></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, meters, _ := buildStructure(score.Part[0])
+
+	if len(unrolled) != 3 {
+		t.Fatalf("expected 3 unrolled measures, got %d", len(unrolled))
+	}
+
+	// Measure 0: 3/4 = 3 quarter notes
+	m0Duration := int64(3 * blicksPerQuarter)
+	if unrolled[1].startBlicks != m0Duration {
+		t.Errorf("measure 1 start: expected %d (3Q), got %d", m0Duration, unrolled[1].startBlicks)
+	}
+
+	// Measure 1: 4/4 = 4 quarter notes
+	m1Start := m0Duration
+	m1Duration := int64(4 * blicksPerQuarter)
+	if unrolled[2].startBlicks != m1Start+m1Duration {
+		t.Errorf("measure 2 start: expected %d (7Q), got %d", m1Start+m1Duration, unrolled[2].startBlicks)
+	}
+
+	// Verify meters
+	if len(meters) != 3 {
+		t.Fatalf("expected 3 meter changes, got %d", len(meters))
+	}
+	expectedMeters := []struct{ num, den int }{{3, 4}, {4, 4}, {3, 4}}
+	for i, m := range meters {
+		if m.Numerator != expectedMeters[i].num || m.Denominator != expectedMeters[i].den {
+			t.Errorf("meter[%d]: expected %d/%d, got %d/%d",
+				i, expectedMeters[i].num, expectedMeters[i].den, m.Numerator, m.Denominator)
+		}
+	}
+}
+
+// TestBuildStructure_MultiVoiceRestsWithBackup tests that multi-voice rests
+// with proper backup elements compute correct measure duration.
+func TestBuildStructure_MultiVoiceRestsWithBackup(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>3</beats><beat-type>4</beat-type></time></attributes>
+      <note><rest/><duration>12</duration><type>half</type><dot/><voice>1</voice></note>
+      <backup><duration>12</duration></backup>
+      <note><rest/><duration>12</duration><type>half</type><dot/><voice>2</voice></note>
+    </measure>
+    <measure>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>12</duration><type>half</type><dot/></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+
+	if len(unrolled) != 2 {
+		t.Fatalf("expected 2 unrolled measures, got %d", len(unrolled))
+	}
+
+	// Measure 0: 3/4 = 3 quarter notes (backup keeps maxCursor at 3Q)
+	expectedStart := int64(3 * blicksPerQuarter)
+	if unrolled[1].startBlicks != expectedStart {
+		t.Errorf("measure 1 start: expected %d (3Q), got %d", expectedStart, unrolled[1].startBlicks)
+	}
+}
+
 // TestBuildStructure_MetronomeWithSoundElement tests that a Metronome mark
 // is not skipped when the Direction has a Sound element for dynamics (bug #5).
 func TestBuildStructure_MetronomeWithSoundElement(t *testing.T) {
