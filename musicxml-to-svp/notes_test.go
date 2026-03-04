@@ -850,3 +850,85 @@ func TestBuildNotes_TieStopWithGraceUsesFullDuration(t *testing.T) {
 			expectedDur, tiedNote.Duration, tiedNote.Duration-expectedDur)
 	}
 }
+
+// TestBuildNotes_SlideExtraction tests that slide start/stop pairs compute SlideDelta.
+func TestBuildNotes_SlideExtraction(t *testing.T) {
+	// A4 (MIDI 69) slides to G4 (MIDI 67) = -200 cents
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>A</step><octave>4</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+        <notations><slide type="start" number="1"/></notations>
+        <lyric number="1"><text>la</text></lyric>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+        <notations><slide type="stop" number="1"/></notations>
+        <lyric number="1"><text>ti</text></lyric>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
+
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes, got %d", len(notes))
+	}
+	if notes[0].SlideDelta != -200 {
+		t.Errorf("note 0 SlideDelta: expected -200, got %d", notes[0].SlideDelta)
+	}
+	if notes[1].SlideDelta != 0 {
+		t.Errorf("note 1 SlideDelta: expected 0, got %d", notes[1].SlideDelta)
+	}
+}
+
+// TestBuildNotes_SlideAcrossMeasures tests slide start in one measure, stop in the next.
+func TestBuildNotes_SlideAcrossMeasures(t *testing.T) {
+	// C5 (MIDI 72) slides to E5 (MIDI 76) = +400 cents
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>5</octave></pitch>
+        <duration>16</duration><type>whole</type>
+        <notations><slide type="start" number="1"/></notations>
+        <lyric number="1"><text>la</text></lyric>
+      </note>
+    </measure>
+    <measure>
+      <note>
+        <pitch><step>E</step><octave>5</octave></pitch>
+        <duration>16</duration><type>whole</type>
+        <notations><slide type="stop" number="1"/></notations>
+        <lyric number="1"><text>ti</text></lyric>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
+
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes, got %d", len(notes))
+	}
+	if notes[0].SlideDelta != 400 {
+		t.Errorf("note 0 SlideDelta: expected 400, got %d", notes[0].SlideDelta)
+	}
+	if notes[1].SlideDelta != 0 {
+		t.Errorf("note 1 SlideDelta: expected 0, got %d", notes[1].SlideDelta)
+	}
+}

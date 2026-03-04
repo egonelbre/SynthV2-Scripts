@@ -41,6 +41,7 @@ type Note struct {
 	Detune        int          // cents
 	Lyric         string
 	Articulations Articulation // bitmask
+	SlideDelta    int          // cents to slide toward at end of note (0 = no slide)
 
 	LeadingGraces  []GraceNote // grace notes before this note
 	TrailingGraces []GraceNote // grace notes after this note

@@ -135,6 +135,20 @@ func noteTieTypes(note *musicxml.Note) (hasStart, hasStop bool) {
 	return
 }
 
+func noteSlideTypes(note *musicxml.Note) (hasStart, hasStop bool) {
+	for _, n := range note.Notations {
+		for _, s := range n.Slide {
+			switch s.Type {
+			case "start":
+				hasStart = true
+			case "stop":
+				hasStop = true
+			}
+		}
+	}
+	return
+}
+
 // validateTimeModification checks that a note's duration is consistent with its
 // time-modification element. Logs a warning to stderr on mismatch but does not
 // fail, since the duration field takes precedence.

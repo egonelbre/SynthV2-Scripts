@@ -257,3 +257,41 @@ func TestCapGraceDurs_RoundingRemainder(t *testing.T) {
 		t.Errorf("sum of graceDurs: expected %d, got %d", maxTotal, sum)
 	}
 }
+
+// TestScoreToSVP_SlideGeneratesPitchDelta tests that SlideDelta produces pitchDelta curve points.
+func TestScoreToSVP_SlideGeneratesPitchDelta(t *testing.T) {
+	s := &Score{
+		Parts: []Part{{
+			Name: "Test",
+			Notes: []Note{
+				{Onset: 0, Duration: 3 * blicksPerQuarter, Pitch: 69, Lyric: "la", SlideDelta: -200},
+				{Onset: 3 * blicksPerQuarter, Duration: blicksPerQuarter, Pitch: 67, Lyric: "ti"},
+			},
+		}},
+	}
+
+	proj := scoreToSVP(s)
+	pts := proj.Library[0].Parameters.PitchDelta.Points
+
+	if len(pts) < 4 {
+		t.Fatalf("expected at least 4 pitchDelta points, got %d", len(pts))
+	}
+
+	// Ramp should start at onset + 2/3 * duration = 2Q with value 0
+	rampOnset := int64(2 * blicksPerQuarter)
+	if int64(pts[0]) != rampOnset {
+		t.Errorf("ramp onset position: expected %d, got %v", rampOnset, pts[0])
+	}
+	if pts[1] != 0 {
+		t.Errorf("ramp onset value: expected 0, got %v", pts[1])
+	}
+
+	// Ramp should end at onset + duration = 3Q with value -200
+	rampEnd := int64(3 * blicksPerQuarter)
+	if int64(pts[2]) != rampEnd {
+		t.Errorf("ramp end position: expected %d, got %v", rampEnd, pts[2])
+	}
+	if pts[3] != -200 {
+		t.Errorf("ramp end value: expected -200, got %v", pts[3])
+	}
+}

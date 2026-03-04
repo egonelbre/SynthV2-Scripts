@@ -368,6 +368,20 @@ func scoreToSVP(score *Score) *SVPProject {
 			params.Tension.Points = applyAccents(params.Tension.Points, accents, accentTensionBump, strongAccentTensionBump)
 		}
 
+		// Build pitchDelta curves from slide annotations.
+		for _, n := range part.Notes {
+			if n.SlideDelta == 0 {
+				continue
+			}
+			rampOnset := n.Onset + n.Duration*2/3
+			rampEnd := n.Onset + n.Duration
+			params.PitchDelta.Points = insertCurvePoints(
+				params.PitchDelta.Points,
+				rampOnset, 0,
+				rampEnd, float64(n.SlideDelta),
+			)
+		}
+
 		group := &SVPGroup{
 			Name:       part.Name,
 			UUID:       newUUID(),

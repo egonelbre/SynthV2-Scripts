@@ -109,6 +109,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 	var graceIsTail bool
 	var lastNoteIdx int = -1
 	var lastVerse int
+	pendingSlideIdx := -1 // index of note with slide-start
 
 	walkPartElements(part, unrolled, func(cursor int64, divisions int, pm playedMeasure, value any) {
 		lastVerse = pm.verse
@@ -182,6 +183,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 			midi, detune := pitchToMIDI(value.Pitch)
 			midi += transpose
 			tieStart, tieStop := noteTieTypes(value)
+			slideStart, slideStop := noteSlideTypes(value)
 
 			if tieStop {
 				// Extend the tied note's duration. Any grace notes before
@@ -218,6 +220,15 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 
 			if tieStart {
 				pendingTies.add(midi, lastNoteIdx)
+			}
+
+			if slideStop && pendingSlideIdx >= 0 {
+				startNote := &notes[pendingSlideIdx]
+				startNote.SlideDelta = (midi-startNote.Pitch)*100 + (detune - startNote.Detune)
+				pendingSlideIdx = -1
+			}
+			if slideStart {
+				pendingSlideIdx = lastNoteIdx
 			}
 
 			if value.Chord == "" {
