@@ -196,6 +196,12 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 					if !tieStart {
 						pendingTies.remove(midi)
 					}
+					// A tie-stop note may also start a slide (e.g. tied note
+					// sliding to the next pitch). Track the tied note as the
+					// slide source.
+					if slideStart {
+						pendingSlideIdx = idx
+					}
 				}
 				if value.Chord == "" {
 					prevOnset = cursor

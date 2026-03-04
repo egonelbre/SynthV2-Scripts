@@ -145,6 +145,14 @@ func noteSlideTypes(note *musicxml.Note) (hasStart, hasStop bool) {
 				hasStop = true
 			}
 		}
+		for _, g := range n.Glissando {
+			switch g.Type {
+			case "start":
+				hasStart = true
+			case "stop":
+				hasStop = true
+			}
+		}
 	}
 	return
 }

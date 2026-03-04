@@ -932,3 +932,54 @@ func TestBuildNotes_SlideAcrossMeasures(t *testing.T) {
 		t.Errorf("note 1 SlideDelta: expected 0, got %d", notes[1].SlideDelta)
 	}
 }
+
+// TestBuildNotes_SlideOnTieStop tests slide starting on a tie-stop note.
+func TestBuildNotes_SlideOnTieStop(t *testing.T) {
+	// C5 half tied to C5 quarter (with slide start) → D4 quarter (slide stop)
+	// The tied C5 should have SlideDelta = (62-72)*100 = -1000 cents
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>5</octave></pitch>
+        <duration>8</duration><type>half</type>
+        <tie type="start"/>
+        <notations><tied type="start"/></notations>
+      </note>
+      <note>
+        <pitch><step>C</step><octave>5</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+        <tie type="stop"/>
+        <notations>
+          <tied type="stop"/>
+          <slide type="start" number="1"/>
+        </notations>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+        <notations><slide type="stop" number="1"/></notations>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
+
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes (tied C5 + D4), got %d", len(notes))
+	}
+	// Tied C5 (half + quarter = 3Q) should slide to D4: (62-72)*100 = -1000
+	if notes[0].SlideDelta != -1000 {
+		t.Errorf("tied note SlideDelta: expected -1000, got %d", notes[0].SlideDelta)
+	}
+	expectedDur := int64(blicksPerQuarter * 3)
+	if notes[0].Duration != expectedDur {
+		t.Errorf("tied note duration: expected %d, got %d", expectedDur, notes[0].Duration)
+	}
+}
