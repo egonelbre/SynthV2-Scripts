@@ -159,7 +159,9 @@ func validateTimeModification(note *musicxml.Note, divisions int) {
 	}
 
 	diff := math.Abs(float64(dur) - expectedDuration)
-	if diff > 0.5 {
+	// Tuplets with indivisible ratios (e.g. 5:4 sixteenths) cause rounding
+	// differences in MusicXML exporters; allow up to 2 divisions of slack.
+	if diff > 2.0 {
 		fmt.Fprintf(os.Stderr, "warning: time-modification mismatch: note type %q with %d/%d tuplet expects duration %.0f, got %d (divisions=%d)\n",
 			note.Type.EnclosedText, tm.ActualNotes, tm.NormalNotes, expectedDuration, dur, divisions)
 	}
