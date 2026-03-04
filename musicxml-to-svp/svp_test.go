@@ -293,8 +293,8 @@ func TestScoreToSVP_SlideGeneratesPitchControls(t *testing.T) {
 		t.Fatalf("expected at least 4 point values, got %d", len(pts))
 	}
 
-	// First point: ramp starts after an eighth note with offset 0
-	rampRelOnset := float64(blicksPerQuarter / 2)
+	// First point: ramp starts after a sixteenth note with offset 0
+	rampRelOnset := float64(blicksPerQuarter / 4)
 	if pts[0] != rampRelOnset {
 		t.Errorf("ramp onset: expected %v, got %v", rampRelOnset, pts[0])
 	}

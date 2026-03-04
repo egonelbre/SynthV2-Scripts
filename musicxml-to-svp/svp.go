@@ -383,7 +383,7 @@ func scoreToSVP(score *Score) *SVPProject {
 			if n.SlideDelta == 0 {
 				continue
 			}
-			rampRelOnset := int64(blicksPerQuarter / 2) // start after an eighth note
+			rampRelOnset := int64(blicksPerQuarter / 4) // start after a sixteenth note
 			if rampRelOnset > n.Duration {
 				rampRelOnset = 0
 			}
