@@ -36,10 +36,19 @@ type SVPTempo struct {
 }
 
 type SVPGroup struct {
-	Name       string        `json:"name"`
-	UUID       string        `json:"uuid"`
-	Notes      []*SVPNote    `json:"notes"`
-	Parameters SVPParameters `json:"parameters"`
+	Name          string            `json:"name"`
+	UUID          string            `json:"uuid"`
+	Notes         []*SVPNote        `json:"notes"`
+	Parameters    SVPParameters     `json:"parameters"`
+	PitchControls []SVPPitchControl `json:"pitchControls,omitempty"`
+}
+
+type SVPPitchControl struct {
+	Pos    int64     `json:"pos"`
+	Pitch  float64   `json:"pitch"`
+	ID     string    `json:"id"`
+	Type   string    `json:"type"`
+	Points []float64 `json:"points"`
 }
 
 type SVPNote struct {
@@ -368,25 +377,32 @@ func scoreToSVP(score *Score) *SVPProject {
 			params.Tension.Points = applyAccents(params.Tension.Points, accents, accentTensionBump, strongAccentTensionBump)
 		}
 
-		// Build pitchDelta curves from slide annotations.
+		// Build pitchControls from slide annotations.
+		var pitchControls []SVPPitchControl
 		for _, n := range part.Notes {
 			if n.SlideDelta == 0 {
 				continue
 			}
-			rampOnset := n.Onset + n.Duration*2/3
-			rampEnd := n.Onset + n.Duration
-			params.PitchDelta.Points = insertCurvePoints(
-				params.PitchDelta.Points,
-				rampOnset, 0,
-				rampEnd, float64(n.SlideDelta),
-			)
+			rampRelOnset := int64(blicksPerQuarter / 2) // start after an eighth note
+			if rampRelOnset > n.Duration {
+				rampRelOnset = 0
+			}
+			rampRelEnd := n.Duration
+			pitchControls = append(pitchControls, SVPPitchControl{
+				Pos:   n.Onset,
+				Pitch: float64(n.Pitch) + float64(n.Detune)/100.0,
+				ID:    newShortID(),
+				Type:  "curve",
+				Points: slideEaseCurve(rampRelOnset, rampRelEnd, float64(n.SlideDelta)/100.0),
+			})
 		}
 
 		group := &SVPGroup{
-			Name:       part.Name,
-			UUID:       newUUID(),
-			Notes:      svpNotes,
-			Parameters: params,
+			Name:          part.Name,
+			UUID:          newUUID(),
+			Notes:         svpNotes,
+			Parameters:    params,
+			PitchControls: pitchControls,
 		}
 		library = append(library, group)
 
@@ -448,6 +464,20 @@ func scoreToSVP(score *Score) *SVPProject {
 			LinkRoomSettings: true,
 		},
 	}
+}
+
+// slideEaseCurve generates a smooth S-curve (cosine easing) for a pitch slide.
+func slideEaseCurve(onset, end int64, deltaSemitones float64) []float64 {
+	const steps = 8
+	points := make([]float64, 0, steps*2)
+	for i := range steps {
+		t := float64(i) / float64(steps-1)
+		pos := float64(onset) + t*float64(end-onset)
+		// Cosine ease-in-out: slow start, fast middle, slow end.
+		offset := deltaSemitones * (1 - math.Cos(math.Pi*t)) / 2
+		points = append(points, pos, offset)
+	}
+	return points
 }
 
 func newEmptyParameters() SVPParameters {

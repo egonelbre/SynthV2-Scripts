@@ -258,8 +258,8 @@ func TestCapGraceDurs_RoundingRemainder(t *testing.T) {
 	}
 }
 
-// TestScoreToSVP_SlideGeneratesPitchDelta tests that SlideDelta produces pitchDelta curve points.
-func TestScoreToSVP_SlideGeneratesPitchDelta(t *testing.T) {
+// TestScoreToSVP_SlideGeneratesPitchControls tests that SlideDelta produces pitchControls entries.
+func TestScoreToSVP_SlideGeneratesPitchControls(t *testing.T) {
 	s := &Score{
 		Parts: []Part{{
 			Name: "Test",
@@ -271,27 +271,52 @@ func TestScoreToSVP_SlideGeneratesPitchDelta(t *testing.T) {
 	}
 
 	proj := scoreToSVP(s)
-	pts := proj.Library[0].Parameters.PitchDelta.Points
+	pcs := proj.Library[0].PitchControls
 
-	if len(pts) < 4 {
-		t.Fatalf("expected at least 4 pitchDelta points, got %d", len(pts))
+	if len(pcs) != 1 {
+		t.Fatalf("expected 1 pitchControls entry, got %d", len(pcs))
 	}
 
-	// Ramp should start at onset + 2/3 * duration = 2Q with value 0
-	rampOnset := int64(2 * blicksPerQuarter)
-	if int64(pts[0]) != rampOnset {
-		t.Errorf("ramp onset position: expected %d, got %v", rampOnset, pts[0])
+	pc := pcs[0]
+	if pc.Pos != 0 {
+		t.Errorf("pitchControl pos: expected 0, got %d", pc.Pos)
+	}
+	if pc.Pitch != 69 {
+		t.Errorf("pitchControl pitch: expected 69, got %v", pc.Pitch)
+	}
+	if pc.Type != "curve" {
+		t.Errorf("pitchControl type: expected %q, got %q", "curve", pc.Type)
+	}
+
+	pts := pc.Points
+	if len(pts) < 4 {
+		t.Fatalf("expected at least 4 point values, got %d", len(pts))
+	}
+
+	// First point: ramp starts after an eighth note with offset 0
+	rampRelOnset := float64(blicksPerQuarter / 2)
+	if pts[0] != rampRelOnset {
+		t.Errorf("ramp onset: expected %v, got %v", rampRelOnset, pts[0])
 	}
 	if pts[1] != 0 {
-		t.Errorf("ramp onset value: expected 0, got %v", pts[1])
+		t.Errorf("ramp onset offset: expected 0, got %v", pts[1])
 	}
 
-	// Ramp should end at onset + duration = 3Q with value -200
-	rampEnd := int64(3 * blicksPerQuarter)
-	if int64(pts[2]) != rampEnd {
-		t.Errorf("ramp end position: expected %d, got %v", rampEnd, pts[2])
+	// Last point: ramp ends at duration with offset -2 semitones
+	rampRelEnd := float64(3 * blicksPerQuarter)
+	lastPos := pts[len(pts)-2]
+	lastVal := pts[len(pts)-1]
+	if lastPos != rampRelEnd {
+		t.Errorf("ramp end: expected %v, got %v", rampRelEnd, lastPos)
 	}
-	if pts[3] != -200 {
-		t.Errorf("ramp end value: expected -200, got %v", pts[3])
+	if lastVal != -2 {
+		t.Errorf("ramp end offset: expected -2, got %v", lastVal)
+	}
+
+	// Middle points should be intermediate (S-curve)
+	midIdx := len(pts) / 2
+	midVal := pts[midIdx+1]
+	if midVal >= 0 || midVal <= -2 {
+		t.Errorf("mid-curve offset should be between 0 and -2, got %v", midVal)
 	}
 }
