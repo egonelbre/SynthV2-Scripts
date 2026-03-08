@@ -209,7 +209,7 @@ function estonianToMandarinPhonemes(word) {
 			}
 		} else if (char == "n") {
 			if (nextChar == "g") {
-				phonemes.push("N");
+				phonemes.push("N", "k");
 				i += 2;
 			} else if (nextChar == "n") {
 				phonemes.push("n", "n");
@@ -226,6 +226,9 @@ function estonianToMandarinPhonemes(word) {
 				phonemes.push("r\\`");
 				i++;
 			}
+		} else if (char == "š" || char == "ž") {
+			phonemes.push("s`");
+			i++;
 		} else if (char == "s") {
 			if (nextChar == "h") {
 				phonemes.push("s`");
@@ -280,7 +283,7 @@ function estonianToMandarinPhonemes(word) {
 			phonemes.push("w");
 			i++;
 		} else if (char == "z") {
-			phonemes.push("ts");
+			phonemes.push("s");
 			i++;
 		} else if (char == "w") {
 			phonemes.push("w");
@@ -398,7 +401,7 @@ function estonianToCantonesePhonemes(word) {
 			}
 		} else if (char == "n") {
 			if (nextChar == "g") {
-				phonemes.push("N");
+				phonemes.push("N", "k");
 				i += 2;
 			} else if (nextChar == "n") {
 				phonemes.push("n", "n");
@@ -415,6 +418,9 @@ function estonianToCantonesePhonemes(word) {
 				phonemes.push("l");
 				i++;
 			}
+		} else if (char == "š" || char == "ž") {
+			phonemes.push("s");
+			i++;
 		} else if (char == "s") {
 			if (nextChar == "h") {
 				phonemes.push("s");
@@ -469,7 +475,7 @@ function estonianToCantonesePhonemes(word) {
 			phonemes.push("w");
 			i++;
 		} else if (char == "z") {
-			phonemes.push("ts");
+			phonemes.push("s");
 			i++;
 		} else if (char == "w") {
 			phonemes.push("w");
@@ -587,7 +593,7 @@ function estonianToJapanesePhonemes(word) {
 			}
 		} else if (char == "n") {
 			if (nextChar == "g") {
-				phonemes.push("N", "g");
+				phonemes.push("N", "k");
 				i += 2;
 			} else if (nextChar == "n") {
 				phonemes.push("n", "n");
@@ -604,6 +610,9 @@ function estonianToJapanesePhonemes(word) {
 				phonemes.push("r");
 				i++;
 			}
+		} else if (char == "š" || char == "ž") {
+			phonemes.push("sh");
+			i++;
 		} else if (char == "s") {
 			if (nextChar == "h") {
 				phonemes.push("sh");
@@ -658,7 +667,7 @@ function estonianToJapanesePhonemes(word) {
 			phonemes.push("v");
 			i++;
 		} else if (char == "z") {
-			phonemes.push("z");
+			phonemes.push("s");
 			i++;
 		} else if (char == "w") {
 			phonemes.push("w");
@@ -773,9 +782,9 @@ function estonianToKoreanPhonemes(word) {
 				i++;
 			}
 		} else if (char == "n") {
-			// ng cluster -> N (coda)
+			// ng cluster -> N + k (Estonian ng = [ŋk])
 			if (nextChar == "g") {
-				phonemes.push("N");
+				phonemes.push("N", "k");
 				i += 2;
 			} else if (nextChar == "n") {
 				phonemes.push("n", "n");
@@ -792,6 +801,10 @@ function estonianToKoreanPhonemes(word) {
 				phonemes.push("4");
 				i++;
 			}
+		} else if (char == "š" || char == "ž") {
+			// Korean doesn't have sh, use s
+			phonemes.push("s");
+			i++;
 		} else if (char == "s") {
 			// sh digraph -> just use s (Korean doesn't have sh)
 			if (nextChar == "h") {

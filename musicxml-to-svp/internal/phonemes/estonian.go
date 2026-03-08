@@ -41,13 +41,14 @@ func selectEstonian(word string) string {
 var estonianMandarin = &phoneTable{
 	digraphs: map[string][]string{
 		"sh": {"s`"},
-		"ng": {"N"},
+		"ng": {"N", "k"},
 		"ts": {"ts"},
 	},
 	singles: map[rune]string{
 		'h': "x", 'j': "j", 'l': "l", 'm': "m", 'n': "n",
 		'r': "r\\`", 's': "s", 't': "t", 'p': "p", 'k': "k",
-		'b': "p", 'd': "t", 'g': "k", 'f': "f", 'v': "w", 'z': "ts", 'w': "w",
+		'b': "p", 'd': "t", 'g': "k", 'f': "f", 'v': "w", 'z': "s", 'w': "w",
+		'š': "s`", 'ž': "s`",
 		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
 		'õ': "7", 'ä': "A", 'ö': "@", 'y': "y",
 	},
@@ -56,13 +57,14 @@ var estonianMandarin = &phoneTable{
 var estonianCantonese = &phoneTable{
 	digraphs: map[string][]string{
 		"sh": {"s"},
-		"ng": {"N"},
+		"ng": {"N", "k"},
 		"ts": {"ts"},
 	},
 	singles: map[rune]string{
 		'h': "h", 'j': "j", 'l': "l", 'm': "m", 'n': "n",
 		'r': "l", 's': "s", 't': "t", 'p': "p", 'k': "k",
-		'b': "p", 'd': "t", 'g': "k", 'f': "f", 'v': "w", 'z': "ts", 'w': "w",
+		'b': "p", 'd': "t", 'g': "k", 'f': "f", 'v': "w", 'z': "s", 'w': "w",
+		'š': "s", 'ž': "s",
 		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
 		'õ': "8", 'ä': "E", 'ö': "9", 'y': "y",
 	},
@@ -71,7 +73,7 @@ var estonianCantonese = &phoneTable{
 var estonianSpanish = &phoneTable{
 	digraphs: map[string][]string{
 		"sh": {"sh"},
-		"ng": {"N"},
+		"ng": {"N", "k"},
 		"ts": {"t", "s"},
 		"rr": {"rr"}, // Estonian geminate r is a trill
 	},
@@ -79,6 +81,7 @@ var estonianSpanish = &phoneTable{
 		'h': "x", 'j': "I", 'l': "l", 'm': "m", 'n': "n",
 		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
 		'b': "b", 'd': "d", 'g': "g", 'f': "f", 'v': "B", 'z': "s", 'w': "U",
+		'š': "sh", 'ž': "sh",
 		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
 		'õ': "o", 'ä': "a", 'ö': "e", 'y': "u",
 	},
