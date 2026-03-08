@@ -140,13 +140,18 @@ func stripSoloPrefix(name string) string {
 func ParseVoicePart(name string) VoicePart {
 	lower := strings.ToLower(strings.TrimSpace(stripSoloPrefix(name)))
 
+	fields := strings.Fields(lower)
+	if len(fields) == 0 {
+		return Unknown
+	}
+
 	// Check for mezzo-soprano first (multi-word).
 	if strings.HasPrefix(lower, "mezzo") {
 		return MezzoSoprano
 	}
 
 	// Take the first word.
-	first := strings.Fields(lower)[0]
+	first := fields[0]
 
 	switch first {
 	case "soprano", "sop":
