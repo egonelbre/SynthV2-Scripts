@@ -77,12 +77,19 @@ func findStandaloneCh(word string) int {
 	return -1
 }
 
-// normalizeGerman replaces trigraph "sch" with placeholder ʃ (U+0283)
-// and ß with plain s before table lookup.
+// normalizeGerman replaces trigraph "sch" with placeholder ʃ (U+0283),
+// ß with plain s, and x with ks before table lookup. Word-initial "sp"
+// and "st" are replaced with ʃp/ʃt since German palatalizes these only
+// at syllable onset.
 func normalizeGerman(s string) string {
 	s = strings.ReplaceAll(s, "sch", "\u0283")
+	if strings.HasPrefix(s, "sp") {
+		s = "\u0283p" + s[2:]
+	} else if strings.HasPrefix(s, "st") {
+		s = "\u0283t" + s[2:]
+	}
 	s = strings.ReplaceAll(s, "ß", "s")
-	s = strings.NewReplacer("x", "ks").Replace(s)
+	s = strings.ReplaceAll(s, "x", "ks")
 	return s
 }
 
@@ -96,8 +103,8 @@ var germanMandarin = &phoneTable{
 		"pf": {"p", "f"},
 		"qu": {"k", "w"},
 		"ts": {"ts"},
-		"st": {"s`", "t"},
-		"sp": {"s`", "p"},
+		"\u0283t": {"s`", "t"},
+		"\u0283p": {"s`", "p"},
 		"ss": {"s", "s"},
 		"ei": {"a", "i"},
 		"ie": {"i", "i"},
