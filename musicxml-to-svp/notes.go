@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
@@ -246,6 +248,11 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 	// Flush any remaining tail graces.
 	if graceIsTail && len(pendingGraces) > 0 && lastNoteIdx >= 0 {
 		notes = flushTailGraces(notes, pendingGraces, transpose, lastVerse)
+	}
+
+	// Warn about unpaired slide-start (slide annotation will be lost).
+	if pendingSlideIdx >= 0 {
+		fmt.Fprintf(os.Stderr, "warning: unpaired slide-start on note at pitch %d (slide annotation lost)\n", notes[pendingSlideIdx].Pitch)
 	}
 
 	return notes
