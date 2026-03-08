@@ -854,7 +854,7 @@ function germanToKoreanPhonemes(word) {
 			phonemes.push("k", "w");
 			i += 2;
 		} else if (char == "t" && nextChar == "s") {
-			phonemes.push("ts\\_h");
+			phonemes.push("ts_h");
 			i += 2;
 		} else if (char == "s" && nextChar == "s") {
 			phonemes.push("s_t");
@@ -863,7 +863,7 @@ function germanToKoreanPhonemes(word) {
 			phonemes.push("s");
 			i++;
 		} else if (char == "z") {
-			phonemes.push("ts\\_h");
+			phonemes.push("ts_h");
 			i++;
 		} else if (char == "w") {
 			phonemes.push("b");

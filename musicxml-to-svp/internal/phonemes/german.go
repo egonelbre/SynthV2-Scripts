@@ -23,11 +23,12 @@ func newGerman() *Converter {
 // Priority:
 //  1. Words with ü → Mandarin (exact 'y' phoneme for front rounded vowel)
 //  2. Words with ö → Cantonese (best '9' approximation)
-//  3. Words with ch → Spanish (ach-Laut after a/o/u) or Japanese (ich-Laut)
+//  3. Words with standalone ch → Spanish (ach-Laut after a/o/u) or Japanese (ich-Laut)
 //  4. Words with ä → Cantonese (good 'E' match)
 //  5. Words with r → Korean (good '4' flap approximation)
-//  6. Simple words → Japanese (cleanest basic vowels)
-//  7. Default → English
+//  6. Words with ß → English (good 's' match)
+//  7. Simple words → Japanese (cleanest basic vowels)
+//  8. Default → English
 func selectGerman(word string) string {
 	if strings.ContainsRune(word, 'ü') {
 		return "mandarin"
@@ -35,13 +36,10 @@ func selectGerman(word string) string {
 	if strings.ContainsRune(word, 'ö') {
 		return "cantonese"
 	}
-	if idx := strings.Index(word, "ch"); idx >= 0 {
+	if idx := findStandaloneCh(word); idx >= 0 {
 		if idx > 0 {
 			prev := word[idx-1]
 			if prev == 'a' || prev == 'o' || prev == 'u' {
-				return "spanish"
-			}
-			if idx > 1 && word[idx-2] == 'a' && prev == 'u' {
 				return "spanish"
 			}
 		}
@@ -53,10 +51,27 @@ func selectGerman(word string) string {
 	if strings.ContainsRune(word, 'r') {
 		return "korean"
 	}
-	if !strings.ContainsAny(word, "äöü") {
-		return "japanese"
+	if strings.ContainsRune(word, 'ß') {
+		return "english"
 	}
-	return "english"
+	return "japanese"
+}
+
+// findStandaloneCh finds "ch" that is not part of "sch".
+// Returns byte index of 'c', or -1 if not found.
+func findStandaloneCh(word string) int {
+	for i := 0; i < len(word); {
+		idx := strings.Index(word[i:], "ch")
+		if idx < 0 {
+			return -1
+		}
+		idx += i
+		if idx == 0 || word[idx-1] != 's' {
+			return idx
+		}
+		i = idx + 2
+	}
+	return -1
 }
 
 // normalizeGerman replaces trigraph "sch" with placeholder ʃ (U+0283)
@@ -188,7 +203,7 @@ var germanKorean = &phoneTable{
 		"nk": {"N", "k"},
 		"pf": {"p", "p"},
 		"qu": {"k", "w"},
-		"ts": {"ts\\_h"},
+		"ts": {"ts_h"},
 		"ss": {"s_t"},
 		"ei": {"6", "i"},
 		"ie": {"i", "i"},
@@ -197,7 +212,7 @@ var germanKorean = &phoneTable{
 		"au": {"6", "M"},
 	},
 	singles: map[rune]string{
-		'z': "ts\\_h", 'w': "b", 'v': "p", 'j': "j",
+		'z': "ts_h", 'w': "b", 'v': "p", 'j': "j",
 		'h': "h", 'l': "l", 'm': "m", 'n': "n",
 		'r': "4", 's': "s", 't': "t", 'p': "p", 'k': "k",
 		'b': "b", 'd': "d", 'g': "g", 'f': "p",
