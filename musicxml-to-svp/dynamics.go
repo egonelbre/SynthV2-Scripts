@@ -133,10 +133,10 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 
 	// Build a set of wedge ranges for quick lookup.
 	type wedgeRange struct {
-		startPos  int64
-		stopPos   int64
-		kind      dynEventKind
-		stopIdx   int
+		startPos int64
+		stopPos  int64
+		kind     dynEventKind
+		stopIdx  int
 	}
 	var ranges []wedgeRange
 	for _, w := range wedges {

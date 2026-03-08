@@ -389,10 +389,10 @@ func scoreToSVP(score *Score) *SVPProject {
 			}
 			rampRelEnd := n.Duration
 			pitchControls = append(pitchControls, SVPPitchControl{
-				Pos:   n.Onset,
-				Pitch: float64(n.Pitch) + float64(n.Detune)/100.0,
-				ID:    newShortID(),
-				Type:  "curve",
+				Pos:    n.Onset,
+				Pitch:  float64(n.Pitch) + float64(n.Detune)/100.0,
+				ID:     newShortID(),
+				Type:   "curve",
 				Points: slideEaseCurve(rampRelOnset, rampRelEnd, float64(n.SlideDelta)/100.0),
 			})
 		}

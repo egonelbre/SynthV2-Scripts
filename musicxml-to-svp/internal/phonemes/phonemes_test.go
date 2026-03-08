@@ -11,14 +11,14 @@ func TestEstonian_BasicConversion(t *testing.T) {
 	}{
 		{"la", "l a", "spanish"},
 		{"tere", "t e r e", "spanish"},
-		{"küla", "k y l a", "mandarin"},    // ü → mandarin
-		{"öö", "9", "cantonese"},            // ö → cantonese, doubled vowel = single phoneme
-		{"õhtu", "7 x t u", "mandarin"},     // õ → mandarin
-		{"äike", "E i k e", "cantonese"},    // ä → cantonese
-		{"hmm", "h m=", "cantonese"},        // word override
-		{"kass", "k a s s", "spanish"},      // geminate consonant
-		{"saal", "s a l", "spanish"},        // doubled vowel = single phoneme
-		{"tsikk", "t s i k k", "spanish"},   // ts digraph + geminate
+		{"küla", "k y l a", "mandarin"},   // ü → mandarin
+		{"öö", "9", "cantonese"},          // ö → cantonese, doubled vowel = single phoneme
+		{"õhtu", "7 x t u", "mandarin"},   // õ → mandarin
+		{"äike", "E i k e", "cantonese"},  // ä → cantonese
+		{"hmm", "h m=", "cantonese"},      // word override
+		{"kass", "k a s s", "spanish"},    // geminate consonant
+		{"saal", "s a l", "spanish"},      // doubled vowel = single phoneme
+		{"tsikk", "t s i k k", "spanish"}, // ts digraph + geminate
 	}
 	for _, tt := range tests {
 		t.Run(tt.word, func(t *testing.T) {
@@ -51,11 +51,11 @@ func TestKarelian_BasicConversion(t *testing.T) {
 		lang     string
 	}{
 		{"kala", "k a l a", "spanish"},
-		{"kyly", "k y l y", "mandarin"},     // y → mandarin
-		{"öä", "9 E", "cantonese"},          // ö → cantonese
-		{"hmm", "h m=", "cantonese"},        // word override
-		{"čakku", "ch a k k u", "spanish"},  // č mapped + geminate
-		{"šakki", "sh a k k i", "spanish"},  // š mapped + geminate
+		{"kyly", "k y l y", "mandarin"},    // y → mandarin
+		{"öä", "9 E", "cantonese"},         // ö → cantonese
+		{"hmm", "h m=", "cantonese"},       // word override
+		{"čakku", "ch a k k u", "spanish"}, // č mapped + geminate
+		{"šakki", "sh a k k i", "spanish"}, // š mapped + geminate
 	}
 	for _, tt := range tests {
 		t.Run(tt.word, func(t *testing.T) {
@@ -93,14 +93,14 @@ func TestGerman_LanguageSelection(t *testing.T) {
 		word string
 		lang string
 	}{
-		{"über", "mandarin"},   // ü → mandarin
-		{"schön", "cantonese"}, // ö → cantonese
-		{"ach", "spanish"},     // ch after a → spanish (ach-Laut)
-		{"ich", "japanese"},    // ch after i → japanese (ich-Laut)
+		{"über", "mandarin"},    // ü → mandarin
+		{"schön", "cantonese"},  // ö → cantonese
+		{"ach", "spanish"},      // ch after a → spanish (ach-Laut)
+		{"ich", "japanese"},     // ch after i → japanese (ich-Laut)
 		{"mächtig", "japanese"}, // ch after non-back-vowel → japanese (priority 3 > ä priority 4)
-		{"rot", "korean"},     // r → korean
-		{"groß", "korean"},    // r → korean (priority 5 > ß priority 6)
-		{"tag", "japanese"},    // simple → japanese
+		{"rot", "korean"},       // r → korean
+		{"groß", "korean"},      // r → korean (priority 5 > ß priority 6)
+		{"tag", "japanese"},     // simple → japanese
 	}
 	for _, tt := range tests {
 		t.Run(tt.word, func(t *testing.T) {
@@ -120,8 +120,8 @@ func TestGerman_BasicConversion(t *testing.T) {
 		lang     string
 	}{
 		{"tag", "t a g", "japanese"},
-		{"rot", "4 o t", "korean"},          // r → korean '4'
-		{"über", "y p e r\\`", "mandarin"},  // ü → mandarin
+		{"rot", "4 o t", "korean"},         // r → korean '4'
+		{"über", "y p e r\\`", "mandarin"}, // ü → mandarin
 	}
 	for _, tt := range tests {
 		t.Run(tt.word, func(t *testing.T) {

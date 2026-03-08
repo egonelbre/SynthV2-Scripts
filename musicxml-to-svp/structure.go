@@ -281,10 +281,10 @@ type navigationMarkers struct {
 
 func scanNavigation(measures []*musicxml.Measure) navigationMarkers {
 	nav := navigationMarkers{
-		segnoIdx: make(map[string]int),
-		codaIdx:  make(map[string]int),
-		fineIdx:  -1,
-		jumpIdx:  -1,
+		segnoIdx:  make(map[string]int),
+		codaIdx:   make(map[string]int),
+		fineIdx:   -1,
+		jumpIdx:   -1,
 		tocodaIdx: -1,
 	}
 

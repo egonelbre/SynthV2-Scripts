@@ -17,7 +17,7 @@ type Converter struct {
 	tables     map[string]*phoneTable
 	normalize  func(string) string
 	skip       func(rune) bool
-	vowels     string // source-language vowels; doubled vowels emit a single phoneme
+	vowels     string            // source-language vowels; doubled vowels emit a single phoneme
 	words      map[string]Result // whole-word overrides checked before table conversion
 }
 
@@ -150,4 +150,3 @@ func phonesetForLanguage(lang string) string {
 		return "xsampa"
 	}
 }
-

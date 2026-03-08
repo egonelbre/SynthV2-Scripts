@@ -12,8 +12,8 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/phonemes"
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
+	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/phonemes"
 )
 
 type repeatedFlag []string

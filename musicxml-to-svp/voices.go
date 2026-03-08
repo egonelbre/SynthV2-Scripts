@@ -159,9 +159,9 @@ func applyChoirWithSoloists(tracks []*SVPTrack, infos []voice.TrackInfo, choir v
 
 func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice.ChoirInfo, relaxed string) {
 	db := &SVPDatabase{
-		Name:     choir.Name,
-		Language: choir.Language,
-		Phoneset: choir.Phoneset,
+		Name:        choir.Name,
+		Language:    choir.Language,
+		Phoneset:    choir.Phoneset,
 		BackendType: "SVR3",
 		Version:     "202",
 	}

@@ -1,8 +1,8 @@
 package musicxml
 
 import (
-	"fmt"
 	"encoding/xml"
+	"fmt"
 )
 
 // From xsd simple type with enumerate restriction "above-below"
@@ -2332,7 +2332,7 @@ type Barline struct {
 	Location  string `xml:"location,attr,omitempty"`
 	Segno     string `xml:"segno,attr,omitempty"`
 	Coda      string `xml:"coda,attr,omitempty"`
-	Divisions int `xml:"divisions,attr,omitempty"`
+	Divisions int    `xml:"divisions,attr,omitempty"`
 	AttributeGroupOptionalUniqueId
 	BarStyle *BarStyleColor `xml:"bar-style,omitempty"`
 	GroupEditorial
@@ -3311,7 +3311,7 @@ type Sound struct {
 	Dalsegno       string   `xml:"dalsegno,attr,omitempty"`
 	Coda           string   `xml:"coda,attr,omitempty"`
 	Tocoda         string   `xml:"tocoda,attr,omitempty"`
-	Divisions      int   `xml:"divisions,attr,omitempty"`
+	Divisions      int      `xml:"divisions,attr,omitempty"`
 	ForwardRepeat  YesNo    `xml:"forward-repeat,attr,omitempty"`
 	Fine           string   `xml:"fine,attr,omitempty"`
 	TimeOnly       TimeOnly `xml:"time-only,attr,omitempty"`
@@ -5160,7 +5160,7 @@ type GroupSlash struct {
 // GroupTimeSignature UnNamed source named group "time-signature"
 type GroupTimeSignature struct {
 	Beats    string `xml:"beats,omitempty"`
-	BeatType int `xml:"beat-type,omitempty"`
+	BeatType int    `xml:"beat-type,omitempty"`
 }
 
 // GroupTraditionalKey UnNamed source named group "traditional-key"
@@ -5238,42 +5238,42 @@ type GroupFullNote struct {
 type GroupMusicData struct {
 	Element []GroupMusicElement `xml:",any,omitempty"`
 	/*
-	Note        []*Note        `xml:"note,omitempty"`
-	Backup      []*Backup      `xml:"backup,omitempty"`
-	Forward     []*Forward     `xml:"forward,omitempty"`
-	Direction   []*Direction   `xml:"direction,omitempty"`
-	Attributes  []*Attributes  `xml:"attributes,omitempty"`
-	Harmony     []*Harmony     `xml:"harmony,omitempty"`
-	FiguredBass []*FiguredBass `xml:"figured-bass,omitempty"`
-	Print       []*Print       `xml:"print,omitempty"`
-	Sound       []*Sound       `xml:"sound,omitempty"`
-	Listening   []*Listening   `xml:"listening,omitempty"`
-	Barline     []*Barline     `xml:"barline,omitempty"`
-	Grouping    []*Grouping    `xml:"grouping,omitempty"`
-	Link        []*Link        `xml:"link,omitempty"`
-	Bookmark    []*Bookmark    `xml:"bookmark,omitempty"`
+		Note        []*Note        `xml:"note,omitempty"`
+		Backup      []*Backup      `xml:"backup,omitempty"`
+		Forward     []*Forward     `xml:"forward,omitempty"`
+		Direction   []*Direction   `xml:"direction,omitempty"`
+		Attributes  []*Attributes  `xml:"attributes,omitempty"`
+		Harmony     []*Harmony     `xml:"harmony,omitempty"`
+		FiguredBass []*FiguredBass `xml:"figured-bass,omitempty"`
+		Print       []*Print       `xml:"print,omitempty"`
+		Sound       []*Sound       `xml:"sound,omitempty"`
+		Listening   []*Listening   `xml:"listening,omitempty"`
+		Barline     []*Barline     `xml:"barline,omitempty"`
+		Grouping    []*Grouping    `xml:"grouping,omitempty"`
+		Link        []*Link        `xml:"link,omitempty"`
+		Bookmark    []*Bookmark    `xml:"bookmark,omitempty"`
 	*/
 }
 
 type GroupMusicElement struct {
 	Value any
 	/*
-	one of:
+		one of:
 
-	Note        *Note        `xml:"note,omitempty"`
-	Backup      *Backup      `xml:"backup,omitempty"`
-	Forward     *Forward     `xml:"forward,omitempty"`
-	Direction   *Direction   `xml:"direction,omitempty"`
-	Attributes  *Attributes  `xml:"attributes,omitempty"`
-	Harmony     *Harmony     `xml:"harmony,omitempty"`
-	FiguredBass *FiguredBass `xml:"figured-bass,omitempty"`
-	Print       *Print       `xml:"print,omitempty"`
-	Sound       *Sound       `xml:"sound,omitempty"`
-	Listening   *Listening   `xml:"listening,omitempty"`
-	Barline     *Barline     `xml:"barline,omitempty"`
-	Grouping    *Grouping    `xml:"grouping,omitempty"`
-	Link        *Link        `xml:"link,omitempty"`
-	Bookmark    *Bookmark    `xml:"bookmark,omitempty"`
+		Note        *Note        `xml:"note,omitempty"`
+		Backup      *Backup      `xml:"backup,omitempty"`
+		Forward     *Forward     `xml:"forward,omitempty"`
+		Direction   *Direction   `xml:"direction,omitempty"`
+		Attributes  *Attributes  `xml:"attributes,omitempty"`
+		Harmony     *Harmony     `xml:"harmony,omitempty"`
+		FiguredBass *FiguredBass `xml:"figured-bass,omitempty"`
+		Print       *Print       `xml:"print,omitempty"`
+		Sound       *Sound       `xml:"sound,omitempty"`
+		Listening   *Listening   `xml:"listening,omitempty"`
+		Barline     *Barline     `xml:"barline,omitempty"`
+		Grouping    *Grouping    `xml:"grouping,omitempty"`
+		Link        *Link        `xml:"link,omitempty"`
+		Bookmark    *Bookmark    `xml:"bookmark,omitempty"`
 	*/
 }
 

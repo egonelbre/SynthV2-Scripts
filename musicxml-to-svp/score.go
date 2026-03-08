@@ -14,7 +14,7 @@ type MeterChange struct {
 }
 
 type TempoChange struct {
-	Position int64   // blicks
+	Position int64 // blicks
 	BPM      float64
 }
 
@@ -27,7 +27,7 @@ type Part struct {
 type Articulation int
 
 const (
-	ArticulationStaccato      Articulation = 1 << iota
+	ArticulationStaccato Articulation = 1 << iota
 	ArticulationStaccatissimo
 	ArticulationTenuto
 	ArticulationAccent
@@ -35,10 +35,10 @@ const (
 )
 
 type Note struct {
-	Onset         int64        // blicks, absolute
-	Duration      int64        // blicks (original notated duration)
-	Pitch         int          // MIDI number
-	Detune        int          // cents
+	Onset         int64 // blicks, absolute
+	Duration      int64 // blicks (original notated duration)
+	Pitch         int   // MIDI number
+	Detune        int   // cents
 	Lyric         string
 	Articulations Articulation // bitmask
 	SlideDelta    int          // cents to slide toward at end of note (0 = no slide)
@@ -48,8 +48,8 @@ type Note struct {
 }
 
 type GraceNote struct {
-	Pitch        int    // MIDI number
-	Detune       int    // cents
+	Pitch        int // MIDI number
+	Detune       int // cents
 	Lyric        string
 	NotatedType  string // "quarter", "eighth", "16th", etc.
 	Acciaccatura bool   // slash grace = halved duration
