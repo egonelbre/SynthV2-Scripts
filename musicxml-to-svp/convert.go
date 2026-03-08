@@ -53,6 +53,12 @@ func noteTypeToQuarters(noteType string) float64 {
 		return 0.25
 	case "32nd":
 		return 0.125
+	case "64th":
+		return 0.0625
+	case "128th":
+		return 0.03125
+	case "256th":
+		return 0.015625
 	default:
 		return 1.0
 	}
