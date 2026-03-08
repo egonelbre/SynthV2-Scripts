@@ -214,8 +214,8 @@ func walkPartElements(
 			if attr, ok := el.Value.(*musicxml.Attributes); ok {
 				if attr.Divisions != 0 {
 					divisions = attr.Divisions
+					break
 				}
-				break
 			}
 		}
 
