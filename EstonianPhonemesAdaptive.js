@@ -1014,7 +1014,7 @@ function estonianToKoreanPhonemes(word) {
 		} else if (char == "t") {
 			// ts cluster -> Korean ts\_h (ch)
 			if (nextChar == "s") {
-				phonemes.push("ts\\_h");
+				phonemes.push("ts_h");
 				i += 2;
 			} else if (nextChar == "t") {
 				phonemes.push("tt"); // Korean tense t

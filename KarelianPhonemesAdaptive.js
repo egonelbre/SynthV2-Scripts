@@ -999,7 +999,7 @@ function karelianToKoreanPhonemes(word) {
 
 		// Consonants
 		if (char == "č") {
-			phonemes.push("ts\\_h");
+			phonemes.push("ts_h");
 			i++;
 		} else if (char == "š") {
 			phonemes.push("s");
@@ -1058,7 +1058,7 @@ function karelianToKoreanPhonemes(word) {
 			}
 		} else if (char == "t") {
 			if (nextChar == "s") {
-				phonemes.push("ts\\_h");
+				phonemes.push("ts_h");
 				i += 2;
 			} else if (nextChar == "t") {
 				phonemes.push("tt");
