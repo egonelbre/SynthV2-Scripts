@@ -102,7 +102,8 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 	}
 
 	var points []float64
-	currentLevel := 0.0
+	// Default to mf level if no explicit level precedes the first hairpin.
+	currentLevel := getValue(dynEvent{loudness: 1.5, tension: 0})
 	hasLevel := false
 
 	// Pair up wedge starts and stops by number.
