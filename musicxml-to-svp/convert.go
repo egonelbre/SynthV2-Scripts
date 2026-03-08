@@ -97,13 +97,24 @@ func parseDuration(s string) int {
 	return v
 }
 
+// lyricText concatenates all text elements from a lyric, handling elision
+// (multiple syllables on a single note, e.g., "fi" + elision + "re" → "fire").
+func lyricText(lyric *musicxml.Lyric) string {
+	var sb strings.Builder
+	for _, t := range lyric.Text {
+		sb.WriteString(t.EnclosedText)
+	}
+	return sb.String()
+}
+
 func extractLyric(note *musicxml.Note, verse int) string {
 	if verse > 0 {
 		// Look for exact match first, then fall back to highest lyric number ≤ verse.
 		bestNum := 0
 		bestText := ""
 		for _, lyric := range note.Lyric {
-			if len(lyric.Text) == 0 || lyric.Text[0].EnclosedText == "" {
+			text := lyricText(lyric)
+			if text == "" {
 				continue
 			}
 			num, err := strconv.Atoi(lyric.Number)
@@ -111,19 +122,19 @@ func extractLyric(note *musicxml.Note, verse int) string {
 				continue
 			}
 			if num == verse {
-				return lyric.Text[0].EnclosedText
+				return text
 			}
 			if num <= verse && num > bestNum {
 				bestNum = num
-				bestText = lyric.Text[0].EnclosedText
+				bestText = text
 			}
 		}
 		return bestText
 	}
 	// No verse filtering: return first non-empty lyric.
 	for _, lyric := range note.Lyric {
-		if len(lyric.Text) > 0 && lyric.Text[0].EnclosedText != "" {
-			return lyric.Text[0].EnclosedText
+		if text := lyricText(lyric); text != "" {
+			return text
 		}
 	}
 	return ""
