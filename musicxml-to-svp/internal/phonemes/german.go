@@ -1,6 +1,9 @@
 package phonemes
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 func newGerman() *Converter {
 	return &Converter{
@@ -38,7 +41,7 @@ func selectGerman(word string) string {
 	}
 	if idx := findStandaloneCh(word); idx >= 0 {
 		if idx > 0 {
-			prev := word[idx-1]
+			prev, _ := utf8.DecodeLastRuneInString(word[:idx])
 			if prev == 'a' || prev == 'o' || prev == 'u' {
 				return "spanish"
 			}
