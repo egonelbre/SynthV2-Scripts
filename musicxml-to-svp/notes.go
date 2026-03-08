@@ -112,6 +112,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 	var lastNoteIdx int = -1
 	var lastVerse int
 	pendingSlideIdx := -1 // index of note with slide-start
+	fermataWarned := false
 
 	walkPartElements(part, unrolled, func(cursor int64, divisions int, pm playedMeasure, value any) {
 		lastVerse = pm.verse
@@ -212,6 +213,16 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 			}
 
 			lyric := extractLyric(value, pm.verse)
+
+			if !fermataWarned {
+				for _, n := range value.Notations {
+					if len(n.Fermata) > 0 {
+						fmt.Fprintf(os.Stderr, "warning: fermata detected but not converted (timing may need manual adjustment)\n")
+						fermataWarned = true
+						break
+					}
+				}
+			}
 
 			note := Note{
 				Onset:         onset,
