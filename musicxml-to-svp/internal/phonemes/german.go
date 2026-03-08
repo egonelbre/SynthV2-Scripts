@@ -1,0 +1,239 @@
+package phonemes
+
+import "strings"
+
+func newGerman() *Converter {
+	return &Converter{
+		selectLang: selectGerman,
+		normalize:  normalizeGerman,
+		vowels:     "aeiouyäöü",
+		tables: map[string]*phoneTable{
+			"mandarin":  germanMandarin,
+			"cantonese": germanCantonese,
+			"japanese":  germanJapanese,
+			"english":   germanEnglish,
+			"korean":    germanKorean,
+			"spanish":   germanSpanish,
+		},
+	}
+}
+
+// selectGerman picks the best target language based on word characteristics.
+//
+// Priority:
+//  1. Words with ü → Mandarin (exact 'y' phoneme for front rounded vowel)
+//  2. Words with ö → Cantonese (best '9' approximation)
+//  3. Words with ch → Spanish (ach-Laut after a/o/u) or Japanese (ich-Laut)
+//  4. Words with ä → Cantonese (good 'E' match)
+//  5. Words with r → Korean (good '4' flap approximation)
+//  6. Simple words → Japanese (cleanest basic vowels)
+//  7. Default → English
+func selectGerman(word string) string {
+	if strings.ContainsRune(word, 'ü') {
+		return "mandarin"
+	}
+	if strings.ContainsRune(word, 'ö') {
+		return "cantonese"
+	}
+	if idx := strings.Index(word, "ch"); idx >= 0 {
+		if idx > 0 {
+			prev := word[idx-1]
+			if prev == 'a' || prev == 'o' || prev == 'u' {
+				return "spanish"
+			}
+			if idx > 1 && word[idx-2] == 'a' && prev == 'u' {
+				return "spanish"
+			}
+		}
+		return "japanese"
+	}
+	if strings.ContainsRune(word, 'ä') {
+		return "cantonese"
+	}
+	if strings.ContainsRune(word, 'r') {
+		return "korean"
+	}
+	if !strings.ContainsAny(word, "äöü") {
+		return "japanese"
+	}
+	return "english"
+}
+
+// normalizeGerman replaces trigraph "sch" with placeholder ʃ (U+0283)
+// and ß with plain s before table lookup.
+func normalizeGerman(s string) string {
+	s = strings.ReplaceAll(s, "sch", "\u0283")
+	s = strings.ReplaceAll(s, "ß", "s")
+	return s
+}
+
+// germanMandarin is best for words with ü (exact 'y' phoneme match).
+var germanMandarin = &phoneTable{
+	digraphs: map[string][]string{
+		"ch": {"x"},
+		"ng": {"N"},
+		"nk": {"N", "k"},
+		"pf": {"p", "f"},
+		"qu": {"k", "w"},
+		"ts": {"ts"},
+		"st": {"s`", "t"},
+		"sp": {"s`", "p"},
+		"ss": {"s", "s"},
+		"ei": {"a", "i"},
+		"ie": {"i", "i"},
+		"eu": {"o", "i"},
+		"äu": {"o", "i"},
+		"au": {"a", "u"},
+	},
+	singles: map[rune]string{
+		'z': "ts", 'w': "w", 'v': "f", 'j': "j",
+		'h': "x", 'l': "l", 'm': "m", 'n': "n",
+		'r': "r\\`", 's': "s", 't': "t", 'p': "p", 'k': "k",
+		'b': "p", 'd': "t", 'g': "k", 'f': "f",
+		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
+		'ä': "A", 'ö': "@", 'ü': "y", 'y': "y",
+		'\u0283': "s`", // sch
+	},
+}
+
+// germanCantonese is best for words with ö (best '9' approximation) and ä (good 'E' match).
+var germanCantonese = &phoneTable{
+	digraphs: map[string][]string{
+		"ch": {"h"},
+		"ng": {"N"},
+		"nk": {"N", "k"},
+		"pf": {"p", "f"},
+		"qu": {"k", "w"},
+		"ts": {"ts"},
+		"ss": {"s", "s"},
+		"ei": {"6", "i"},
+		"ie": {"i", "i"},
+		"eu": {"O", "i"},
+		"äu": {"O", "i"},
+		"au": {"a", "u"},
+	},
+	singles: map[rune]string{
+		'z': "ts", 'w': "w", 'v': "f", 'j': "j",
+		'h': "h", 'l': "l", 'm': "m", 'n': "n",
+		'r': "l", 's': "s", 't': "t", 'p': "p", 'k': "k",
+		'b': "p", 'd': "t", 'g': "k", 'f': "f",
+		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
+		'ä': "E", 'ö': "9", 'ü': "y", 'y': "y",
+		'\u0283': "s", // sch
+	},
+}
+
+// germanJapanese is best for simple words and ich-Laut (ch after front vowels).
+var germanJapanese = &phoneTable{
+	digraphs: map[string][]string{
+		"ch": {"h"},
+		"ng": {"N", "g"},
+		"nk": {"N", "k"},
+		"pf": {"p", "f"},
+		"qu": {"k", "w"},
+		"ts": {"ts"},
+		"ss": {"s", "s"},
+		"ei": {"a", "i"},
+		"ie": {"i", "i"},
+		"eu": {"o", "i"},
+		"äu": {"o", "i"},
+		"au": {"a", "u"},
+	},
+	singles: map[rune]string{
+		'z': "ts", 'w': "v", 'v': "f", 'j': "y",
+		'h': "h", 'l': "r", 'm': "m", 'n': "n",
+		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
+		'b': "b", 'd': "d", 'g': "g", 'f': "f",
+		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
+		'ä': "a", 'ö': "o", 'ü': "u", 'y': "u",
+		'\u0283': "sh", // sch
+	},
+}
+
+// germanEnglish is the default fallback (most compatible).
+var germanEnglish = &phoneTable{
+	digraphs: map[string][]string{
+		"ch": {"hh"},
+		"ng": {"ng"},
+		"nk": {"ng", "k"},
+		"pf": {"p", "f"},
+		"qu": {"k", "w"},
+		"ts": {"t", "s"},
+		"ss": {"s", "s"},
+		"ei": {"ay"},
+		"ie": {"iy", "iy"},
+		"eu": {"oy"},
+		"äu": {"oy"},
+		"au": {"aw"},
+	},
+	expanded: map[rune][]string{
+		'z': {"t", "s"},
+	},
+	singles: map[rune]string{
+		'w': "v", 'v': "f", 'j': "y",
+		'h': "hh", 'l': "l", 'm': "m", 'n': "n",
+		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
+		'b': "b", 'd': "d", 'g': "g", 'f': "f",
+		'a': "aa", 'e': "eh", 'i': "iy", 'o': "ow", 'u': "uw",
+		'ä': "ae", 'ö': "er", 'ü': "iy", 'y': "iy",
+		'\u0283': "sh", // sch
+	},
+}
+
+// germanKorean is best for words with r (good '4' flap approximation).
+var germanKorean = &phoneTable{
+	digraphs: map[string][]string{
+		"ch": {"h"},
+		"ng": {"N"},
+		"nk": {"N", "k"},
+		"pf": {"p", "p"},
+		"qu": {"k", "w"},
+		"ts": {"ts\\_h"},
+		"ss": {"s_t"},
+		"ei": {"6", "i"},
+		"ie": {"i", "i"},
+		"eu": {"o", "i"},
+		"äu": {"o", "i"},
+		"au": {"6", "M"},
+	},
+	singles: map[rune]string{
+		'z': "ts\\_h", 'w': "b", 'v': "p", 'j': "j",
+		'h': "h", 'l': "l", 'm': "m", 'n': "n",
+		'r': "4", 's': "s", 't': "t", 'p': "p", 'k': "k",
+		'b': "b", 'd': "d", 'g': "g", 'f': "p",
+		'a': "6", 'e': "e_o", 'i': "i", 'o': "o", 'u': "M",
+		'ä': "6", 'ö': "V", 'ü': "M", 'y': "M",
+		'\u0283': "s", // sch
+	},
+}
+
+// germanSpanish is best for ach-Laut (ch after back vowels) using Spanish 'x' [x].
+var germanSpanish = &phoneTable{
+	digraphs: map[string][]string{
+		"ch": {"x"},
+		"ng": {"N"},
+		"nk": {"N", "k"},
+		"pf": {"p", "f"},
+		"qu": {"k", "U"},
+		"ts": {"t", "s"},
+		"ss": {"s", "s"},
+		"rr": {"rr"},
+		"ei": {"a", "I"},
+		"ie": {"i", "i"},
+		"eu": {"o", "I"},
+		"äu": {"o", "I"},
+		"au": {"a", "U"},
+	},
+	expanded: map[rune][]string{
+		'z': {"t", "s"},
+	},
+	singles: map[rune]string{
+		'w': "b", 'v': "f", 'j': "y",
+		'h': "x", 'l': "l", 'm': "m", 'n': "n",
+		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
+		'b': "b", 'd': "d", 'g': "g", 'f': "f",
+		'a': "a", 'e': "e", 'i': "i", 'o': "o", 'u': "u",
+		'ä': "e", 'ö': "e", 'ü': "i", 'y': "i",
+		'\u0283': "sh", // sch
+	},
+}

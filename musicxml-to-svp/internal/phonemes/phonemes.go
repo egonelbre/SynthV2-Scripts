@@ -22,13 +22,15 @@ type Converter struct {
 }
 
 // New creates a Converter for the given source language.
-// Supported: "estonian", "karelian".
+// Supported: "estonian", "karelian", "german".
 func New(lang string) *Converter {
 	switch strings.ToLower(lang) {
 	case "estonian":
 		return newEstonian()
 	case "karelian":
 		return newKarelian()
+	case "german":
+		return newGerman()
 	default:
 		return nil
 	}
@@ -78,6 +80,9 @@ type phoneTable struct {
 	// Digraphs are checked first (two-char sequences like "sh", "ng", "ts").
 	// Also used for special geminates that don't simply double (Korean "ss"→"s_t").
 	digraphs map[string][]string
+	// Expanded maps individual runes to multiple phonemes (checked before singles).
+	// Unlike singles, expanded entries skip geminate handling.
+	expanded map[rune][]string
 	// Singles maps individual runes to their phoneme.
 	// Geminates (doubled chars) automatically double the single phoneme.
 	singles map[rune]string
@@ -100,6 +105,14 @@ func (t *phoneTable) convert(word string, skip func(rune) bool, vowels string) s
 			if ph, ok := t.digraphs[pair]; ok {
 				phonemes = append(phonemes, ph...)
 				i++
+				continue
+			}
+		}
+
+		// Check expanded (single chars → multiple phonemes, no geminate handling).
+		if t.expanded != nil {
+			if ph, ok := t.expanded[ch]; ok {
+				phonemes = append(phonemes, ph...)
 				continue
 			}
 		}
