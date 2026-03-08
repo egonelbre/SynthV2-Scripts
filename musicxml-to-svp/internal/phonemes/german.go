@@ -79,6 +79,7 @@ func findStandaloneCh(word string) int {
 func normalizeGerman(s string) string {
 	s = strings.ReplaceAll(s, "sch", "\u0283")
 	s = strings.ReplaceAll(s, "ß", "s")
+	s = strings.NewReplacer("x", "ks").Replace(s)
 	return s
 }
 
@@ -86,6 +87,7 @@ func normalizeGerman(s string) string {
 var germanMandarin = &phoneTable{
 	digraphs: map[string][]string{
 		"ch": {"x"},
+		"ck": {"k"},
 		"ng": {"N"},
 		"nk": {"N", "k"},
 		"pf": {"p", "f"},
@@ -115,6 +117,7 @@ var germanMandarin = &phoneTable{
 var germanCantonese = &phoneTable{
 	digraphs: map[string][]string{
 		"ch": {"h"},
+		"ck": {"k"},
 		"ng": {"N"},
 		"nk": {"N", "k"},
 		"pf": {"p", "f"},
@@ -142,6 +145,7 @@ var germanCantonese = &phoneTable{
 var germanJapanese = &phoneTable{
 	digraphs: map[string][]string{
 		"ch": {"h"},
+		"ck": {"k"},
 		"ng": {"N", "g"},
 		"nk": {"N", "k"},
 		"pf": {"p", "f"},
@@ -169,6 +173,7 @@ var germanJapanese = &phoneTable{
 var germanEnglish = &phoneTable{
 	digraphs: map[string][]string{
 		"ch": {"hh"},
+		"ck": {"k"},
 		"ng": {"ng"},
 		"nk": {"ng", "k"},
 		"pf": {"p", "f"},
@@ -199,6 +204,7 @@ var germanEnglish = &phoneTable{
 var germanKorean = &phoneTable{
 	digraphs: map[string][]string{
 		"ch": {"h"},
+		"ck": {"k"},
 		"ng": {"N"},
 		"nk": {"N", "k"},
 		"pf": {"p", "p"},
@@ -226,6 +232,7 @@ var germanKorean = &phoneTable{
 var germanSpanish = &phoneTable{
 	digraphs: map[string][]string{
 		"ch": {"x"},
+		"ck": {"k"},
 		"ng": {"N"},
 		"nk": {"N", "k"},
 		"pf": {"p", "f"},
@@ -243,7 +250,7 @@ var germanSpanish = &phoneTable{
 		'z': {"t", "s"},
 	},
 	singles: map[rune]string{
-		'w': "b", 'v': "f", 'j': "y",
+		'w': "B", 'v': "f", 'j': "I",
 		'h': "x", 'l': "l", 'm': "m", 'n': "n",
 		'r': "r", 's': "s", 't': "t", 'p': "p", 'k': "k",
 		'b': "b", 'd': "d", 'g': "g", 'f': "f",
