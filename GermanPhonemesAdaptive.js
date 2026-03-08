@@ -163,6 +163,19 @@ function processNotes(notes, group, options, groupRef) {
 	}
 }
 
+// Find "ch" that is not part of "sch".
+// Returns index of 'c', or -1 if not found.
+function findStandaloneCh(word) {
+	var i = 0;
+	while (i < word.length) {
+		var idx = word.indexOf("ch", i);
+		if (idx < 0) return -1;
+		if (idx == 0 || word[idx - 1] != "s") return idx;
+		i = idx + 2;
+	}
+	return -1;
+}
+
 // Analyze word and select best language for phoneme conversion
 function selectBestLanguage(word) {
 	// Priority 1: Words with ü → Mandarin (exact 'y' phoneme match)
@@ -175,23 +188,17 @@ function selectBestLanguage(word) {
 		return "cantonese";
 	}
 
-	// Priority 3: Check for "ch" sound type
-	// ach-Laut (after a, o, u, au) → Spanish x [x]
+	// Priority 3: Check for standalone "ch" (not part of "sch")
+	// ach-Laut (after a, o, u) → Spanish x [x]
 	// ich-Laut (after i, e, ä, ö, ü, consonants, or initial) → Japanese h
-	if (word.indexOf("ch") >= 0) {
-		var chIndex = word.indexOf("ch");
+	var chIndex = findStandaloneCh(word);
+	if (chIndex >= 0) {
 		if (chIndex > 0) {
 			var prevChar = word[chIndex - 1];
-			// Check for ach-Laut contexts
 			if (prevChar == "a" || prevChar == "o" || prevChar == "u") {
 				return "spanish";
 			}
-			// Check for "au" before ch
-			if (chIndex > 1 && word[chIndex - 2] == "a" && prevChar == "u") {
-				return "spanish";
-			}
 		}
-		// ich-Laut or initial ch → Japanese for softer sound
 		return "japanese";
 	}
 
@@ -205,24 +212,13 @@ function selectBestLanguage(word) {
 		return "korean";
 	}
 
-	// Priority 6: Simple basic vowels only → Japanese (cleanest)
-	if (hasOnlyBasicVowels(word)) {
-		return "japanese";
+	// Priority 6: Words with ß → English (good 's' match)
+	if (word.indexOf("ß") >= 0) {
+		return "english";
 	}
 
-	// Default: English (most compatible)
-	return "english";
-}
-
-function hasOnlyBasicVowels(word) {
-	// Check if word only contains basic vowels (no German umlauts)
-	for (var i = 0; i < word.length; i++) {
-		var c = word[i];
-		if (c == "ä" || c == "ö" || c == "ü") {
-			return false;
-		}
-	}
-	return true;
+	// Default: Japanese (cleanest basic vowels)
+	return "japanese";
 }
 
 // ==================== MANDARIN PHONEME CONVERSION ====================
@@ -244,6 +240,9 @@ function germanToMandarinPhonemes(word) {
 		} else if (char == "c" && nextChar == "h") {
 			// ch → x (aspirated)
 			phonemes.push("x");
+			i += 2;
+		} else if (char == "c" && nextChar == "k") {
+			phonemes.push("k");
 			i += 2;
 		} else if (char == "n" && nextChar == "g") {
 			phonemes.push("N");
@@ -328,6 +327,9 @@ function germanToMandarinPhonemes(word) {
 		} else if (char == "f") {
 			phonemes.push("f");
 			i++;
+		} else if (char == "x") {
+			phonemes.push("k", "s");
+			i++;
 		}
 		// German diphthongs
 		else if (char == "e" && nextChar == "i") {
@@ -406,6 +408,9 @@ function germanToCantonesePhonemes(word) {
 		} else if (char == "c" && nextChar == "h") {
 			phonemes.push("h");
 			i += 2;
+		} else if (char == "c" && nextChar == "k") {
+			phonemes.push("k");
+			i += 2;
 		} else if (char == "n" && nextChar == "g") {
 			phonemes.push("N");
 			i += 2;
@@ -477,6 +482,9 @@ function germanToCantonesePhonemes(word) {
 			i++;
 		} else if (char == "f") {
 			phonemes.push("f");
+			i++;
+		} else if (char == "x") {
+			phonemes.push("k", "s");
 			i++;
 		}
 		// German diphthongs
@@ -553,6 +561,9 @@ function germanToJapanesePhonemes(word) {
 			// ich-Laut approximation
 			phonemes.push("h");
 			i += 2;
+		} else if (char == "c" && nextChar == "k") {
+			phonemes.push("k");
+			i += 2;
 		} else if (char == "n" && nextChar == "g") {
 			phonemes.push("N", "g");
 			i += 2;
@@ -624,6 +635,9 @@ function germanToJapanesePhonemes(word) {
 			i++;
 		} else if (char == "f") {
 			phonemes.push("f");
+			i++;
+		} else if (char == "x") {
+			phonemes.push("k", "s");
 			i++;
 		}
 		// German diphthongs
@@ -697,6 +711,9 @@ function germanToEnglishPhonemes(word) {
 		} else if (char == "c" && nextChar == "h") {
 			phonemes.push("hh");
 			i += 2;
+		} else if (char == "c" && nextChar == "k") {
+			phonemes.push("k");
+			i += 2;
 		} else if (char == "n" && nextChar == "g") {
 			phonemes.push("ng");
 			i += 2;
@@ -768,6 +785,9 @@ function germanToEnglishPhonemes(word) {
 			i++;
 		} else if (char == "f") {
 			phonemes.push("f");
+			i++;
+		} else if (char == "x") {
+			phonemes.push("k", "s");
 			i++;
 		}
 		// German diphthongs
@@ -841,6 +861,9 @@ function germanToKoreanPhonemes(word) {
 		} else if (char == "c" && nextChar == "h") {
 			phonemes.push("h");
 			i += 2;
+		} else if (char == "c" && nextChar == "k") {
+			phonemes.push("k");
+			i += 2;
 		} else if (char == "n" && nextChar == "g") {
 			phonemes.push("N");
 			i += 2;
@@ -913,6 +936,9 @@ function germanToKoreanPhonemes(word) {
 			i++;
 		} else if (char == "f") {
 			phonemes.push("p");
+			i++;
+		} else if (char == "x") {
+			phonemes.push("k", "s");
 			i++;
 		}
 		// German diphthongs
@@ -1014,14 +1040,17 @@ function germanToSpanishPhonemes(word) {
 		} else if (char == "z") {
 			phonemes.push("t", "s");
 			i++;
+		} else if (char == "c" && nextChar == "k") {
+			phonemes.push("k");
+			i += 2;
 		} else if (char == "w") {
-			phonemes.push("b");
+			phonemes.push("B");
 			i++;
 		} else if (char == "v") {
 			phonemes.push("f");
 			i++;
 		} else if (char == "j") {
-			phonemes.push("y");
+			phonemes.push("I");
 			i++;
 		} else if (char == "h") {
 			phonemes.push("x");
@@ -1061,6 +1090,9 @@ function germanToSpanishPhonemes(word) {
 			i++;
 		} else if (char == "f") {
 			phonemes.push("f");
+			i++;
+		} else if (char == "x") {
+			phonemes.push("k", "s");
 			i++;
 		}
 		// German diphthongs

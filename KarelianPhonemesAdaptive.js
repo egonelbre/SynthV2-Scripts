@@ -4,7 +4,7 @@
 
 This script converts Karelian lyrics to Synthesizer V phonemes using an adaptive
 multi-language approach. It analyzes each word and selects the best phoneme set
-(Mandarin, Cantonese, Japanese, or English) based on the word's characteristics.
+(Mandarin, Cantonese, Japanese, or Korean) based on the word's characteristics.
 
 Karelian is a Finnic language closely related to Finnish and Estonian.
 Key phonological features:
@@ -18,8 +18,8 @@ Strategy:
 - Words with y (ü) → Mandarin/Cantonese (exact 'y' phoneme match)
 - Words with ö → Cantonese (best '9' approximation)
 - Words with ä → Cantonese (good 'E' match)
-- Simple words → Japanese (cleanest basic vowels)
-- Default → English (widely compatible)
+- Words with r → Korean (good '4' flap approximation)
+- Default → Japanese (cleanest basic vowels)
 
 */
 
@@ -92,7 +92,6 @@ function processNotes(notes, group, options, groupRef) {
 		mandarin: 0,
 		cantonese: 0,
 		japanese: 0,
-		english: 0,
 		korean: 0,
 	};
 
@@ -132,9 +131,6 @@ function processNotes(notes, group, options, groupRef) {
 			case "japanese":
 				phonemes = karelianToJapanesePhonemes(wordLower);
 				break;
-			case "english":
-				phonemes = karelianToEnglishPhonemes(wordLower);
-				break;
 			case "korean":
 				phonemes = karelianToKoreanPhonemes(wordLower);
 				break;
@@ -151,7 +147,6 @@ function processNotes(notes, group, options, groupRef) {
 		msg += "Mandarin: " + languageStats.mandarin + " words\n";
 		msg += "Cantonese: " + languageStats.cantonese + " words\n";
 		msg += "Japanese: " + languageStats.japanese + " words\n";
-		msg += "English: " + languageStats.english + " words\n";
 		msg += "Korean: " + languageStats.korean + " words";
 		SV.showMessageBox(SV.T(SCRIPT_TITLE), msg);
 	}
@@ -179,24 +174,8 @@ function selectBestLanguage(word) {
 		return "korean";
 	}
 
-	// Priority 5: Simple basic vowels only → Japanese (cleanest)
-	if (hasOnlyBasicVowels(word)) {
-		return "japanese";
-	}
-
-	// Default: English (most compatible)
-	return "english";
-}
-
-function hasOnlyBasicVowels(word) {
-	// Check if word only contains a, e, i, o, u (no special Karelian vowels)
-	for (var i = 0; i < word.length; i++) {
-		var c = word[i];
-		if (c == "ä" || c == "ö" || c == "y") {
-			return false;
-		}
-	}
-	return true;
+	// Default: Japanese (cleanest basic vowels)
+	return "japanese";
 }
 
 // Strip palatalization marks (apostrophes) and return cleaned character
@@ -777,199 +756,6 @@ function karelianToJapanesePhonemes(word) {
 				i += 2;
 			} else {
 				phonemes.push("u");
-				i++;
-			}
-		} else {
-			i++;
-		}
-	}
-
-	return phonemes.join(" ");
-}
-
-// English phoneme conversion
-function karelianToEnglishPhonemes(word) {
-	var phonemes = [];
-	var i = 0;
-
-	while (i < word.length) {
-		var char = word[i];
-		var nextChar = i + 1 < word.length ? word[i + 1] : "";
-
-		// Skip palatalization marks
-		if (isPalatalizationMark(char)) {
-			i++;
-			continue;
-		}
-
-		if (char == "č") {
-			phonemes.push("ch");
-			i++;
-		} else if (char == "š") {
-			phonemes.push("sh");
-			i++;
-		} else if (char == "ž") {
-			phonemes.push("zh");
-			i++;
-		} else if (char == "h") {
-			phonemes.push("hh");
-			i++;
-		} else if (char == "j") {
-			phonemes.push("y");
-			i++;
-		} else if (char == "l") {
-			if (nextChar == "l") {
-				phonemes.push("l", "l");
-				i += 2;
-			} else {
-				phonemes.push("l");
-				i++;
-			}
-		} else if (char == "m") {
-			if (nextChar == "m") {
-				phonemes.push("m", "m");
-				i += 2;
-			} else {
-				phonemes.push("m");
-				i++;
-			}
-		} else if (char == "n") {
-			if (nextChar == "g") {
-				phonemes.push("ng", "g");
-				i += 2;
-			} else if (nextChar == "n") {
-				phonemes.push("n", "n");
-				i += 2;
-			} else {
-				phonemes.push("n");
-				i++;
-			}
-		} else if (char == "r") {
-			if (nextChar == "r") {
-				phonemes.push("r", "r");
-				i += 2;
-			} else {
-				phonemes.push("r");
-				i++;
-			}
-		} else if (char == "s") {
-			if (nextChar == "s") {
-				phonemes.push("s", "s");
-				i += 2;
-			} else {
-				phonemes.push("s");
-				i++;
-			}
-		} else if (char == "t") {
-			if (nextChar == "s") {
-				phonemes.push("t", "s");
-				i += 2;
-			} else if (nextChar == "t") {
-				phonemes.push("t", "t");
-				i += 2;
-			} else {
-				phonemes.push("t");
-				i++;
-			}
-		} else if (char == "p") {
-			if (nextChar == "p") {
-				phonemes.push("p", "p");
-				i += 2;
-			} else {
-				phonemes.push("p");
-				i++;
-			}
-		} else if (char == "k") {
-			if (nextChar == "k") {
-				phonemes.push("k", "k");
-				i += 2;
-			} else {
-				phonemes.push("k");
-				i++;
-			}
-		} else if (char == "b") {
-			phonemes.push("b");
-			i++;
-		} else if (char == "d") {
-			phonemes.push("d");
-			i++;
-		} else if (char == "g") {
-			phonemes.push("g");
-			i++;
-		} else if (char == "f") {
-			phonemes.push("f");
-			i++;
-		} else if (char == "v") {
-			phonemes.push("v");
-			i++;
-		} else if (char == "z") {
-			phonemes.push("z");
-			i++;
-		} else if (char == "w") {
-			phonemes.push("w");
-			i++;
-		} else if (char == "a") {
-			if (nextChar == "a") {
-				phonemes.push("aa", "aa");
-				i += 2;
-			} else {
-				phonemes.push("aa");
-				i++;
-			}
-		} else if (char == "e") {
-			if (nextChar == "e") {
-				phonemes.push("eh", "eh");
-				i += 2;
-			} else {
-				phonemes.push("eh");
-				i++;
-			}
-		} else if (char == "i") {
-			if (nextChar == "i") {
-				phonemes.push("iy", "iy");
-				i += 2;
-			} else {
-				phonemes.push("iy");
-				i++;
-			}
-		} else if (char == "o") {
-			if (nextChar == "o") {
-				phonemes.push("ow", "ow");
-				i += 2;
-			} else {
-				phonemes.push("ow");
-				i++;
-			}
-		} else if (char == "u") {
-			if (nextChar == "u") {
-				phonemes.push("uw", "uw");
-				i += 2;
-			} else {
-				phonemes.push("uw");
-				i++;
-			}
-		} else if (char == "ä") {
-			if (nextChar == "ä") {
-				phonemes.push("ae", "ae");
-				i += 2;
-			} else {
-				phonemes.push("ae");
-				i++;
-			}
-		} else if (char == "ö") {
-			if (nextChar == "ö") {
-				phonemes.push("er", "er");
-				i += 2;
-			} else {
-				phonemes.push("er");
-				i++;
-			}
-		} else if (char == "y") {
-			if (nextChar == "y") {
-				phonemes.push("iy", "iy");
-				i += 2;
-			} else {
-				phonemes.push("iy");
 				i++;
 			}
 		} else {
