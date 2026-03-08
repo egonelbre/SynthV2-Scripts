@@ -234,17 +234,20 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 
 			if !found {
 				// Unpaired cresc/dim text — use next dynLevel as endpoint
-				// if available, otherwise estimate over 2 measures.
-				if lvl, ok := findNextLevel(i + 1); ok {
-					targetLevel = lvl
-					// Find the position of the next dynLevel.
-					for j := i + 1; j < len(events); j++ {
-						if events[j].kind == dynLevel {
+				// if it's within 4 measures, otherwise estimate over 2 measures.
+				maxRange := int64(4 * 4 * blicksPerQuarter) // 4 measures of 4/4
+				foundNearby := false
+				for j := i + 1; j < len(events); j++ {
+					if events[j].kind == dynLevel {
+						if events[j].position-ev.position <= maxRange {
+							targetLevel = getValue(events[j])
 							stopPos = events[j].position
-							break
+							foundNearby = true
 						}
+						break
 					}
-				} else {
+				}
+				if !foundNearby {
 					stopPos = ev.position + 2*4*blicksPerQuarter
 					if ev.kind == dynCrescStart {
 						targetLevel = currentLevel + defaultDelta
