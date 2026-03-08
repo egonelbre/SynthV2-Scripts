@@ -415,6 +415,10 @@ func applyAccents(points []float64, accents []accentEvent, normalBump, strongBum
 		if spikeWidth < minAccentSpikeWidth {
 			spikeWidth = minAccentSpikeWidth
 		}
+		// Don't let the spike extend past the note end.
+		if spikeWidth > acc.duration {
+			spikeWidth = acc.duration
+		}
 
 		// Find the current curve value at the accent position.
 		baseVal := curveValueAt(points, acc.position)
