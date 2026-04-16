@@ -121,24 +121,29 @@ var Soloists = map[VoicePart][]SoloistDB{
 	},
 }
 
-// ParseIsSolo returns true if the name starts with the word "solo".
+// ParseIsSolo returns true if the name contains the word "solo".
 func ParseIsSolo(name string) bool {
 	fields := strings.Fields(strings.TrimSpace(name))
-	return len(fields) > 0 && strings.EqualFold(fields[0], "solo")
+	for _, field := range fields {
+		if strings.EqualFold(field, "solo") {
+			return true
+		}
+	}
+	return false
 }
 
-// stripSoloPrefix removes a leading "solo" word from the name, if present.
-func stripSoloPrefix(name string) string {
+// stripSolo removes a leading "solo" from the name, if present.
+func stripSolo(name string) string {
 	fields := strings.Fields(strings.TrimSpace(name))
-	if len(fields) > 1 && strings.EqualFold(fields[0], "solo") {
-		return strings.Join(fields[1:], " ")
-	}
-	return name
+	fields = slices.DeleteFunc(fields, func(field string) bool {
+		return strings.EqualFold(field, "solo")
+	})
+	return strings.Join(fields, " ")
 }
 
 // ParseVoicePart extracts a VoicePart from a track name like "Soprano 1", "Bass", "Solo Alto", etc.
 func ParseVoicePart(name string) VoicePart {
-	lower := strings.ToLower(strings.TrimSpace(stripSoloPrefix(name)))
+	lower := strings.ToLower(strings.TrimSpace(stripSolo(name)))
 
 	fields := strings.Fields(lower)
 	if len(fields) == 0 {
@@ -171,7 +176,7 @@ func ParseVoicePart(name string) VoicePart {
 
 // ParsePartNum extracts the track number from a name like "Bass 2" -> 2, "Bass" -> 1, "Solo Bass 2" -> 2.
 func ParsePartNum(name string) int {
-	fields := strings.Fields(strings.TrimSpace(stripSoloPrefix(name)))
+	fields := strings.Fields(strings.TrimSpace(stripSolo(name)))
 	if len(fields) >= 2 {
 		// Try to parse the second field as a number (handles "Bass 2", "Soprano 1a" -> 1).
 		numStr := fields[1]
