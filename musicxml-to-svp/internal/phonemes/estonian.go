@@ -18,6 +18,11 @@ func newEstonian() *Converter {
 				Phoneset: "xsampa",
 				Phonemes: "h m=",
 			},
+			"ŋ": Result{
+				Language: "english",
+				Phoneset: "arpabet",
+				Phonemes: "ng",
+			},
 		},
 	}
 }
