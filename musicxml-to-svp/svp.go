@@ -141,14 +141,16 @@ type SVPDatabase struct {
 }
 
 type SVPVoice struct {
-	RelaxedPronunciation   string             `json:"relaxedPronunciation,omitempty"`
-	VocalModeInherited     bool               `json:"vocalModeInherited"`
-	VocalModePreset        string             `json:"vocalModePreset"`
-	VocalModeParams        map[string]float64 `json:"vocalModeParams"`
-	ChoirSeatingSeparation float64            `json:"choirSeatingSeparation,omitempty"`
-	ChoirNumStems          int                `json:"choirNumStems,omitempty"`
-	ChoirPartName          string             `json:"choirPartName,omitempty"`
+	RelaxedPronunciation   string          `json:"relaxedPronunciation,omitempty"`
+	VocalModeInherited     bool            `json:"vocalModeInherited"`
+	VocalModePreset        string          `json:"vocalModePreset"`
+	VocalModeParams        VocalModeParams `json:"vocalModeParams"`
+	ChoirSeatingSeparation float64         `json:"choirSeatingSeparation,omitempty"`
+	ChoirNumStems          int             `json:"choirNumStems,omitempty"`
+	ChoirPartName          string          `json:"choirPartName,omitempty"`
 }
+
+type VocalModeParams map[string]map[string]float64
 
 type SVPMixer struct {
 	GainDecibel float64 `json:"gainDecibel"`

@@ -10,6 +10,24 @@ import (
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/voice"
 )
 
+var DefaultChoirVoiceParams = VocalModeParams{
+	"Bright": map[string]float64{
+		"pitch":         0,
+		"timbre":        0,
+		"pronunciation": 0,
+	},
+	"Smooth": map[string]float64{
+		"pitch":         0,
+		"timbre":        0,
+		"pronunciation": 0,
+	},
+	"Rounded": map[string]float64{
+		"pitch":         70,
+		"timbre":        70,
+		"pronunciation": 70,
+	},
+}
+
 func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool, panScheme string) {
 	relaxedStr := "false"
 	if relaxed {
@@ -181,7 +199,7 @@ func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice
 		t.MainRef.Voice = &SVPVoice{
 			RelaxedPronunciation:   relaxed,
 			VocalModeInherited:     true,
-			VocalModeParams:        map[string]float64{},
+			VocalModeParams:        DefaultChoirVoiceParams,
 			ChoirSeatingSeparation: 0.7,
 		}
 
@@ -194,7 +212,7 @@ func applyChoirToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, choir voice
 			t.Groups[j].Voice = &SVPVoice{
 				RelaxedPronunciation:   relaxed,
 				VocalModeInherited:     true,
-				VocalModeParams:        map[string]float64{},
+				VocalModeParams:        DefaultChoirVoiceParams,
 				ChoirNumStems:          4,
 				ChoirSeatingSeparation: 0.7,
 				ChoirPartName:          partName,
@@ -228,7 +246,7 @@ func applySoloistsToTracks(tracks []*SVPTrack, infos []voice.TrackInfo, relaxed 
 		t.MainRef.Voice = &SVPVoice{
 			RelaxedPronunciation: relaxed,
 			VocalModeInherited:   true,
-			VocalModeParams:      map[string]float64{},
+			VocalModeParams:      VocalModeParams{},
 		}
 	}
 }
