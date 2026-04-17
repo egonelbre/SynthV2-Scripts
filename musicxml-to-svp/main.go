@@ -28,8 +28,10 @@ func main() {
 	voiceFlag := flag.String("voice", "", "assign voices: choir1, choir2, choir3, or soloists")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german")
-	relaxedFlag := flag.Bool("relaxed", false, "enable relaxed consonant pronunciation")
+	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
+	preciseOnsetFlag := flag.Bool("precise-onset", true, "lock pitch at note onset and phrase ends to prevent slide-into-note (suited for choirs)")
 	outputFlag := flag.String("o", "", "output file path (default: input with .svp extension)")
+
 	var phonemeFlags repeatedFlag
 	flag.Var(&phonemeFlags, "p", `lyric replacement as "lyric=phoneme" (repeatable)`)
 	flag.Usage = func() {
@@ -105,6 +107,10 @@ func main() {
 
 	// Convert to SVP
 	project := scoreToSVP(irScore)
+
+	if *preciseOnsetFlag {
+		addPreciseOnsetControls(project.Library)
+	}
 
 	// Set render output directory to the input filename without extension.
 	inputBase := filepath.Base(inputPath)
