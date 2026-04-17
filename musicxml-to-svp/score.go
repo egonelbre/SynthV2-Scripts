@@ -32,6 +32,7 @@ const (
 	ArticulationTenuto
 	ArticulationAccent
 	ArticulationStrongAccent // marcato
+	ArticulationBreathMark   // shortens note to leave a 32nd-note pause
 )
 
 type Note struct {

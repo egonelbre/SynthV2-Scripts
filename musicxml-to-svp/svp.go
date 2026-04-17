@@ -344,6 +344,12 @@ func scoreToSVP(score *Score) *SVPProject {
 				}
 			}
 
+			// Breath mark: steal a 32nd-note gap from the end of the note.
+			if n.Articulations&ArticulationBreathMark != 0 {
+				breathGap := min(int64(blicksPerQuarter/8), duration/2)
+				duration -= breathGap
+			}
+
 			// Collect accent events (use note duration for spike scaling).
 			if n.Articulations&ArticulationStrongAccent != 0 {
 				accents = append(accents, accentEvent{

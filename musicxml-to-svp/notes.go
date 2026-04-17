@@ -27,6 +27,9 @@ func noteArticulations(note *musicxml.Note) Articulation {
 			if len(art.StrongAccent) > 0 {
 				a |= ArticulationStrongAccent
 			}
+			if len(art.BreathMark) > 0 {
+				a |= ArticulationBreathMark
+			}
 		}
 	}
 	return a

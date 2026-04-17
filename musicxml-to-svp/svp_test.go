@@ -50,6 +50,37 @@ func TestScoreToSVP_ArticulationShortening(t *testing.T) {
 	}
 }
 
+// TestScoreToSVP_BreathMarkShortens tests that a breath mark steals a 32nd-note gap
+// from the end of the note, and is clamped to at most half the note's duration.
+func TestScoreToSVP_BreathMarkShortens(t *testing.T) {
+	breath32nd := int64(blicksPerQuarter / 8)
+	shortDur := breath32nd / 4 // shorter than the breath gap, so clamping kicks in
+	s := &Score{
+		Parts: []Part{{
+			Name: "Test",
+			Notes: []Note{
+				{Onset: 0, Duration: blicksPerQuarter, Pitch: 60, Lyric: "a", Articulations: ArticulationBreathMark},
+				{Onset: blicksPerQuarter, Duration: shortDur, Pitch: 62, Lyric: "b", Articulations: ArticulationBreathMark},
+			},
+		}},
+	}
+
+	proj := scoreToSVP(s)
+	notes := proj.Library[0].Notes
+
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes, got %d", len(notes))
+	}
+	expectedLong := blicksPerQuarter - breath32nd
+	if notes[0].Duration != expectedLong {
+		t.Errorf("breath-mark quarter duration: expected %d, got %d", expectedLong, notes[0].Duration)
+	}
+	expectedShort := shortDur - shortDur/2
+	if notes[1].Duration != expectedShort {
+		t.Errorf("breath-mark short-note duration: expected %d (clamped), got %d", expectedShort, notes[1].Duration)
+	}
+}
+
 // TestScoreToSVP_TenutoOverridesStaccato tests that tenuto suppresses staccato shortening.
 func TestScoreToSVP_TenutoOverridesStaccato(t *testing.T) {
 	s := &Score{

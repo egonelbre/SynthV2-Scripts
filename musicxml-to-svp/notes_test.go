@@ -96,6 +96,42 @@ func TestBuildNotes_Articulations(t *testing.T) {
 	}
 }
 
+// TestBuildNotes_BreathMark tests that a breath mark sets the articulation bit.
+func TestBuildNotes_BreathMark(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+        <notations><articulations><breath-mark/></articulations></notations>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
+
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes, got %d", len(notes))
+	}
+	if notes[0].Articulations&ArticulationBreathMark == 0 {
+		t.Error("note 0: expected breath-mark articulation")
+	}
+	if notes[1].Articulations&ArticulationBreathMark != 0 {
+		t.Error("note 1: unexpected breath-mark articulation")
+	}
+}
+
 // TestBuildNotes_GraceNoteAttachment tests leading grace note attachment.
 func TestBuildNotes_GraceNoteAttachment(t *testing.T) {
 	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
