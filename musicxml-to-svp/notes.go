@@ -145,7 +145,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 			blicks := durationToBlicks(dur, divisions)
 
 			onset := cursor
-			if value.Chord != "" {
+			if value.Chord != nil {
 				onset = prevOnset
 			}
 
@@ -155,7 +155,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 				}
 				pendingGraces = nil
 				lastNoteIdx = -1
-				if value.Chord == "" {
+				if value.Chord == nil {
 					prevOnset = cursor
 				}
 				return
@@ -209,7 +209,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 						pendingSlideIdx = idx
 					}
 				}
-				if value.Chord == "" {
+				if value.Chord == nil {
 					prevOnset = cursor
 				}
 				return
@@ -253,7 +253,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 				pendingSlideIdx = lastNoteIdx
 			}
 
-			if value.Chord == "" {
+			if value.Chord == nil {
 				prevOnset = cursor
 			}
 		}

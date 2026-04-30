@@ -1019,3 +1019,71 @@ func TestBuildNotes_SlideOnTieStop(t *testing.T) {
 		t.Errorf("tied note duration: expected %d, got %d", expectedDur, notes[0].Duration)
 	}
 }
+
+// TestBuildNotes_ChordSharedOnset tests that <chord/> notes share onset with
+// the chord head and do not advance the cursor. Sibelius can export divisi
+// using <chord/> with a duration shorter than the chord head; even in that
+// case the chord note must overlay the head, and the next note must follow
+// the head's duration — not be pushed out by the chord note's duration.
+func TestBuildNotes_ChordSharedOnset(t *testing.T) {
+	// Measure: half (C4) + half (D4) with chord E4 of quarter duration + quarter (G4).
+	// Expected onsets: C4@0, D4@2Q, E4@2Q (chord), G4@4Q.
+	// The chord note's quarter duration must NOT push G4 to 5Q.
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>5</beats><beat-type>4</beat-type></time></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>8</duration><type>half</type>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>8</duration><type>half</type>
+      </note>
+      <note>
+        <chord/>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>4</duration><type>quarter</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
+
+	if len(notes) != 4 {
+		t.Fatalf("expected 4 notes (C4, D4, chord E4, G4), got %d", len(notes))
+	}
+
+	Q := int64(blicksPerQuarter)
+	want := []struct {
+		pitch      int
+		onset, dur int64
+	}{
+		{60, 0, 2 * Q},     // C4 half
+		{62, 2 * Q, 2 * Q}, // D4 half (chord head)
+		{64, 2 * Q, Q},     // E4 chord, shorter quarter — same onset as D4
+		{67, 4 * Q, Q},     // G4 quarter, follows D4 (NOT D4+E4)
+	}
+	for i, w := range want {
+		if notes[i].Pitch != w.pitch {
+			t.Errorf("note %d pitch: expected %d, got %d", i, w.pitch, notes[i].Pitch)
+		}
+		if notes[i].Onset != w.onset {
+			t.Errorf("note %d onset: expected %d, got %d (drift = %d)",
+				i, w.onset, notes[i].Onset, notes[i].Onset-w.onset)
+		}
+		if notes[i].Duration != w.dur {
+			t.Errorf("note %d duration: expected %d, got %d", i, w.dur, notes[i].Duration)
+		}
+	}
+}

@@ -5228,7 +5228,11 @@ type GroupDisplayStepOctave struct {
 
 // GroupFullNote UnNamed source named group "full-note"
 type GroupFullNote struct {
-	Chord     string     `xml:"chord,omitempty"`
+	// Chord is non-nil when the note carries a <chord/> marker, indicating
+	// it shares its onset with the previous note (the chord head). The
+	// element itself is empty, so a *Empty pointer (rather than a string)
+	// is required to distinguish "present" from "absent".
+	Chord     *Empty     `xml:"chord,omitempty"`
 	Pitch     *Pitch     `xml:"pitch,omitempty"`
 	Unpitched *Unpitched `xml:"unpitched,omitempty"`
 	Rest      *Rest      `xml:"rest,omitempty"`

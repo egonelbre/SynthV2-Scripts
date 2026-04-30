@@ -249,7 +249,7 @@ func walkPartElements(
 				fn(cursor, divisions, pm, value)
 				if value.Grace == nil {
 					dur := parseDuration(value.Duration)
-					if dur > 0 && value.Chord == "" {
+					if dur > 0 && value.Chord == nil {
 						cursor += durationToBlicks(dur, divisions)
 					}
 				}

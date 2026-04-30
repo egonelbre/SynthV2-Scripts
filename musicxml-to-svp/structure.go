@@ -508,7 +508,7 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []MeterChange, [
 				}
 				dur := parseDuration(value.Duration)
 				if dur > 0 {
-					if value.Chord == "" {
+					if value.Chord == nil {
 						blicks := durationToBlicks(dur, divisions)
 						measureCursor += blicks
 						if measureCursor > maxCursor {
