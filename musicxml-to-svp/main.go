@@ -27,7 +27,7 @@ func (f *repeatedFlag) Set(v string) error {
 func main() {
 	voiceFlag := flag.String("voice", "", "assign voices: choir1, choir2, choir3, or soloists")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
-	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german")
+	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german, latin")
 	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
 	preciseOnsetFlag := flag.Bool("precise-onset", true, "lock pitch at note onset and phrase ends to prevent slide-into-note (suited for choirs)")
 	outputFlag := flag.String("o", "", "output file path (default: input with .svp extension)")
@@ -141,7 +141,7 @@ func main() {
 	if *langFlag != "" {
 		conv := phonemes.New(*langFlag)
 		if conv == nil {
-			fmt.Fprintf(os.Stderr, "unknown language: %q (options: estonian, karelian, german)\n", *langFlag)
+			fmt.Fprintf(os.Stderr, "unknown language: %q (options: estonian, karelian, german, latin)\n", *langFlag)
 			os.Exit(1)
 		}
 		for word, r := range replacements {

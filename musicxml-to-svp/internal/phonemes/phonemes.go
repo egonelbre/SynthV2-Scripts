@@ -22,7 +22,7 @@ type Converter struct {
 }
 
 // New creates a Converter for the given source language.
-// Supported: "estonian", "karelian", "german".
+// Supported: "estonian", "karelian", "german", "latin".
 func New(lang string) *Converter {
 	switch strings.ToLower(lang) {
 	case "estonian":
@@ -31,6 +31,8 @@ func New(lang string) *Converter {
 		return newKarelian()
 	case "german":
 		return newGerman()
+	case "latin":
+		return newLatin()
 	default:
 		return nil
 	}

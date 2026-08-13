@@ -193,6 +193,42 @@ func TestGerman_SetWord(t *testing.T) {
 	}
 }
 
+func TestLatin_BasicConversion(t *testing.T) {
+	c := New("latin")
+	tests := []struct {
+		word     string
+		phonemes string
+	}{
+		{"gloria", "g l o r i a"},
+		{"sanctus", "s a n k t u s"},     // hard c
+		{"pacem", "p a ch e m"},          // soft c before e
+		{"caelum", "ch e l u m"},         // ae → e, then soft c
+		{"agnus", "a J u s"},             // gn → [ɲ]
+		{"regina", "r e y i n a"},        // soft g before i
+		{"gratia", "g r a t s i a"},      // ti + vowel → [tsi]
+		{"hostia", "o s t i a"},          // ti after s stays [ti], h silent
+		{"excelsis", "e k sh e l s i s"}, // xc before e → [kʃ]
+		{"qui", "k U i"},                 // qu → [kw]
+		{"sanguis", "s a N g U i s"},     // ngu + vowel → [ŋgw]
+		{"kyrie", "k i r i e"},           // y → i
+		{"iesu", "I e s u"},              // initial i + vowel is consonantal
+		{"hosanna", "o s a n n a"},       // silent h, geminate n
+		{"terra", "t e rr a"},            // rr trill
+		{"mihi", "m i k i"},              // word override
+	}
+	for _, tt := range tests {
+		t.Run(tt.word, func(t *testing.T) {
+			r := c.Convert(tt.word)
+			if r.Phonemes != tt.phonemes {
+				t.Errorf("Convert(%q).Phonemes = %q, want %q", tt.word, r.Phonemes, tt.phonemes)
+			}
+			if r.Language != "spanish" {
+				t.Errorf("Convert(%q).Language = %q, want %q", tt.word, r.Language, "spanish")
+			}
+		})
+	}
+}
+
 func TestNew_UnknownLanguage(t *testing.T) {
 	c := New("french")
 	if c != nil {
