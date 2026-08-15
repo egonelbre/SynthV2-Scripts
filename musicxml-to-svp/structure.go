@@ -467,8 +467,7 @@ func buildStructure(firstPart *musicxml.Part) ([]playedMeasure, []MeterChange, [
 					pm.divisions = divisions
 				}
 				for _, t := range value.Time {
-					meterNum = parseBeats(t.Beats)
-					meterDen = t.BeatType
+					meterNum, meterDen = timeSignature(t)
 					meters = append(meters, MeterChange{
 						MeasureIndex: measureIdx,
 						Numerator:    meterNum,

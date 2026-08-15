@@ -5158,9 +5158,11 @@ type GroupSlash struct {
 }
 
 // GroupTimeSignature UnNamed source named group "time-signature"
+// GroupTimeSignature holds beats/beat-type pairs. Composite meters such as
+// 3/8+4/4 repeat the pair within a single time element, so these are slices.
 type GroupTimeSignature struct {
-	Beats    string `xml:"beats,omitempty"`
-	BeatType int    `xml:"beat-type,omitempty"`
+	Beats    []string `xml:"beats,omitempty"`
+	BeatType []int    `xml:"beat-type,omitempty"`
 }
 
 // GroupTraditionalKey UnNamed source named group "traditional-key"

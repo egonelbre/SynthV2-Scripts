@@ -85,6 +85,27 @@ func parseBeats(s string) int {
 	return total
 }
 
+// timeSignature returns the meter for a time element, folding composite meters
+// (3/8+4/4) onto the finest denominator: 11/8.
+func timeSignature(t *musicxml.Time) (num, den int) {
+	for _, bt := range t.BeatType {
+		if bt > den {
+			den = bt
+		}
+	}
+	for i, b := range t.Beats {
+		bt := den
+		if i < len(t.BeatType) {
+			bt = t.BeatType[i]
+		}
+		num += parseBeats(b) * den / bt
+	}
+	if num <= 0 || den <= 0 {
+		return 4, 4
+	}
+	return num, den
+}
+
 func parseDuration(s string) int {
 	if s == "" {
 		return 0

@@ -828,3 +828,31 @@ func TestBuildStructure_ContinuationVolta(t *testing.T) {
 		}
 	}
 }
+
+// TestBuildStructure_CompositeMeter checks that a composite meter (3/8+4/4)
+// measure gets its full 11/8 length, so the next measure does not overlap it.
+func TestBuildStructure_CompositeMeter(t *testing.T) {
+	const xml = `<?xml version="1.0"?>
+<score-partwise>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>4</divisions>
+        <time><beats>3</beats><beat-type>8</beat-type><beats>4</beats><beat-type>4</beat-type></time>
+      </attributes>
+      <note><rest/><duration>22</duration></note>
+    </measure>
+    <measure number="2">
+      <note><rest/><duration>22</duration></note>
+    </measure>
+  </part>
+</score-partwise>`
+	score := parseTestScore(t, xml)
+	unrolled, meters, _ := buildStructure(score.Part[0])
+	if meters[0].Numerator != 11 || meters[0].Denominator != 8 {
+		t.Fatalf("got %d/%d, want 11/8", meters[0].Numerator, meters[0].Denominator)
+	}
+	want := int64(11) * blicksPerQuarter / 2
+	if unrolled[1].startBlicks != want {
+		t.Fatalf("measure 2 starts at %d, want %d", unrolled[1].startBlicks, want)
+	}
+}
