@@ -25,7 +25,8 @@ func (f *repeatedFlag) Set(v string) error {
 }
 
 func main() {
-	voiceFlag := flag.String("voice", "", "assign voices: choir1, choir2, choir3, or soloists")
+	voiceFlag := flag.String("voice", "choir1", "assign voices: choir1, choir2, choir3, soloists, or none")
+	splitVoicesFlag := flag.Bool("split-voices", true, "split parts with overlapping notes into one track per voice")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german, latin")
 	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
@@ -105,6 +106,10 @@ func main() {
 		irScore.Parts = append(irScore.Parts, p)
 	}
 
+	if *splitVoicesFlag {
+		irScore.Parts = splitVoices(irScore.Parts)
+	}
+
 	// Convert to SVP
 	project := scoreToSVP(irScore)
 
@@ -118,7 +123,7 @@ func main() {
 	project.RenderConfig.Destination = inputBase
 
 	// Assign voices if requested.
-	if *voiceFlag != "" {
+	if *voiceFlag != "" && *voiceFlag != "none" {
 		assignVoices(project.Tracks, strings.ToLower(*voiceFlag), *relaxedFlag, *panFlag)
 		setNoteAttributes(project.Library)
 	}
