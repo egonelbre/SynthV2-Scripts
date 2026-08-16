@@ -182,9 +182,8 @@ type SVPProjectMixer struct {
 const (
 	stressLoudnessBump = 1.0
 	stressTensionBump  = 0.1
-	// Spike width is duration/accentSpikeWidthFraction, so capping the span at
-	// a quarter note yields at most a 16th-note-long stress.
-	stressMaxSpan = int64(blicksPerQuarter)
+	// Longest a stress spike may last, regardless of note duration.
+	maxStressWidth = int64(blicksPerQuarter / 4) // a 16th note
 )
 
 // Accent loudness and tension bumps (dB and tension units).
@@ -364,9 +363,7 @@ func scoreToSVP(score *Score) *SVPProject {
 			if score.StressWordStart && n.WordStart && !isAccented {
 				stresses = append(stresses, accentEvent{
 					position: onset,
-					// Cap the span so a long note gets a short stress at its
-					// start rather than a bump over the whole note.
-					duration: min(n.Duration, stressMaxSpan),
+					duration: n.Duration,
 				})
 			}
 			if n.Articulations&ArticulationStrongAccent != 0 {
@@ -400,8 +397,8 @@ func scoreToSVP(score *Score) *SVPProject {
 		}
 		// Stresses first, so an accent at the same spot wins.
 		if len(stresses) > 0 {
-			params.Loudness.Points = applyAccents(params.Loudness.Points, stresses, stressLoudnessBump, stressLoudnessBump)
-			params.Tension.Points = applyAccents(params.Tension.Points, stresses, stressTensionBump, stressTensionBump)
+			params.Loudness.Points = applyStresses(params.Loudness.Points, stresses, stressLoudnessBump)
+			params.Tension.Points = applyStresses(params.Tension.Points, stresses, stressTensionBump)
 		}
 		if len(accents) > 0 {
 			params.Loudness.Points = applyAccents(params.Loudness.Points, accents, accentLoudnessBump, strongAccentLoudnessBump)

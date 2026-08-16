@@ -46,10 +46,15 @@ func TestStressWordStart(t *testing.T) {
 	// the note ends.
 	long := scoreToSVP(&Score{StressWordStart: true, Parts: []Part{{Name: "Soprano", Notes: []Note{
 		{Onset: 0, Duration: 8 * q, Pitch: 60, Lyric: "aa", WordStart: true},
+		{Onset: 8 * q, Duration: q, Pitch: 62, Lyric: "bb", WordStart: true},
 	}}}})
 	longLoudness := long.Library[0].Parameters.Loudness.Points
-	if got := curveValueAt(longLoudness, q/2); got > 0.01 {
-		t.Errorf("loudness half a beat into a long note = %v, want ~0", got)
+	// The whole body of the long note stays at the base level: no lingering
+	// bump after the spike and no ramp up into the next word's spike.
+	for pos := q / 2; pos < 8*q-q/4; pos += q / 2 {
+		if got := curveValueAt(longLoudness, pos); got > 0.01 {
+			t.Errorf("loudness inside long note at %d = %v, want ~0", pos, got)
+		}
 	}
 
 	// Mid-word syllable stays well below the stressed level (the cubic curve

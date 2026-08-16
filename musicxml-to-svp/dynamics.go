@@ -425,7 +425,35 @@ func applyAccents(points []float64, accents []accentEvent, normalBump, strongBum
 		baseVal := curveValueAt(points, acc.position)
 
 		// Insert spike: peak at onset, decay back to base.
-		points = insertCurvePoints(points, acc.position, baseVal+bump, acc.position+spikeWidth, baseVal)
+		points = insertCurvePoints(points,
+			float64(acc.position), baseVal+bump,
+			float64(acc.position+spikeWidth), baseVal)
+	}
+	return points
+}
+
+// applyStresses overlays a short loudness bump at the start of each stressed
+// note. Unlike accents, each spike is fenced by base-level anchors before and
+// after it, so the curve stays flat between words instead of drifting up
+// toward the next spike.
+func applyStresses(points []float64, stresses []accentEvent, bump float64) []float64 {
+	for _, s := range stresses {
+		width := min(s.duration/accentSpikeWidthFraction, maxStressWidth)
+		width = max(width, minAccentSpikeWidth)
+		width = min(width, s.duration)
+
+		baseVal := curveValueAt(points, s.position)
+
+		spike := []float64{
+			float64(s.position), baseVal + bump,
+			float64(s.position + width), baseVal,
+			float64(s.position + 2*width), baseVal,
+		}
+		// Anchor at the base level before the spike, unless it starts at 0.
+		if lead := s.position - width; lead > 0 {
+			spike = append([]float64{float64(lead), baseVal}, spike...)
+		}
+		points = insertCurvePoints(points, spike...)
 	}
 	return points
 }
@@ -494,18 +522,16 @@ func curveValueAt(points []float64, pos int64) float64 {
 	return (2*t3-3*t2+1)*v1 + (t3-2*t2+t)*m1 + (-2*t3+3*t2)*v2 + (t3-t2)*m2
 }
 
-// insertCurvePoints inserts two points (pos1,val1) and (pos2,val2) into a
-// sorted curve point array, maintaining position order. Existing points at
-// the same positions are replaced to avoid duplicates.
-func insertCurvePoints(points []float64, pos1 int64, val1 float64, pos2 int64, val2 float64) []float64 {
-	newPts := []float64{float64(pos1), val1, float64(pos2), val2}
-
+// insertCurvePoints inserts points, given as pos/value pairs in ascending
+// position order, into a sorted curve point array. Existing points within the
+// inserted range are replaced to avoid duplicates.
+func insertCurvePoints(points []float64, newPts ...float64) []float64 {
 	if len(points) == 0 {
 		return newPts
 	}
 
-	fpos1 := float64(pos1)
-	fpos2 := float64(pos2)
+	fpos1 := newPts[0]
+	fpos2 := newPts[len(newPts)-2]
 
 	// Find insertion index (before the first point >= pos1).
 	idx := len(points)
