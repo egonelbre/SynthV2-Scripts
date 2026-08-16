@@ -117,6 +117,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 	var lastVerse int
 	pendingSlideIdx := -1 // index of note with slide-start
 	fermataWarned := false
+	wordOpen := false // previous syllable ended with a hyphen
 
 	walkPartElements(part, unrolled, func(cursor int64, divisions int, pm playedMeasure, value any) {
 		lastVerse = pm.verse
@@ -234,9 +235,13 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 				Pitch:         midi,
 				Detune:        detune,
 				Lyric:         lyric,
-				WordStart:     isWordStart(lyric, syllabic),
+				WordStart:     isWordStart(lyric, syllabic, wordOpen),
 				Articulations: noteArticulations(value),
 				LeadingGraces: leadingGraces,
+			}
+
+			if lyric != "" {
+				wordOpen = continuesWord(syllabic)
 			}
 
 			notes = append(notes, note)
@@ -274,11 +279,13 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 	return notes
 }
 
-// isWordStart reports whether a lyric starts a new word. Notes without a
-// syllabic value are treated as whole words, which is what exporters that omit
-// syllabic produce for unhyphenated lyrics.
-func isWordStart(lyric, syllabic string) bool {
-	if lyric == "" || lyric == "-" {
+// isWordStart reports whether a lyric starts a new word. wordOpen says the
+// previous syllable ended with a hyphen, which wins over the syllabic value:
+// after a melisma some exporters mark the closing syllable as "single".
+// Notes without a syllabic value are treated as whole words, which is what
+// exporters that omit syllabic produce for unhyphenated lyrics.
+func isWordStart(lyric, syllabic string, wordOpen bool) bool {
+	if lyric == "" || lyric == "-" || wordOpen {
 		return false
 	}
 	switch syllabic {
@@ -287,6 +294,12 @@ func isWordStart(lyric, syllabic string) bool {
 	default: // "middle", "end"
 		return false
 	}
+}
+
+// continuesWord reports whether a syllable leaves the word unfinished, i.e. it
+// is followed by a hyphen.
+func continuesWord(syllabic string) bool {
+	return syllabic == "begin" || syllabic == "middle"
 }
 
 // fillLyrics handles grace note lyric assignment and melismatic continuations.

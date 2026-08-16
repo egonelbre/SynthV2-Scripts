@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/musicxml"
@@ -454,77 +455,107 @@ func applyAccents(points []float64, accents []accentEvent, normalBump, strongBum
 	return points
 }
 
-// stressBaseValues samples the curve at each stress position before any stress
-// is written, so earlier spikes don't shift the base level of later ones.
-func stressBaseValues(points []float64, stresses []accentEvent) []float64 {
-	bases := make([]float64, len(stresses))
-	for i, s := range stresses {
-		bases[i] = curveValueAt(points, s.position)
-	}
-	return bases
-}
-
-// applyStresses overlays a short loudness bump at the start of each stressed
-// note. Unlike accents, each spike is fenced by base-level anchors before and
-// after it, so the curve stays flat between words instead of drifting up
-// toward the next spike.
+// applyStresses layers a short bump at the start of each stressed note on top
+// of the dynamics curve. Each shape starts and ends at zero offset, so the
+// curve is untouched between words.
 func applyStresses(points []float64, stresses []accentEvent, bump float64) []float64 {
-	bases := stressBaseValues(points, stresses)
-	for i, s := range stresses {
+	shapes := make([][]float64, 0, len(stresses))
+	for _, s := range stresses {
 		width := min(s.duration/2, maxStressWidth)
 		width = max(width, minAccentSpikeWidth)
 		width = min(width, s.duration)
 
-		baseVal := bases[i]
-
-		spike := []float64{
-			float64(s.position), baseVal + bump,
-			float64(s.position + width), baseVal,
-			float64(s.position + width + stressAnchorGap), baseVal,
-		}
-		// Anchor at the base level just before the spike, unless it starts at 0.
-		// The gap is fixed so a wider spike doesn't also start ramping earlier.
-		if lead := s.position - stressAnchorGap; lead > 0 {
-			spike = append([]float64{float64(lead), baseVal}, spike...)
-		}
-		points = insertCurvePoints(points, spike...)
+		shapes = append(shapes, []float64{
+			float64(s.position - stressAnchorGap), 0,
+			float64(s.position), bump,
+			float64(s.position + width), 0,
+		})
 	}
-	return points
+	return addStressShapes(points, shapes)
 }
 
-// applyXyloStresses overlays a struck-instrument shape at each stress: a strong
-// attack at the word start, a fast decay, then a slow fade below the base level
-// over the rest of the note.
+// applyXyloStresses layers a struck-instrument shape on each stressed note: a
+// strong attack at the word start, a fast decay, then a fade below the
+// dynamics level that is held until the note ends.
 func applyXyloStresses(points []float64, stresses []accentEvent, bump float64) []float64 {
-	bases := stressBaseValues(points, stresses)
-	for i, s := range stresses {
+	shapes := make([][]float64, 0, len(stresses))
+	for _, s := range stresses {
 		attack := min(s.duration/accentSpikeWidthFraction, maxStressWidth)
 		attack = max(attack, minAccentSpikeWidth)
 		attack = min(attack, s.duration)
 
-		baseVal := bases[i]
-
-		spike := []float64{
-			float64(s.position), baseVal + bump,
-			float64(s.position + attack), baseVal + bump*xyloDecayFraction,
+		shape := []float64{
+			float64(s.position - stressAnchorGap), 0,
+			float64(s.position), bump,
+			float64(s.position + attack), bump * xyloDecayFraction,
 		}
-		// Trail off to the floor within a quarter note, then hold it until the
-		// end of the note, stopping short of the next word's lead anchor so
-		// the fade isn't overwritten.
+		// Fade to the floor within a quarter note, hold it until the note ends,
+		// then return to the dynamics level for the next word.
 		if tailEnd := s.duration - 2*stressAnchorGap; tailEnd > 2*attack {
-			floor := baseVal + bump*xyloTailFraction
+			floor := bump * xyloTailFraction
 			decayEnd := min(attack+xyloDecaySpan, tailEnd)
-			spike = append(spike, float64(s.position+decayEnd), floor)
+			shape = append(shape, float64(s.position+decayEnd), floor)
 			if decayEnd < tailEnd {
-				spike = append(spike, float64(s.position+tailEnd), floor)
+				shape = append(shape, float64(s.position+tailEnd), floor)
 			}
 		}
-		if lead := s.position - stressAnchorGap; lead > 0 {
-			spike = append([]float64{float64(lead), baseVal}, spike...)
-		}
-		points = insertCurvePoints(points, spike...)
+		shape = append(shape, float64(s.position+s.duration), 0)
+		shapes = append(shapes, shape)
 	}
-	return points
+	return addStressShapes(points, shapes)
+}
+
+// addStressShapes adds stress offset shapes to a curve. Every position from
+// either the curve or the shapes gets a point valued base+offset, so dynamics
+// under a stress (a diminuendo, say) survive instead of being overwritten.
+func addStressShapes(points []float64, shapes [][]float64) []float64 {
+	var offsets []float64
+	for _, shape := range shapes {
+		// Clip the tail of the previous shape when notes are close enough that
+		// the shapes overlap; the earlier trail-off runs into the new attack.
+		for len(offsets) >= 2 && offsets[len(offsets)-2] >= shape[0] {
+			offsets = offsets[:len(offsets)-2]
+		}
+		offsets = append(offsets, shape...)
+	}
+	if len(offsets) == 0 {
+		return points
+	}
+
+	positions := make([]float64, 0, len(points)/2+len(offsets)/2)
+	for i := 0; i < len(points); i += 2 {
+		positions = append(positions, points[i])
+	}
+	for i := 0; i < len(offsets); i += 2 {
+		positions = append(positions, offsets[i])
+	}
+	slices.Sort(positions)
+	positions = slices.Compact(positions)
+
+	// ponytail: linear scan per position, fine for a few thousand points.
+	result := make([]float64, 0, 2*len(positions))
+	for _, pos := range positions {
+		result = append(result, pos, curveValueAt(points, int64(pos))+offsetAt(offsets, pos))
+	}
+	return result
+}
+
+// offsetAt linearly interpolates a stress offset curve, returning 0 outside it.
+func offsetAt(offsets []float64, pos float64) float64 {
+	if pos <= offsets[0] || pos >= offsets[len(offsets)-2] {
+		return 0
+	}
+	for i := 0; i+3 < len(offsets); i += 2 {
+		p1, v1, p2, v2 := offsets[i], offsets[i+1], offsets[i+2], offsets[i+3]
+		if pos < p1 || pos > p2 {
+			continue
+		}
+		if p2 == p1 {
+			return v2
+		}
+		return v1 + (v2-v1)*(pos-p1)/(p2-p1)
+	}
+	return 0
 }
 
 // curveValueAt returns the interpolated value of a curve at a given position.
