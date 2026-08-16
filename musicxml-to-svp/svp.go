@@ -236,6 +236,19 @@ func newShortID() string {
 	return hex.EncodeToString(b)
 }
 
+// ensurePoints replaces nil point slices with empty ones, so they marshal as
+// [] rather than null.
+func (p *SVPParameters) ensurePoints() {
+	for _, curve := range []*SVPParamCurve{
+		&p.PitchDelta, &p.VibratoEnv, &p.Loudness, &p.Tension, &p.Breathiness,
+		&p.Voicing, &p.Gender, &p.ToneShift, &p.MouthOpening,
+	} {
+		if curve.Points == nil {
+			curve.Points = []float64{}
+		}
+	}
+}
+
 func newEmptyParamCurve() SVPParamCurve {
 	return SVPParamCurve{Mode: "cubic", Points: []float64{}}
 }
@@ -427,6 +440,9 @@ func scoreToSVP(score *Score) *SVPProject {
 			params.Loudness.Points = applyAccents(params.Loudness.Points, accents, accentLoudnessBump, strongAccentLoudnessBump)
 			params.Tension.Points = applyAccents(params.Tension.Points, accents, accentTensionBump, strongAccentTensionBump)
 		}
+		// A nil slice marshals to null, which SynthV rejects with
+		// "property points is not an array".
+		params.ensurePoints()
 
 		// Build pitchControls from slide annotations.
 		var pitchControls []SVPPitchControl
