@@ -99,8 +99,11 @@ function processNotes(notes, group, options, groupRef) {
 		var duration = note.getDuration() - ONSET_NATURAL;
 
 		// allow time for a smooth transition between joined notes.
+		// Notes at the same pitch are never treated as joined -- SynthV
+		// merges them into a single phrase and the locked pitch is lost,
+		// so the boundary needs its own anchor.
 		var isJoined = false;
-		if(nextNote) {
+		if(nextNote && nextNote.getPitch() != note.getPitch()) {
 			var transition = nextNote.getOnset() - note.getEnd();
 			if (transition < TRANSITION_DURATION) {
 				isJoined = true;
