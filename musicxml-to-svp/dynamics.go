@@ -303,8 +303,8 @@ type dynamicLevel struct {
 
 // How long the attack of an fp-style dynamic is held before dropping.
 const (
-	attackBlicks      = int64(blicksPerQuarter) // hold the attack for a quarter note
-	attackDecayBlicks = int64(blicksPerQuarter) // then ease down over another quarter
+	attackBlicks      = int64(blicksPerQuarter / 4) // hold the attack briefly
+	attackDecayBlicks = int64(2 * blicksPerQuarter) // then ease down over two beats
 )
 
 // attackDecay returns the ramp length into a level that follows an attack.
