@@ -45,10 +45,11 @@ func makeGraceNote(g *musicxml.Note, transpose, verse int) GraceNote {
 	if g.Type != nil {
 		notatedType = string(g.Type.EnclosedText)
 	}
+	lyric, _ := extractLyric(g, verse)
 	return GraceNote{
 		Pitch:        midi,
 		Detune:       detune,
-		Lyric:        extractLyric(g, verse),
+		Lyric:        lyric,
 		NotatedType:  notatedType,
 		Acciaccatura: g.Grace.Slash == "yes",
 	}
@@ -215,7 +216,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 				return
 			}
 
-			lyric := extractLyric(value, pm.verse)
+			lyric, syllabic := extractLyric(value, pm.verse)
 
 			if !fermataWarned {
 				for _, n := range value.Notations {
@@ -233,6 +234,7 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 				Pitch:         midi,
 				Detune:        detune,
 				Lyric:         lyric,
+				WordStart:     isWordStart(lyric, syllabic),
 				Articulations: noteArticulations(value),
 				LeadingGraces: leadingGraces,
 			}
@@ -270,6 +272,21 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 	}
 
 	return notes
+}
+
+// isWordStart reports whether a lyric starts a new word. Notes without a
+// syllabic value are treated as whole words, which is what exporters that omit
+// syllabic produce for unhyphenated lyrics.
+func isWordStart(lyric, syllabic string) bool {
+	if lyric == "" || lyric == "-" {
+		return false
+	}
+	switch syllabic {
+	case "", "single", "begin":
+		return true
+	default: // "middle", "end"
+		return false
+	}
 }
 
 // fillLyrics handles grace note lyric assignment and melismatic continuations.

@@ -128,11 +128,13 @@ func lyricText(lyric *musicxml.Lyric) string {
 	return sb.String()
 }
 
-func extractLyric(note *musicxml.Note, verse int) string {
+// extractLyric returns the lyric text for a verse together with its syllabic
+// value ("single", "begin", "middle", "end", or "" when unspecified).
+func extractLyric(note *musicxml.Note, verse int) (text, syllabic string) {
 	if verse > 0 {
 		// Look for exact match first, then fall back to highest lyric number ≤ verse.
 		bestNum := 0
-		bestText := ""
+		bestText, bestSyllabic := "", ""
 		for _, lyric := range note.Lyric {
 			text := lyricText(lyric)
 			if text == "" {
@@ -143,22 +145,22 @@ func extractLyric(note *musicxml.Note, verse int) string {
 				continue
 			}
 			if num == verse {
-				return text
+				return text, lyric.Syllabic
 			}
 			if num <= verse && num > bestNum {
 				bestNum = num
-				bestText = text
+				bestText, bestSyllabic = text, lyric.Syllabic
 			}
 		}
-		return bestText
+		return bestText, bestSyllabic
 	}
 	// No verse filtering: return first non-empty lyric.
 	for _, lyric := range note.Lyric {
 		if text := lyricText(lyric); text != "" {
-			return text
+			return text, lyric.Syllabic
 		}
 	}
-	return ""
+	return "", ""
 }
 
 func noteTieTypes(note *musicxml.Note) (hasStart, hasStop bool) {

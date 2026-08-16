@@ -178,6 +178,15 @@ type SVPProjectMixer struct {
 	LinkRoomSettings bool    `json:"linkRoomSettings"`
 }
 
+// Word-start stress bumps (dB and tension units), subtler than an accent.
+const (
+	stressLoudnessBump = 1.0
+	stressTensionBump  = 0.1
+	// Spike width is duration/accentSpikeWidthFraction, so capping the span at
+	// a quarter note yields at most a 16th-note-long stress.
+	stressMaxSpan = int64(blicksPerQuarter)
+)
+
 // Accent loudness and tension bumps (dB and tension units).
 const (
 	accentLoudnessBump       = 1.5
@@ -318,7 +327,7 @@ func scoreToSVP(score *Score) *SVPProject {
 
 	for partIdx, part := range score.Parts {
 		svpNotes := []*SVPNote{}
-		var accents []accentEvent
+		var accents, stresses []accentEvent
 
 		for _, n := range part.Notes {
 			onset := n.Onset
@@ -351,6 +360,15 @@ func scoreToSVP(score *Score) *SVPProject {
 			}
 
 			// Collect accent events (use note duration for spike scaling).
+			isAccented := n.Articulations&(ArticulationAccent|ArticulationStrongAccent) != 0
+			if score.StressWordStart && n.WordStart && !isAccented {
+				stresses = append(stresses, accentEvent{
+					position: onset,
+					// Cap the span so a long note gets a short stress at its
+					// start rather than a bump over the whole note.
+					duration: min(n.Duration, stressMaxSpan),
+				})
+			}
 			if n.Articulations&ArticulationStrongAccent != 0 {
 				accents = append(accents, accentEvent{
 					position: onset,
@@ -379,6 +397,11 @@ func scoreToSVP(score *Score) *SVPProject {
 		if len(part.Dynamics) > 0 {
 			params.Loudness.Points = buildCurve(part.Dynamics, func(e dynEvent) float64 { return e.loudness }, defaultLoudnessDelta)
 			params.Tension.Points = buildCurve(part.Dynamics, func(e dynEvent) float64 { return e.tension }, defaultTensionDelta)
+		}
+		// Stresses first, so an accent at the same spot wins.
+		if len(stresses) > 0 {
+			params.Loudness.Points = applyAccents(params.Loudness.Points, stresses, stressLoudnessBump, stressLoudnessBump)
+			params.Tension.Points = applyAccents(params.Tension.Points, stresses, stressTensionBump, stressTensionBump)
 		}
 		if len(accents) > 0 {
 			params.Loudness.Points = applyAccents(params.Loudness.Points, accents, accentLoudnessBump, strongAccentLoudnessBump)

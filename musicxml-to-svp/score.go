@@ -5,6 +5,10 @@ type Score struct {
 	Meters []MeterChange
 	Tempos []TempoChange
 	Parts  []Part
+
+	// StressWordStart adds a small loudness/tension bump at the start of each
+	// word to make word boundaries clearer.
+	StressWordStart bool
 }
 
 type MeterChange struct {
@@ -41,6 +45,7 @@ type Note struct {
 	Pitch         int   // MIDI number
 	Detune        int   // cents
 	Lyric         string
+	WordStart     bool         // note carries the first syllable of a word
 	Articulations Articulation // bitmask
 	SlideDelta    int          // cents to slide toward at end of note (0 = no slide)
 
