@@ -307,15 +307,22 @@ func TestBuildDynamics_ForzaPiano(t *testing.T) {
 	if events[0].position != 0 || events[0].loudness != 3 {
 		t.Errorf("attack: got position %d loudness %v, want 0 and 3", events[0].position, events[0].loudness)
 	}
-	if events[1].position != attackBlicks || events[1].loudness != -3 {
-		t.Errorf("settle: got position %d loudness %v, want %d and -3", events[1].position, events[1].loudness, attackBlicks)
+	if want := attackBlicks + attackDecayBlicks; events[1].position != want || events[1].loudness != -3 {
+		t.Errorf("settle: got position %d loudness %v, want %d and -3", events[1].position, events[1].loudness, want)
 	}
 
 	points := buildCurve(events, func(e dynEvent) float64 { return e.loudness }, defaultLoudnessDelta)
 	if got := curveValueAt(points, 0); got < 2.9 {
 		t.Errorf("loudness at onset = %v, want ~3", got)
 	}
-	if got := curveValueAt(points, blicksPerQuarter); got > -2.9 {
-		t.Errorf("loudness a beat later = %v, want ~-3", got)
+	// Holds the attack, then eases down to piano.
+	if got := curveValueAt(points, attackBlicks); got < 2.9 {
+		t.Errorf("loudness at the end of the attack = %v, want ~3", got)
+	}
+	if got := curveValueAt(points, attackBlicks+attackDecayBlicks/2); got > 2 || got < -2 {
+		t.Errorf("loudness mid-decay = %v, want between the two levels", got)
+	}
+	if got := curveValueAt(points, attackBlicks+attackDecayBlicks); got > -2.9 {
+		t.Errorf("loudness after the decay = %v, want ~-3", got)
 	}
 }

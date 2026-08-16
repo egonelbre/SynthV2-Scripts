@@ -28,13 +28,14 @@ func buildDynamics(part *musicxml.Part, unrolled []playedMeasure) []dynEvent {
 							loudness: lvl.attack.loudness,
 							tension:  lvl.attack.tension,
 						})
-						position += attackBlicks
+						position += attackBlicks + attackDecayBlicks
 					}
 					events = append(events, dynEvent{
-						position: position,
-						kind:     dynLevel,
-						loudness: lvl.loudness,
-						tension:  lvl.tension,
+						position:   position,
+						kind:       dynLevel,
+						loudness:   lvl.loudness,
+						tension:    lvl.tension,
+						transition: attackDecay(lvl),
 					})
 				}
 			}
@@ -101,6 +102,9 @@ type dynEvent struct {
 	loudness float64 // only meaningful for dynLevel
 	tension  float64 // only meaningful for dynLevel
 	number   int     // wedge number for matching start/stop
+	// transition overrides how long the ramp into this level takes;
+	// 0 means the default step transition.
+	transition int64
 }
 
 const stepTransitionBlicks = int64(blicksPerQuarter / 8) // 1/8 quarter note
@@ -202,7 +206,11 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 				addPoint(ev.position, evVal)
 			} else if hasLevel {
 				// Step transition: hold old level, then jump to new.
-				transitionStart := ev.position - stepTransitionBlicks
+				transition := stepTransitionBlicks
+				if ev.transition > 0 {
+					transition = ev.transition
+				}
+				transitionStart := ev.position - transition
 				if transitionStart < 0 {
 					transitionStart = 0
 				}
@@ -294,7 +302,18 @@ type dynamicLevel struct {
 }
 
 // How long the attack of an fp-style dynamic is held before dropping.
-const attackBlicks = int64(blicksPerQuarter) // a quarter note
+const (
+	attackBlicks      = int64(blicksPerQuarter) // hold the attack for a quarter note
+	attackDecayBlicks = int64(blicksPerQuarter) // then ease down over another quarter
+)
+
+// attackDecay returns the ramp length into a level that follows an attack.
+func attackDecay(lvl dynamicLevel) int64 {
+	if lvl.attack == nil {
+		return 0
+	}
+	return attackDecayBlicks
+}
 
 var (
 	attackF  = &dynamicLevel{loudness: 3, tension: 0}
