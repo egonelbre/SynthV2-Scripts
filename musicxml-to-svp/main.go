@@ -28,7 +28,7 @@ func main() {
 	voiceFlag := flag.String("voice", "choir1", "assign voices: choir1, choir2, choir3, soloists, or none")
 	splitVoicesFlag := flag.Bool("split-voices", true, "split parts with overlapping notes into one track per voice")
 	stressFlag := flag.String("stress", "none", "add stress for clearer diction: word-start, xylo, none")
-	coverFlag := flag.Bool("cover", false, "darken (cover) vowels above the voice part's passaggio")
+	coverFlag := flag.String("cover", "none", "darken (cover) high notes: formant, phoneme, both, none")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german, latin")
 	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
@@ -112,7 +112,14 @@ func main() {
 		irScore.Parts = splitVoices(irScore.Parts)
 	}
 
-	irScore.Cover = *coverFlag
+	switch *coverFlag {
+	case coverFormant, coverBoth:
+		irScore.Cover = true
+	case coverPhoneme, coverNone, "":
+	default:
+		fmt.Fprintf(os.Stderr, "unknown cover mode: %q (options: formant, phoneme, both, none)\n", *coverFlag)
+		os.Exit(1)
+	}
 
 	switch *stressFlag {
 	case stressWordStart, stressXylo:
@@ -172,6 +179,11 @@ func main() {
 		applyPhonemes(project.Library, conv)
 	} else if len(replacements) > 0 {
 		applyLyricReplacements(project.Library, replacements)
+	}
+
+	// Vowel substitution runs last, on the phonemes produced above.
+	if *coverFlag == coverPhoneme || *coverFlag == coverBoth {
+		coverPhonemes(project.Library)
 	}
 
 	out, err := json.MarshalIndent(project, "", "  ")

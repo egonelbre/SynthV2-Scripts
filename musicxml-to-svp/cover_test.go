@@ -46,3 +46,32 @@ func TestCoverGender(t *testing.T) {
 		t.Errorf("unknown part: got %v, want nil", pts)
 	}
 }
+
+func TestCoverPhonemes(t *testing.T) {
+	note := func(pitch int, phonemes, lang string) *SVPNote {
+		n := &SVPNote{Pitch: pitch, Phonemes: phonemes}
+		n.Takes.LanguageOverride = lang
+		return n
+	}
+	// Soprano passaggio is F5 (77), so substitution starts at G#5 (80).
+	group := &SVPGroup{Name: "Soprano", Notes: []*SVPNote{
+		note(72, "b e a t a", "spanish"), // low, untouched
+		note(80, "b e a t a", "spanish"), // high, a -> o
+		note(80, "f aa r", "english"),    // high, aa -> ao
+		note(80, "b e a", ""),            // unknown language, untouched
+	}}
+	// A part we can't identify is skipped entirely.
+	other := &SVPGroup{Name: "Piano", Notes: []*SVPNote{note(80, "b e a", "spanish")}}
+
+	coverPhonemes([]*SVPGroup{group, other})
+
+	want := []string{"b e a t a", "b e o t o", "f ao r", "b e a"}
+	for i, w := range want {
+		if group.Notes[i].Phonemes != w {
+			t.Errorf("note %d: got %q, want %q", i, group.Notes[i].Phonemes, w)
+		}
+	}
+	if other.Notes[0].Phonemes != "b e a" {
+		t.Errorf("unknown part: got %q, want unchanged", other.Notes[0].Phonemes)
+	}
+}

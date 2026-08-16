@@ -3,8 +3,17 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/egonelbre/synthv2-scripts/musicxml-to-svp/internal/voice"
+)
+
+// Cover modes, selected with -cover.
+const (
+	coverNone    = "none"
+	coverFormant = "formant"
+	coverPhoneme = "phoneme"
+	coverBoth    = "both"
 )
 
 // Vowel modification ("covering"): above the passaggio singers darken and
@@ -72,4 +81,63 @@ func coverAmount(pitch, threshold int) float64 {
 		above = coverSemitones
 	}
 	return coverMaxGender * float64(above) / coverSemitones
+}
+
+// Notes this far above the passaggio get their vowel substituted; the swap is
+// audible, so it starts higher than the formant shift.
+const coverPhonemeMargin = 3
+
+// coverVowelTables maps a note's language to the vowel substitutions used for
+// covering. Spanish (which Latin is sung with) only has five vowels, so [a]
+// can only move to [o] -- a stronger modification than the [ɔ] a singer would
+// use. Languages without a table are left alone.
+var coverVowelTables = map[string]map[string]string{
+	"spanish": {
+		"a": "o",
+	},
+	"english": {
+		"aa": "ao", // f_a_r  -> f_ough_t
+		"ae": "eh", // b_a_t  -> b_e_t
+		"eh": "ah", // b_e_t  -> d_u_ck
+		"ey": "eh",
+		"iy": "ih", // b_ea_t -> b_i_t
+	},
+}
+
+// coverPhonemes substitutes darker vowels on notes well above the part's
+// passaggio. It only touches notes that already carry phonemes and a language
+// override, which is what -lang and -p produce.
+func coverPhonemes(library []*SVPGroup) {
+	for _, group := range library {
+		threshold, ok := coverThresholds[voice.ParseVoicePart(group.Name)]
+		if !ok {
+			continue
+		}
+
+		covered, skipped := 0, 0
+		for _, note := range group.Notes {
+			if note.Phonemes == "" || note.Pitch < threshold+coverPhonemeMargin {
+				continue
+			}
+			table, ok := coverVowelTables[note.Takes.LanguageOverride]
+			if !ok {
+				skipped++
+				continue
+			}
+			phonemes := strings.Fields(note.Phonemes)
+			for i, p := range phonemes {
+				if darker, ok := table[p]; ok {
+					phonemes[i] = darker
+					covered++
+				}
+			}
+			note.Phonemes = strings.Join(phonemes, " ")
+		}
+		if covered > 0 {
+			fmt.Fprintf(os.Stderr, "  %s: covered %d vowels\n", group.Name, covered)
+		}
+		if skipped > 0 {
+			fmt.Fprintf(os.Stderr, "  %s: %d high notes without a known language, left uncovered\n", group.Name, skipped)
+		}
+	}
 }
