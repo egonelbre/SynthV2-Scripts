@@ -27,7 +27,7 @@ func (f *repeatedFlag) Set(v string) error {
 func main() {
 	voiceFlag := flag.String("voice", "choir1", "assign voices: choir1, choir2, choir3, soloists, or none")
 	splitVoicesFlag := flag.Bool("split-voices", true, "split parts with overlapping notes into one track per voice")
-	stressFlag := flag.String("stress", "none", "add stress for clearer diction: word-start, none")
+	stressFlag := flag.String("stress", "none", "add stress for clearer diction: word-start, xylo, none")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german, latin")
 	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
@@ -112,11 +112,11 @@ func main() {
 	}
 
 	switch *stressFlag {
-	case "word-start":
-		irScore.StressWordStart = true
-	case "none", "":
+	case stressWordStart, stressXylo:
+		irScore.StressMode = *stressFlag
+	case "none", stressNone:
 	default:
-		fmt.Fprintf(os.Stderr, "unknown stress mode: %q (options: word-start, none)\n", *stressFlag)
+		fmt.Fprintf(os.Stderr, "unknown stress mode: %q (options: word-start, xylo, none)\n", *stressFlag)
 		os.Exit(1)
 	}
 

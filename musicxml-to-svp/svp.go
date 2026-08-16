@@ -188,6 +188,19 @@ const (
 	stressAnchorGap = int64(blicksPerQuarter / 8) // a 32nd note
 )
 
+// Xylo stress: a struck attack at the word start that decays fast and keeps
+// fading over the note, like a xylophone but with a gentler tail.
+const (
+	xyloLoudnessBump = 4.0
+	xyloTensionBump  = 0.2
+	// Level right after the attack, and at the end of the trail-off,
+	// as fractions of the bump.
+	xyloDecayFraction = 0.25
+	xyloTailFraction  = -0.5
+	// How long the fade to the floor takes after the attack.
+	xyloDecaySpan = int64(blicksPerQuarter)
+)
+
 // Accent loudness and tension bumps (dB and tension units).
 const (
 	accentLoudnessBump       = 1.5
@@ -362,7 +375,7 @@ func scoreToSVP(score *Score) *SVPProject {
 
 			// Collect accent events (use note duration for spike scaling).
 			isAccented := n.Articulations&(ArticulationAccent|ArticulationStrongAccent) != 0
-			if score.StressWordStart && n.WordStart && !isAccented {
+			if score.StressMode != stressNone && n.WordStart && !isAccented {
 				stresses = append(stresses, accentEvent{
 					position: onset,
 					duration: n.Duration,
@@ -398,7 +411,12 @@ func scoreToSVP(score *Score) *SVPProject {
 			params.Tension.Points = buildCurve(part.Dynamics, func(e dynEvent) float64 { return e.tension }, defaultTensionDelta)
 		}
 		// Stresses first, so an accent at the same spot wins.
-		if len(stresses) > 0 {
+		switch {
+		case len(stresses) == 0:
+		case score.StressMode == stressXylo:
+			params.Loudness.Points = applyXyloStresses(params.Loudness.Points, stresses, xyloLoudnessBump)
+			params.Tension.Points = applyXyloStresses(params.Tension.Points, stresses, xyloTensionBump)
+		default:
 			params.Loudness.Points = applyStresses(params.Loudness.Points, stresses, stressLoudnessBump)
 			params.Tension.Points = applyStresses(params.Tension.Points, stresses, stressTensionBump)
 		}

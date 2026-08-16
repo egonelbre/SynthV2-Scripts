@@ -454,17 +454,28 @@ func applyAccents(points []float64, accents []accentEvent, normalBump, strongBum
 	return points
 }
 
+// stressBaseValues samples the curve at each stress position before any stress
+// is written, so earlier spikes don't shift the base level of later ones.
+func stressBaseValues(points []float64, stresses []accentEvent) []float64 {
+	bases := make([]float64, len(stresses))
+	for i, s := range stresses {
+		bases[i] = curveValueAt(points, s.position)
+	}
+	return bases
+}
+
 // applyStresses overlays a short loudness bump at the start of each stressed
 // note. Unlike accents, each spike is fenced by base-level anchors before and
 // after it, so the curve stays flat between words instead of drifting up
 // toward the next spike.
 func applyStresses(points []float64, stresses []accentEvent, bump float64) []float64 {
-	for _, s := range stresses {
+	bases := stressBaseValues(points, stresses)
+	for i, s := range stresses {
 		width := min(s.duration/2, maxStressWidth)
 		width = max(width, minAccentSpikeWidth)
 		width = min(width, s.duration)
 
-		baseVal := curveValueAt(points, s.position)
+		baseVal := bases[i]
 
 		spike := []float64{
 			float64(s.position), baseVal + bump,
@@ -473,6 +484,41 @@ func applyStresses(points []float64, stresses []accentEvent, bump float64) []flo
 		}
 		// Anchor at the base level just before the spike, unless it starts at 0.
 		// The gap is fixed so a wider spike doesn't also start ramping earlier.
+		if lead := s.position - stressAnchorGap; lead > 0 {
+			spike = append([]float64{float64(lead), baseVal}, spike...)
+		}
+		points = insertCurvePoints(points, spike...)
+	}
+	return points
+}
+
+// applyXyloStresses overlays a struck-instrument shape at each stress: a strong
+// attack at the word start, a fast decay, then a slow fade below the base level
+// over the rest of the note.
+func applyXyloStresses(points []float64, stresses []accentEvent, bump float64) []float64 {
+	bases := stressBaseValues(points, stresses)
+	for i, s := range stresses {
+		attack := min(s.duration/accentSpikeWidthFraction, maxStressWidth)
+		attack = max(attack, minAccentSpikeWidth)
+		attack = min(attack, s.duration)
+
+		baseVal := bases[i]
+
+		spike := []float64{
+			float64(s.position), baseVal + bump,
+			float64(s.position + attack), baseVal + bump*xyloDecayFraction,
+		}
+		// Trail off to the floor within a quarter note, then hold it until the
+		// end of the note, stopping short of the next word's lead anchor so
+		// the fade isn't overwritten.
+		if tailEnd := s.duration - 2*stressAnchorGap; tailEnd > 2*attack {
+			floor := baseVal + bump*xyloTailFraction
+			decayEnd := min(attack+xyloDecaySpan, tailEnd)
+			spike = append(spike, float64(s.position+decayEnd), floor)
+			if decayEnd < tailEnd {
+				spike = append(spike, float64(s.position+tailEnd), floor)
+			}
+		}
 		if lead := s.position - stressAnchorGap; lead > 0 {
 			spike = append([]float64{float64(lead), baseVal}, spike...)
 		}

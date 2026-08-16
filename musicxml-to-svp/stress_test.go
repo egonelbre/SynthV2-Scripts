@@ -35,7 +35,7 @@ func TestStressWordStart(t *testing.T) {
 		t.Errorf("stress disabled: got %v loudness points, want none", pts)
 	}
 
-	on := scoreToSVP(&Score{StressWordStart: true, Parts: []Part{{Name: "Soprano", Notes: notes}}})
+	on := scoreToSVP(&Score{StressMode: stressWordStart, Parts: []Part{{Name: "Soprano", Notes: notes}}})
 	loudness := on.Library[0].Parameters.Loudness.Points
 	for _, pos := range []int64{0, 2 * q} {
 		if got := curveValueAt(loudness, pos); got < stressLoudnessBump-0.01 {
@@ -44,7 +44,7 @@ func TestStressWordStart(t *testing.T) {
 	}
 	// A long note is only stressed at its start: the bump is gone well before
 	// the note ends.
-	long := scoreToSVP(&Score{StressWordStart: true, Parts: []Part{{Name: "Soprano", Notes: []Note{
+	long := scoreToSVP(&Score{StressMode: stressWordStart, Parts: []Part{{Name: "Soprano", Notes: []Note{
 		{Onset: 0, Duration: 8 * q, Pitch: 60, Lyric: "aa", WordStart: true},
 		{Onset: 8 * q, Duration: q, Pitch: 62, Lyric: "bb", WordStart: true},
 	}}}})
@@ -61,5 +61,28 @@ func TestStressWordStart(t *testing.T) {
 	// ramping toward the next spike keeps it above the base).
 	if got := curveValueAt(loudness, q); got > stressLoudnessBump/2 {
 		t.Errorf("loudness at mid-word %d = %v, want < %v", q, got, stressLoudnessBump/2)
+	}
+}
+
+func TestStressXylo(t *testing.T) {
+	q := int64(blicksPerQuarter)
+	score := &Score{StressMode: stressXylo, Parts: []Part{{Name: "Soprano", Notes: []Note{
+		{Onset: 0, Duration: 4 * q, Pitch: 60, Lyric: "aa", WordStart: true},
+		{Onset: 4 * q, Duration: q, Pitch: 62, Lyric: "bb", WordStart: true},
+	}}}}
+	loudness := scoreToSVP(score).Library[0].Parameters.Loudness.Points
+
+	attack := curveValueAt(loudness, 0)
+	if attack < xyloLoudnessBump-0.01 {
+		t.Errorf("attack = %v, want %v", attack, xyloLoudnessBump)
+	}
+	// Decays fast, then keeps fading below the base level.
+	mid := curveValueAt(loudness, q)
+	tail := curveValueAt(loudness, 3*q)
+	if !(attack > mid && mid > tail) {
+		t.Errorf("expected attack > mid > tail, got %v, %v, %v", attack, mid, tail)
+	}
+	if tail > 0 {
+		t.Errorf("tail = %v, want below the base level", tail)
 	}
 }

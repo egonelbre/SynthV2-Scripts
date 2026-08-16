@@ -6,10 +6,16 @@ type Score struct {
 	Tempos []TempoChange
 	Parts  []Part
 
-	// StressWordStart adds a small loudness/tension bump at the start of each
-	// word to make word boundaries clearer.
-	StressWordStart bool
+	// StressMode emphasizes word starts to make the text clearer:
+	// stressNone, stressWordStart or stressXylo.
+	StressMode string
 }
+
+const (
+	stressNone      = ""
+	stressWordStart = "word-start"
+	stressXylo      = "xylo"
+)
 
 type MeterChange struct {
 	MeasureIndex int
