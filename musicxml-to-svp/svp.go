@@ -184,6 +184,8 @@ const (
 	stressTensionBump  = 0.15
 	// Longest a stress spike may last, regardless of note duration.
 	maxStressWidth = int64(blicksPerQuarter / 2) // an 8th note
+	// Distance of the base-level anchors from the spike.
+	stressAnchorGap = int64(blicksPerQuarter / 8) // a 32nd note
 )
 
 // Accent loudness and tension bumps (dB and tension units).

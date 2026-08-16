@@ -447,10 +447,11 @@ func applyStresses(points []float64, stresses []accentEvent, bump float64) []flo
 		spike := []float64{
 			float64(s.position), baseVal + bump,
 			float64(s.position + width), baseVal,
-			float64(s.position + 2*width), baseVal,
+			float64(s.position + width + stressAnchorGap), baseVal,
 		}
-		// Anchor at the base level before the spike, unless it starts at 0.
-		if lead := s.position - width; lead > 0 {
+		// Anchor at the base level just before the spike, unless it starts at 0.
+		// The gap is fixed so a wider spike doesn't also start ramping earlier.
+		if lead := s.position - stressAnchorGap; lead > 0 {
 			spike = append([]float64{float64(lead), baseVal}, spike...)
 		}
 		points = insertCurvePoints(points, spike...)
