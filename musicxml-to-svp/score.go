@@ -6,6 +6,9 @@ type Score struct {
 	Tempos []TempoChange
 	Parts  []Part
 
+	// Cover darkens the timbre of notes above the voice part's passaggio.
+	Cover bool
+
 	// StressMode emphasizes word starts to make the text clearer:
 	// stressNone, stressWordStart or stressXylo.
 	StressMode string

@@ -28,6 +28,7 @@ func main() {
 	voiceFlag := flag.String("voice", "choir1", "assign voices: choir1, choir2, choir3, soloists, or none")
 	splitVoicesFlag := flag.Bool("split-voices", true, "split parts with overlapping notes into one track per voice")
 	stressFlag := flag.String("stress", "none", "add stress for clearer diction: word-start, xylo, none")
+	coverFlag := flag.Bool("cover", false, "darken (cover) vowels above the voice part's passaggio")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german, latin")
 	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
@@ -110,6 +111,8 @@ func main() {
 	if *splitVoicesFlag {
 		irScore.Parts = splitVoices(irScore.Parts)
 	}
+
+	irScore.Cover = *coverFlag
 
 	switch *stressFlag {
 	case stressWordStart, stressXylo:
