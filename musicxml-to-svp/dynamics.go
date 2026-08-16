@@ -293,11 +293,11 @@ type dynamicLevel struct {
 }
 
 // How long the attack of an fp-style dynamic is held before dropping.
-const attackBlicks = int64(blicksPerQuarter / 4) // a 16th note
+const attackBlicks = int64(blicksPerQuarter / 2) // an 8th note
 
 var (
-	attackF  = &dynamicLevel{loudness: 3, tension: 0}
-	attackSF = &dynamicLevel{loudness: 3, tension: 0.3}
+	attackF  = &dynamicLevel{loudness: 6, tension: 0}
+	attackSF = &dynamicLevel{loudness: 6, tension: 0.3}
 )
 
 // dynamicLevels maps MusicXML dynamics element names to loudness (dB) and tension values.

@@ -304,8 +304,8 @@ func TestBuildDynamics_ForzaPiano(t *testing.T) {
 	if len(events) != 2 {
 		t.Fatalf("expected 2 events (attack + settle), got %d", len(events))
 	}
-	if events[0].position != 0 || events[0].loudness != 3 {
-		t.Errorf("attack: got position %d loudness %v, want 0 and 3", events[0].position, events[0].loudness)
+	if events[0].position != 0 || events[0].loudness != 6 {
+		t.Errorf("attack: got position %d loudness %v, want 0 and 6", events[0].position, events[0].loudness)
 	}
 	if events[1].position != attackBlicks || events[1].loudness != -3 {
 		t.Errorf("settle: got position %d loudness %v, want %d and -3", events[1].position, events[1].loudness, attackBlicks)
