@@ -530,12 +530,16 @@ func applyXyloStresses(points []float64, stresses []accentEvent, bump float64) [
 func addStressShapes(points []float64, shapes [][]float64) []float64 {
 	var offsets []float64
 	for _, shape := range shapes {
-		// Clip the tail of the previous shape when notes are close enough that
-		// the shapes overlap; the earlier trail-off runs into the new attack.
-		for len(offsets) >= 2 && offsets[len(offsets)-2] >= shape[0] {
-			offsets = offsets[:len(offsets)-2]
+		for i := 0; i+1 < len(shape); i += 2 {
+			pos := max(shape[i], 0) // a shape may lead in from before the start
+			// Clip the tail of the previous shape when notes are close enough
+			// that the shapes overlap; the earlier trail-off runs into the
+			// new attack.
+			for len(offsets) >= 2 && offsets[len(offsets)-2] >= pos {
+				offsets = offsets[:len(offsets)-2]
+			}
+			offsets = append(offsets, pos, shape[i+1])
 		}
-		offsets = append(offsets, shape...)
 	}
 	if len(offsets) == 0 {
 		return points
@@ -561,8 +565,13 @@ func addStressShapes(points []float64, shapes [][]float64) []float64 {
 
 // offsetAt linearly interpolates a stress offset curve, returning 0 outside it.
 func offsetAt(offsets []float64, pos float64) float64 {
-	if pos <= offsets[0] || pos >= offsets[len(offsets)-2] {
-		return 0
+	// Shapes start and end at zero offset, except when a lead-in was clipped
+	// at the start of the piece, so the endpoints carry their own value.
+	if pos <= offsets[0] {
+		return offsets[1]
+	}
+	if pos >= offsets[len(offsets)-2] {
+		return offsets[len(offsets)-1]
 	}
 	for i := 0; i+3 < len(offsets); i += 2 {
 		p1, v1, p2, v2 := offsets[i], offsets[i+1], offsets[i+2], offsets[i+3]

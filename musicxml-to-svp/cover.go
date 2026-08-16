@@ -21,9 +21,14 @@ const (
 // equivalent in SynthV is the gender parameter, which shifts the formants;
 // negative values darken.
 const (
+	coverLeadIn    = 5    // semitones below the passaggio where covering starts
 	coverSemitones = 7    // semitones above the passaggio for a full cover
 	coverMaxGender = -0.3 // gender offset at full cover
 	coverRampGap   = int64(blicksPerQuarter / 8)
+
+	// defaultGender brightens every voice a little, which sits better in a
+	// choir texture.
+	defaultGender = 0.15
 )
 
 // coverThresholds maps a voice part to the MIDI pitch where covering starts,
@@ -37,13 +42,14 @@ var coverThresholds = map[voice.VoicePart]int{
 	voice.Bass:         60, // C4
 }
 
-// coverGender returns gender curve points that darken the notes above the
-// part's passaggio, or nil when the part isn't a recognized voice.
-func coverGender(part Part) []float64 {
+// coverGender darkens the notes around and above the part's passaggio by
+// layering onto the given gender curve. Unrecognized voice parts are returned
+// unchanged.
+func coverGender(part Part, gender []float64) []float64 {
 	threshold, ok := coverThresholds[voice.ParseVoicePart(part.Name)]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "  skipping cover for %q (unknown voice part)\n", part.Name)
-		return nil
+		return gender
 	}
 
 	var shapes [][]float64
@@ -65,27 +71,29 @@ func coverGender(part Part) []float64 {
 		shapes = append(shapes, shape)
 	}
 	if len(shapes) == 0 {
-		return nil
+		return gender
 	}
-	return addStressShapes(nil, shapes)
+	return addStressShapes(gender, shapes)
 }
 
-// coverAmount ramps the gender offset from nothing at the passaggio to the
+// coverAmount ramps the gender offset from nothing coverLeadIn semitones below
+// the passaggio -- so the passaggio itself is already partly covered -- to the
 // full cover coverSemitones above it.
 func coverAmount(pitch, threshold int) float64 {
-	above := pitch - threshold + 1
+	above := pitch - threshold + coverLeadIn
 	if above <= 0 {
 		return 0
 	}
-	if above > coverSemitones {
-		above = coverSemitones
+	span := coverLeadIn + coverSemitones
+	if above > span {
+		above = span
 	}
-	return coverMaxGender * float64(above) / coverSemitones
+	return coverMaxGender * float64(above) / float64(span)
 }
 
 // Notes this far above the passaggio get their vowel substituted; the swap is
-// audible, so it starts higher than the formant shift.
-const coverPhonemeMargin = 3
+// audible, so it starts well above where the formant shift comes in.
+const coverPhonemeMargin = 6
 
 // coverVowelTables maps a note's language to the vowel substitutions used for
 // covering. Spanish (which Latin is sung with) only has five vowels, so [a]

@@ -433,8 +433,9 @@ func scoreToSVP(score *Score) *SVPProject {
 			params.Loudness.Points = applyStresses(params.Loudness.Points, stresses, stressLoudnessBump)
 			params.Tension.Points = applyStresses(params.Tension.Points, stresses, stressTensionBump)
 		}
+		params.Gender.Points = []float64{0, defaultGender}
 		if score.Cover {
-			params.Gender.Points = coverGender(part)
+			params.Gender.Points = coverGender(part, params.Gender.Points)
 		}
 		if len(accents) > 0 {
 			params.Loudness.Points = applyAccents(params.Loudness.Points, accents, accentLoudnessBump, strongAccentLoudnessBump)
