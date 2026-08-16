@@ -18,8 +18,19 @@ func buildDynamics(part *musicxml.Part, unrolled []playedMeasure) []dynEvent {
 		for _, dt := range dir.DirectionType {
 			for _, dyn := range dt.Dynamics {
 				if lvl, ok := dynamicsToLevel(dyn); ok {
+					position := cursor
+					// fp and friends: a brief attack, then the settled level.
+					if lvl.attack != nil {
+						events = append(events, dynEvent{
+							position: position,
+							kind:     dynLevel,
+							loudness: lvl.attack.loudness,
+							tension:  lvl.attack.tension,
+						})
+						position += attackBlicks
+					}
 					events = append(events, dynEvent{
-						position: cursor,
+						position: position,
 						kind:     dynLevel,
 						loudness: lvl.loudness,
 						tension:  lvl.tension,
@@ -276,7 +287,18 @@ func buildCurve(events []dynEvent, getValue func(dynEvent) float64, defaultDelta
 type dynamicLevel struct {
 	loudness float64
 	tension  float64
+	// attack is the brief louder level struck before settling to this one,
+	// as in fp (forte-piano) and its sforzando variants.
+	attack *dynamicLevel
 }
+
+// How long the attack of an fp-style dynamic is held before dropping.
+const attackBlicks = int64(blicksPerQuarter / 4) // a 16th note
+
+var (
+	attackF  = &dynamicLevel{loudness: 3, tension: 0}
+	attackSF = &dynamicLevel{loudness: 3, tension: 0.3}
+)
 
 // dynamicLevels maps MusicXML dynamics element names to loudness (dB) and tension values.
 //
@@ -285,41 +307,41 @@ type dynamicLevel struct {
 // to convey the additional intensity difference.
 var dynamicLevels = map[string]dynamicLevel{
 	// Fortissimo variants: loudness near f, tension increases.
-	"ffffff": {6, 0.8},
-	"fffff":  {5.5, 0.7},
-	"ffff":   {5, 0.5},
-	"fff":    {4.5, 0.4},
-	"ff":     {4, 0.2},
+	"ffffff": {loudness: 6, tension: 0.8},
+	"fffff":  {loudness: 5.5, tension: 0.7},
+	"ffff":   {loudness: 5, tension: 0.5},
+	"fff":    {loudness: 4.5, tension: 0.4},
+	"ff":     {loudness: 4, tension: 0.2},
 
 	// Pianissimo variants: loudness near p, tension decreases.
-	"pppppp": {-6, -0.8},
-	"ppppp":  {-5.5, -0.7},
-	"pppp":   {-5, -0.5},
-	"ppp":    {-4.5, -0.4},
-	"pp":     {-4, -0.2},
+	"pppppp": {loudness: -6, tension: -0.8},
+	"ppppp":  {loudness: -5.5, tension: -0.7},
+	"pppp":   {loudness: -5, tension: -0.5},
+	"ppp":    {loudness: -4.5, tension: -0.4},
+	"pp":     {loudness: -4, tension: -0.2},
 
-	// Sforzando variants.
-	"sffz": {3, 0.3},
-	"sfzp": {1.5, 0},
-	"sfpp": {1.5, 0},
-	"sfz":  {3, 0.3},
-	"sfp":  {1.5, 0},
-	"sf":   {3, 0.3},
+	// Sforzando variants. The *p forms attack, then drop to piano.
+	"sffz": {loudness: 3, tension: 0.3},
+	"sfzp": {loudness: -3, tension: 0, attack: attackSF},
+	"sfpp": {loudness: -4, tension: -0.2, attack: attackSF},
+	"sfz":  {loudness: 3, tension: 0.3},
+	"sfp":  {loudness: -3, tension: 0, attack: attackSF},
+	"sf":   {loudness: 3, tension: 0.3},
 
 	// Core dynamics.
-	"mp": {-1.5, 0},
-	"mf": {1.5, 0},
-	"fp": {0, 0},
-	"fz": {3, 0.3},
-	"f":  {3, 0},
+	"mp": {loudness: -1.5, tension: 0},
+	"mf": {loudness: 1.5, tension: 0},
+	"fp": {loudness: -3, tension: 0, attack: attackF},
+	"fz": {loudness: 3, tension: 0.3},
+	"f":  {loudness: 3, tension: 0},
 
-	"rfz": {1.5, 0.2},
-	"rf":  {1.5, 0.2},
+	"rfz": {loudness: 1.5, tension: 0.2},
+	"rf":  {loudness: 1.5, tension: 0.2},
 
-	"pf": {0, 0},
-	"p":  {-3, 0},
+	"pf": {loudness: 0, tension: 0},
+	"p":  {loudness: -3, tension: 0},
 
-	"n": {-6, -0.8},
+	"n": {loudness: -6, tension: -0.8},
 }
 
 // dynamicsToLevel maps a MusicXML dynamics element to loudness (dB) and tension values.

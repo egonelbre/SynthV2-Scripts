@@ -281,3 +281,41 @@ func TestDynamicsToLevel_OtherDynamicsPrefix(t *testing.T) {
 		})
 	}
 }
+
+// TestBuildDynamics_ForzaPiano checks that fp attacks at forte and drops to
+// piano shortly after.
+func TestBuildDynamics_ForzaPiano(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise>
+  <part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+  <part id="P1">
+    <measure>
+      <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <direction><direction-type><dynamics><fp/></dynamics></direction-type></direction>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>16</duration><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>`
+
+	score := parseTestScore(t, xmlData)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	events := buildDynamics(score.Part[0], unrolled)
+
+	if len(events) != 2 {
+		t.Fatalf("expected 2 events (attack + settle), got %d", len(events))
+	}
+	if events[0].position != 0 || events[0].loudness != 3 {
+		t.Errorf("attack: got position %d loudness %v, want 0 and 3", events[0].position, events[0].loudness)
+	}
+	if events[1].position != attackBlicks || events[1].loudness != -3 {
+		t.Errorf("settle: got position %d loudness %v, want %d and -3", events[1].position, events[1].loudness, attackBlicks)
+	}
+
+	points := buildCurve(events, func(e dynEvent) float64 { return e.loudness }, defaultLoudnessDelta)
+	if got := curveValueAt(points, 0); got < 2.9 {
+		t.Errorf("loudness at onset = %v, want ~3", got)
+	}
+	if got := curveValueAt(points, blicksPerQuarter); got > -2.9 {
+		t.Errorf("loudness a beat later = %v, want ~-3", got)
+	}
+}
