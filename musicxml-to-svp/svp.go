@@ -180,10 +180,10 @@ type SVPProjectMixer struct {
 
 // Word-start stress bumps (dB and tension units), subtler than an accent.
 const (
-	stressLoudnessBump = 1.0
-	stressTensionBump  = 0.1
+	stressLoudnessBump = 2.0
+	stressTensionBump  = 0.15
 	// Longest a stress spike may last, regardless of note duration.
-	maxStressWidth = int64(blicksPerQuarter / 4) // a 16th note
+	maxStressWidth = int64(blicksPerQuarter / 2) // an 8th note
 )
 
 // Accent loudness and tension bumps (dB and tension units).

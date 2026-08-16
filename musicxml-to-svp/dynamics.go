@@ -438,7 +438,7 @@ func applyAccents(points []float64, accents []accentEvent, normalBump, strongBum
 // toward the next spike.
 func applyStresses(points []float64, stresses []accentEvent, bump float64) []float64 {
 	for _, s := range stresses {
-		width := min(s.duration/accentSpikeWidthFraction, maxStressWidth)
+		width := min(s.duration/2, maxStressWidth)
 		width = max(width, minAccentSpikeWidth)
 		width = min(width, s.duration)
 
