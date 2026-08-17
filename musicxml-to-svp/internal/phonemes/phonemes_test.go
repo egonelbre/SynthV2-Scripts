@@ -287,3 +287,32 @@ func TestPhoneset(t *testing.T) {
 		})
 	}
 }
+
+func TestPreferVoiceLanguage(t *testing.T) {
+	// "tule" has no front rounded vowel and no r/v, so Spanish, Mandarin and
+	// Cantonese all render it; "rända" needs Cantonese for the ä.
+	tests := []struct {
+		word     string
+		prefer   string
+		always   bool
+		wantLang string
+	}{
+		{word: "tule", wantLang: "spanish"},
+		{word: "tule", prefer: "mandarin", wantLang: "mandarin"},
+		{word: "tule", prefer: "english", wantLang: "spanish"},     // no Estonian table for English
+		{word: "rända", prefer: "mandarin", wantLang: "cantonese"}, // ä fits Cantonese better
+		{word: "rända", prefer: "mandarin", always: true, wantLang: "mandarin"},
+		{word: "tuul", prefer: "spanish", wantLang: "spanish"},
+	}
+
+	for _, tt := range tests {
+		c := New("estonian")
+		if tt.prefer != "" {
+			c.Prefer(tt.prefer, tt.always)
+		}
+		if got := c.Convert(tt.word); got.Language != tt.wantLang {
+			t.Errorf("Convert(%q) with prefer %q (always=%v) = %q, want %q",
+				tt.word, tt.prefer, tt.always, got.Language, tt.wantLang)
+		}
+	}
+}

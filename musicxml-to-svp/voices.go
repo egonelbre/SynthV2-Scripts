@@ -28,6 +28,21 @@ var DefaultChoirVoiceParams = VocalModeParams{
 	},
 }
 
+// voiceLanguage returns the native language of the selected voices, which
+// lyrics are best converted into. Soloists come from mixed languages, so they
+// have none.
+func voiceLanguage(voiceArg string) string {
+	switch voiceArg {
+	case "choir1", "1":
+		return voice.Choirs[0].Language
+	case "choir2", "2":
+		return voice.Choirs[1].Language
+	case "choir3", "3":
+		return voice.Choirs[2].Language
+	}
+	return ""
+}
+
 func assignVoices(tracks []*SVPTrack, voiceArg string, relaxed bool, panScheme string) {
 	relaxedStr := "false"
 	if relaxed {

@@ -10,9 +10,9 @@ import (
 // rolled r, ch [tʃ], sh [ʃ], J [ɲ]), so no adaptive selection is needed.
 func newLatin() *Converter {
 	return &Converter{
-		selectLang: func(string) string { return "spanish" },
-		normalize:  normalizeLatin,
-		vowels:     "aeiou",
+		selectLangs: func(string) []string { return []string{"spanish"} },
+		normalize:   normalizeLatin,
+		vowels:      "aeiou",
 		tables: map[string]*phoneTable{
 			"spanish": latinSpanish,
 		},

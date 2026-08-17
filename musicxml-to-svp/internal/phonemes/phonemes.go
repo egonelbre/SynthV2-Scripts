@@ -2,7 +2,10 @@
 // multi-language selection (Mandarin, Cantonese, Spanish).
 package phonemes
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // Result holds the conversion result for a single note.
 type Result struct {
@@ -13,12 +16,26 @@ type Result struct {
 
 // Converter converts lyrics to phonemes for a specific source language.
 type Converter struct {
-	selectLang func(string) string
-	tables     map[string]*phoneTable
-	normalize  func(string) string
-	skip       func(rune) bool
-	vowels     string            // source-language vowels; doubled vowels emit a single phoneme
-	words      map[string]Result // whole-word overrides checked before table conversion
+	// selectLangs returns the target languages that can render a word, best
+	// first. Languages after the first fit the word just as well, so the
+	// voice's own language can be preferred among them.
+	selectLangs func(string) []string
+	tables      map[string]*phoneTable
+	normalize   func(string) string
+	skip        func(rune) bool
+	vowels      string            // source-language vowels; doubled vowels emit a single phoneme
+	words       map[string]Result // whole-word overrides checked before table conversion
+
+	prefer       string // voice language, preferred among equally good candidates
+	preferAlways bool   // use the voice language even when it fits worse
+}
+
+// Prefer sets the voice's own language. It is used when several languages
+// render a word equally well, or -- with always -- whenever a table for it
+// exists, even where another language would sound closer.
+func (c *Converter) Prefer(lang string, always bool) {
+	c.prefer = lang
+	c.preferAlways = always
 }
 
 // New creates a Converter for the given source language.
@@ -60,7 +77,7 @@ func (c *Converter) Convert(word string) Result {
 		return r
 	}
 
-	lang := c.selectLang(lower)
+	lang := c.pickLang(lower)
 	table := c.tables[lang]
 	if table == nil {
 		return Result{Language: lang}
@@ -76,6 +93,19 @@ func (c *Converter) Convert(word string) Result {
 		Phoneset: phonesetForLanguage(lang),
 		Phonemes: table.convert(w, c.skip, c.vowels),
 	}
+}
+
+// pickLang chooses the target language for a word: the voice's own language
+// when it is among the candidates (or always, if asked), otherwise the best
+// candidate for the word.
+func (c *Converter) pickLang(word string) string {
+	candidates := c.selectLangs(word)
+	if c.prefer != "" && c.tables[c.prefer] != nil {
+		if c.preferAlways || slices.Contains(candidates, c.prefer) {
+			return c.prefer
+		}
+	}
+	return candidates[0]
 }
 
 type phoneTable struct {

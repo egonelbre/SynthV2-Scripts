@@ -7,9 +7,9 @@ import (
 
 func newGerman() *Converter {
 	return &Converter{
-		selectLang: selectGerman,
-		normalize:  normalizeGerman,
-		vowels:     "aeiouyäöü",
+		selectLangs: selectGerman,
+		normalize:   normalizeGerman,
+		vowels:      "aeiouyäöü",
 		tables: map[string]*phoneTable{
 			"mandarin":  germanMandarin,
 			"cantonese": germanCantonese,
@@ -30,34 +30,34 @@ func newGerman() *Converter {
 //  4. Words with ä → Cantonese (good 'E' match)
 //  5. Words with r → Korean (good '4' flap approximation)
 //  6. Words with ß → English (good 's' match)
-//  7. Simple words → Japanese (cleanest basic vowels)
-//  8. Default → English
-func selectGerman(word string) string {
+//  7. Simple words → Japanese (cleanest basic vowels), but English and
+//     Mandarin render them just as well, so the voice's language can win.
+func selectGerman(word string) []string {
 	if strings.ContainsRune(word, 'ü') {
-		return "mandarin"
+		return []string{"mandarin"}
 	}
 	if strings.ContainsRune(word, 'ö') {
-		return "cantonese"
+		return []string{"cantonese"}
 	}
 	if idx := findStandaloneCh(word); idx >= 0 {
 		if idx > 0 {
 			prev, _ := utf8.DecodeLastRuneInString(word[:idx])
 			if prev == 'a' || prev == 'o' || prev == 'u' {
-				return "spanish"
+				return []string{"spanish"}
 			}
 		}
-		return "japanese"
+		return []string{"japanese"}
 	}
 	if strings.ContainsRune(word, 'ä') {
-		return "cantonese"
+		return []string{"cantonese"}
 	}
 	if strings.ContainsRune(word, 'r') {
-		return "korean"
+		return []string{"korean", "english"} // flap, or the English approximant
 	}
 	if strings.ContainsRune(word, 'ß') {
-		return "english"
+		return []string{"english", "japanese", "mandarin", "spanish"} // plain [s]
 	}
-	return "japanese"
+	return []string{"japanese", "english", "mandarin"}
 }
 
 // findStandaloneCh finds "ch" that is not part of "sch".

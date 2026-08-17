@@ -32,6 +32,7 @@ func main() {
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
 	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german, latin")
 	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
+	alwaysVoiceLangFlag := flag.Bool("always-prefer-voice-language", false, "convert lyrics into the voice's own language even where another language fits better")
 	preciseOnsetFlag := flag.Bool("precise-onset", true, "lock pitch at note onset and phrase ends to prevent slide-into-note (suited for choirs)")
 	outputFlag := flag.String("o", "", "output file path (default: input with .svp extension)")
 
@@ -168,6 +169,11 @@ func main() {
 		if conv == nil {
 			fmt.Fprintf(os.Stderr, "unknown language: %q (options: estonian, karelian, german, latin)\n", *langFlag)
 			os.Exit(1)
+		}
+		// Prefer the voice's own language where it renders the word as well as
+		// the adaptive pick would.
+		if lang := voiceLanguage(strings.ToLower(*voiceFlag)); lang != "" {
+			conv.Prefer(lang, *alwaysVoiceLangFlag)
 		}
 		for word, r := range replacements {
 			conv.SetWord(word, phonemes.Result{

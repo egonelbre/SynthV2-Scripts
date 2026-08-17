@@ -4,9 +4,9 @@ import "strings"
 
 func newKarelian() *Converter {
 	return &Converter{
-		selectLang: selectKarelian,
-		skip:       isKarelianPalatalization,
-		vowels:     "aeiouyäöü",
+		selectLangs: selectKarelian,
+		skip:        isKarelianPalatalization,
+		vowels:      "aeiouyäöü",
 		tables: map[string]*phoneTable{
 			"mandarin":  karelianMandarin,
 			"cantonese": karelianCantonese,
@@ -22,17 +22,18 @@ func newKarelian() *Converter {
 	}
 }
 
-func selectKarelian(word string) string {
-	if strings.ContainsRune(word, 'y') {
-		return "mandarin"
+func selectKarelian(word string) []string {
+	switch {
+	case strings.ContainsRune(word, 'y'):
+		return []string{"mandarin"}
+	case strings.ContainsRune(word, 'ö'):
+		return []string{"cantonese"}
+	case strings.ContainsRune(word, 'ä'):
+		return []string{"cantonese"}
+	case strings.ContainsAny(word, "rvz"):
+		return []string{"spanish"}
 	}
-	if strings.ContainsRune(word, 'ö') {
-		return "cantonese"
-	}
-	if strings.ContainsRune(word, 'ä') {
-		return "cantonese"
-	}
-	return "spanish"
+	return []string{"spanish", "mandarin", "cantonese"}
 }
 
 func isKarelianPalatalization(r rune) bool {

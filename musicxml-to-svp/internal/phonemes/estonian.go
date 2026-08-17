@@ -4,9 +4,9 @@ import "strings"
 
 func newEstonian() *Converter {
 	return &Converter{
-		selectLang: selectEstonian,
-		normalize:  func(s string) string { return strings.ReplaceAll(s, "ü", "y") },
-		vowels:     "aeiouyõäöü",
+		selectLangs: selectEstonian,
+		normalize:   func(s string) string { return strings.ReplaceAll(s, "ü", "y") },
+		vowels:      "aeiouyõäöü",
 		tables: map[string]*phoneTable{
 			"mandarin":  estonianMandarin,
 			"cantonese": estonianCantonese,
@@ -37,20 +37,23 @@ func newEstonian() *Converter {
 	}
 }
 
-func selectEstonian(word string) string {
-	if strings.ContainsAny(word, "üy") {
-		return "mandarin"
+// selectEstonian returns the languages that can sing a word, best first.
+// Front rounded vowels pin the choice; plain words can go to any of the three,
+// except that Mandarin and Cantonese mangle r and v.
+func selectEstonian(word string) []string {
+	switch {
+	case strings.ContainsAny(word, "üy"):
+		return []string{"mandarin"} // exact 'y'
+	case strings.ContainsRune(word, 'ö'):
+		return []string{"cantonese"} // '9'
+	case strings.ContainsRune(word, 'õ'):
+		return []string{"mandarin"} // '7'
+	case strings.ContainsRune(word, 'ä'):
+		return []string{"cantonese"} // 'E'
+	case strings.ContainsAny(word, "rvz"):
+		return []string{"spanish"}
 	}
-	if strings.ContainsRune(word, 'ö') {
-		return "cantonese"
-	}
-	if strings.ContainsRune(word, 'õ') {
-		return "mandarin"
-	}
-	if strings.ContainsRune(word, 'ä') {
-		return "cantonese"
-	}
-	return "spanish"
+	return []string{"spanish", "mandarin", "cantonese"}
 }
 
 var estonianMandarin = &phoneTable{
