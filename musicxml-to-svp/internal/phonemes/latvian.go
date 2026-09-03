@@ -40,9 +40,10 @@ var latvianSpanish = &phoneTable{
 	},
 	expanded: map[rune][]string{
 		'o': {"u", "o"},
+		'c': {"t", "s"}, // Spanish has no ts affricate
 	},
 	singles: map[rune]string{
-		'b': "b", 'c': "ts", 'č': "ch", 'd': "d", 'f': "f", 'g': "g", 'ģ': "g",
+		'b': "b", 'č': "ch", 'd': "d", 'f': "f", 'g': "g", 'ģ': "g",
 		'h': "x", 'j': "I", 'k': "k", 'ķ': "k", 'l': "l", 'ļ': "l", 'm': "m",
 		'n': "n", 'ņ': "J", 'p': "p", 'r': "r", 's': "s", 'š': "sh", 't': "t",
 		'v': "B", 'z': "s", 'ž': "sh", 'w': "U",

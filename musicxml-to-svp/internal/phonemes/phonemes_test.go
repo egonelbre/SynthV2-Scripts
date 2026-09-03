@@ -94,12 +94,12 @@ func TestLatvian_BasicConversion(t *testing.T) {
 		phonemes string
 		lang     string
 	}{
-		{"māte", "m a t e", "spanish"},    // macron dropped, r-less word still spanish first
-		{"roka", "r u o k a", "spanish"},  // o → [uo], r → spanish
-		{"ōpera", "o p e r a", "spanish"}, // ō → plain [o]
-		{"cilvēks", "ts i l B e k s", "spanish"},
-		{"dziesma", "d s i e s m a", "spanish"}, // dz digraph
-		{"ņemt", "J e m t", "spanish"},          // ņ → J
+		{"māte", "m a t e", "spanish"},            // macron dropped, r-less word still spanish first
+		{"roka", "r u o k a", "spanish"},          // o → [uo], r → spanish
+		{"ōpera", "o p e r a", "spanish"},         // ō → plain [o]
+		{"cilvēks", "t s i l B e k s", "spanish"}, // spanish has no ts
+		{"dziesma", "d s i e s m a", "spanish"},   // dz digraph
+		{"ņemt", "J e m t", "spanish"},            // ņ → J
 		{"šķērsi", "sh k e r s i", "spanish"},
 		{"laba", "l a b a", "spanish"},
 	}
