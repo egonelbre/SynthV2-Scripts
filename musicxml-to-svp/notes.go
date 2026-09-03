@@ -218,6 +218,12 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 			}
 
 			lyric, syllabic := extractLyric(value, pm.verse)
+			wordStart := isWordStart(lyric, syllabic, wordOpen)
+			if lyric == "" && value.Chord != nil && lastNoteIdx >= 0 {
+				// Chord notes carry no lyric of their own; inherit the chord
+				// head's so split voices keep their words.
+				lyric, wordStart = notes[lastNoteIdx].Lyric, notes[lastNoteIdx].WordStart
+			}
 
 			if !fermataWarned {
 				for _, n := range value.Notations {
@@ -235,12 +241,12 @@ func buildNotes(part *musicxml.Part, unrolled []playedMeasure) []Note {
 				Pitch:         midi,
 				Detune:        detune,
 				Lyric:         lyric,
-				WordStart:     isWordStart(lyric, syllabic, wordOpen),
+				WordStart:     wordStart,
 				Articulations: noteArticulations(value),
 				LeadingGraces: leadingGraces,
 			}
 
-			if lyric != "" {
+			if lyric != "" && value.Chord == nil {
 				wordOpen = continuesWord(syllabic)
 			}
 

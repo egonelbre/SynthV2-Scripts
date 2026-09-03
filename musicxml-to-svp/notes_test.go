@@ -1087,3 +1087,27 @@ func TestBuildNotes_ChordSharedOnset(t *testing.T) {
 		}
 	}
 }
+
+func TestChordNotesInheritLyric(t *testing.T) {
+	xml := `<score-partwise><part-list><score-part id="P1"><part-name>S</part-name></score-part></part-list>
+<part id="P1"><measure number="1"><attributes><divisions>1</divisions></attributes>
+<note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type><lyric number="1"><syllabic>begin</syllabic><text>la</text></lyric></note>
+<note><chord/><pitch><step>E</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note>
+<note><pitch><step>D</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type><lyric number="1"><syllabic>end</syllabic><text>la</text></lyric></note>
+<note><chord/><pitch><step>F</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note>
+</measure></part></score-partwise>`
+	score := parseTestScore(t, xml)
+	unrolled, _, _ := buildStructure(score.Part[0])
+	notes := buildNotes(score.Part[0], unrolled)
+	if len(notes) != 4 {
+		t.Fatalf("got %d notes", len(notes))
+	}
+	for i, want := range []struct {
+		lyric string
+		start bool
+	}{{"la", true}, {"la", true}, {"la", false}, {"la", false}} {
+		if notes[i].Lyric != want.lyric || notes[i].WordStart != want.start {
+			t.Errorf("note %d: got %q/%v, want %q/%v", i, notes[i].Lyric, notes[i].WordStart, want.lyric, want.start)
+		}
+	}
+}
