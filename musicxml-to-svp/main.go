@@ -35,6 +35,7 @@ func main() {
 	alwaysVoiceLangFlag := flag.Bool("always-prefer-voice-language", false, "convert lyrics into the voice's own language even where another language fits better")
 	preciseOnsetFlag := flag.Bool("precise-onset", true, "lock pitch at note onset and phrase ends to prevent slide-into-note (suited for choirs)")
 	outputFlag := flag.String("o", "", "output file path (default: input with .svp extension)")
+	metronomeFlag := flag.Bool("metronome", false, "render a click track WAV next to the output and link it as an instrumental track")
 
 	var phonemeFlags repeatedFlag
 	flag.Var(&phonemeFlags, "p", `lyric replacement as "lyric=phoneme" (repeatable)`)
@@ -192,6 +193,13 @@ func main() {
 		coverPhonemes(project.Library)
 	}
 
+	if *metronomeFlag {
+		if err := addMetronomeTrack(project, irScore, unrolled, outputPath); err != nil {
+			fmt.Fprintf(os.Stderr, "error writing metronome: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	out, err := json.MarshalIndent(project, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error marshaling JSON: %v\n", err)
@@ -205,6 +213,10 @@ func main() {
 
 	fmt.Fprintf(os.Stderr, "wrote %s (%d parts, %d meters, %d tempos)\n", outputPath, len(project.Tracks), len(project.Time.Meters), len(project.Time.Tempos))
 	for _, t := range project.Tracks {
+		if a := t.MainRef.Audio; a != nil {
+			fmt.Fprintf(os.Stderr, "  %s: %s (%.1fs)\n", t.Name, a.Filename, a.Duration)
+			continue
+		}
 		for _, g := range project.Library {
 			if g.UUID == t.Groups[0].GroupID {
 				fmt.Fprintf(os.Stderr, "  %s: %d notes\n", t.Name, len(g.Notes))

@@ -121,13 +121,15 @@ type SVPTrack struct {
 }
 
 type SVPGroupRef struct {
-	GroupID        string       `json:"groupID"`
-	BlickOffset    int64        `json:"blickOffset"`
-	PitchOffset    int          `json:"pitchOffset"`
-	IsInstrumental bool         `json:"isInstrumental"`
-	Database       *SVPDatabase `json:"database,omitempty"`
-	Voice          *SVPVoice    `json:"voice,omitempty"`
-	UUID           string       `json:"uuid"`
+	GroupID          string       `json:"groupID"`
+	BlickOffset      int64        `json:"blickOffset"`
+	PitchOffset      int          `json:"pitchOffset"`
+	IsInstrumental   bool         `json:"isInstrumental"`
+	BlickAbsoluteEnd int64        `json:"blickAbsoluteEnd,omitempty"`
+	Audio            *SVPAudio    `json:"audio,omitempty"`
+	Database         *SVPDatabase `json:"database,omitempty"`
+	Voice            *SVPVoice    `json:"voice,omitempty"`
+	UUID             string       `json:"uuid"`
 }
 
 type SVPDatabase struct {
