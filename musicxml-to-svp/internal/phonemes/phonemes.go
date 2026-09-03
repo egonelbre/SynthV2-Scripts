@@ -39,13 +39,15 @@ func (c *Converter) Prefer(lang string, always bool) {
 }
 
 // New creates a Converter for the given source language.
-// Supported: "estonian", "karelian", "german", "latin".
+// Supported: "estonian", "karelian", "latvian", "german", "latin".
 func New(lang string) *Converter {
 	switch strings.ToLower(lang) {
 	case "estonian":
 		return newEstonian()
 	case "karelian":
 		return newKarelian()
+	case "latvian":
+		return newLatvian()
 	case "german":
 		return newGerman()
 	case "latin":

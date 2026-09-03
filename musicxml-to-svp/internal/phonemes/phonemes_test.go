@@ -87,6 +87,40 @@ func TestKarelian_PalatalizationSkip(t *testing.T) {
 	}
 }
 
+func TestLatvian_BasicConversion(t *testing.T) {
+	c := New("latvian")
+	tests := []struct {
+		word     string
+		phonemes string
+		lang     string
+	}{
+		{"māte", "m a t e", "spanish"},    // macron dropped, r-less word still spanish first
+		{"roka", "r u o k a", "spanish"},  // o → [uo], r → spanish
+		{"ōpera", "o p e r a", "spanish"}, // ō → plain [o]
+		{"cilvēks", "ts i l B e k s", "spanish"},
+		{"dziesma", "d s i e s m a", "spanish"}, // dz digraph
+		{"ņemt", "J e m t", "spanish"},          // ņ → J
+		{"šķērsi", "sh k e r s i", "spanish"},
+		{"laba", "l a b a", "spanish"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.word, func(t *testing.T) {
+			r := c.Convert(tt.word)
+			if r.Phonemes != tt.phonemes {
+				t.Errorf("Convert(%q).Phonemes = %q, want %q", tt.word, r.Phonemes, tt.phonemes)
+			}
+			if r.Language != tt.lang {
+				t.Errorf("Convert(%q).Language = %q, want %q", tt.word, r.Language, tt.lang)
+			}
+		})
+	}
+	// Plain words can go to the voice's own language.
+	c.Prefer("mandarin", false)
+	if r := c.Convert("laba"); r.Language != "mandarin" || r.Phonemes != "l a p a" {
+		t.Errorf("Convert(\"laba\") with mandarin voice = %+v", r)
+	}
+}
+
 func TestGerman_LanguageSelection(t *testing.T) {
 	c := New("german")
 	tests := []struct {

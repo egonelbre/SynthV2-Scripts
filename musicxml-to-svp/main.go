@@ -30,7 +30,7 @@ func main() {
 	stressFlag := flag.String("stress", "none", "add stress for clearer diction: word-start, xylo, none")
 	coverFlag := flag.String("cover", "none", "darken (cover) high notes: formant, phoneme, both, none")
 	panFlag := flag.String("pan", "default", "panning scheme: default, spread, center")
-	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, german, latin")
+	langFlag := flag.String("lang", "", "convert lyrics to phonemes: estonian, karelian, latvian, german, latin")
 	relaxedFlag := flag.Bool("relaxed", true, "enable relaxed consonant pronunciation")
 	alwaysVoiceLangFlag := flag.Bool("always-prefer-voice-language", false, "convert lyrics into the voice's own language even where another language fits better")
 	preciseOnsetFlag := flag.Bool("precise-onset", true, "lock pitch at note onset and phrase ends to prevent slide-into-note (suited for choirs)")
@@ -167,7 +167,7 @@ func main() {
 	if *langFlag != "" {
 		conv := phonemes.New(*langFlag)
 		if conv == nil {
-			fmt.Fprintf(os.Stderr, "unknown language: %q (options: estonian, karelian, german, latin)\n", *langFlag)
+			fmt.Fprintf(os.Stderr, "unknown language: %q (options: estonian, karelian, latvian, german, latin)\n", *langFlag)
 			os.Exit(1)
 		}
 		// Prefer the voice's own language where it renders the word as well as
